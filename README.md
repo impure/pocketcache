@@ -11,29 +11,40 @@ and the Flutter guide for
 [developing packages and plugins](https://flutter.dev/developing-packages). 
 -->
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+An wrapper around PocketBase allowing for easy offline use.
 
 ## Features
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+- List files offline
+- Refresh Auth token without errors
 
 ## Getting started
 
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
+This package uses `sqlite3`. It should work on all platforms except for web without additional configuration.
+
+Note that this package reserves the following:
+
+- Column names starting in `_offline_bool_`
+- The column name `_downloaded`
+
+In addition it expects all of PocketBases data to have the `id`, `created`, and `updated` fields.
 
 ## Usage
 
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder. 
+Init the package:
 
 ```dart
-const like = 'sample';
+initPbOffline(pb);
+```
+
+Then you can use any of the exposed wrappers.
+
+```dart
+resetAuth();
+
+List<Map<String, dynamic>> data = getListWrapper("some_collection", page: 1, page_count: 1));
 ```
 
 ## Additional information
 
-TODO: Tell users more about the package: where to find more information, how to 
-contribute to the package, how to file issues, what response they can expect 
-from the package authors, and more.
+Be careful about updating columns with uniqueness constraints or adding rows with uniqueness constraints. Database rules are not enforced on the client and these operations may fail when sent to the server.
