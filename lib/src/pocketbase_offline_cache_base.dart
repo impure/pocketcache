@@ -14,9 +14,9 @@ late Logger logger;
 
 bool dbAccessible = true;
 
-Future<void> initPbOffline(PocketBase pb, {Logger? logger}) async {
-	logger = logger ?? Logger();
-	pb = pb;
+Future<void> initPbOffline(PocketBase pbInstance, {Logger? overrideLogger}) async {
+	logger = overrideLogger ?? Logger();
+	pb = pbInstance;
 	db = sqlite3.open(join((await getApplicationDocumentsDirectory()).path, "offline_cache"));
 }
 
