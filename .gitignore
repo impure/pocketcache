@@ -1,4 +1,6 @@
 .DS_Store
+.flutter-plugins
+.flutter-plugins-dependencies
 
 # https://dart.dev/guides/libraries/private-files
 # Created by `dart pub`
