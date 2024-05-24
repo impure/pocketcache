@@ -42,7 +42,7 @@ Future<void> continuouslyCheckDbAccessible() async {
 
 Future<void> resetAuth() async {
 	try {
-		await _pb.collection('users').authRefresh();
+		await pb.collection('users').authRefresh();
 	} on ClientException catch (e) {
 		if (!e.toString().contains("refused the network connection")) {
 			rethrow;

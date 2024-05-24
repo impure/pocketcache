@@ -11,7 +11,7 @@ and the Flutter guide for
 [developing packages and plugins](https://flutter.dev/developing-packages). 
 -->
 
-An wrapper around PocketBase allowing for easy offline use.
+An wrapper around PocketBase allowing for easy offline use. Designed for my RSS reader Stratum ([iOS](https://apps.apple.com/us/app/stratum-rss-feed-reader/id6445805598), [Android](https://play.google.com/store/apps/details?id=com.amorfatite.keystone)).
 
 ## Features
 
