@@ -121,7 +121,7 @@ ResultSet selectBuilder(String tableName, {String? columns, (String, List<Object
 	final StringBuffer query = StringBuffer("SELECT ${columns ?? "*"} FROM $tableName");
 	
 	if (filter != null) {
-		query.write(" WHERE ${filter.$1}");
+		query.write(" WHERE ${filter.$1.replaceAll("&&", "AND").replaceAll("||", "OR")}");
 	}
 
 	if (maxItems != null) {
