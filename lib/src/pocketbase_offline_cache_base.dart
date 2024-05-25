@@ -75,7 +75,7 @@ class PbOfflineCache {
 		}
 	}
 
-	void dequeueCachedOperations() {
+	Future<void> dequeueCachedOperations() async {
 		final ResultSet data = db.select("SELECT * FROM _operation_queue ORDER BY created ASC");
 
 		for (final Row row in data) {
@@ -103,25 +103,36 @@ class PbOfflineCache {
 				params[row.values[2].toString()] = value;
 			}
 
+			void cleanUp() {
+				db.execute("DELETE FROM _operation_queue WHERE id = ?", <String>[ localId ]);
+				db.execute("DELETE FROM _operation_queue_params WHERE id = ?", <String>[ localId ]);
+			}
+
+			// If we failed to update data (probably due to a key constraint) then we need to delete the local copy of the record as well or we'll be out of sync
+			void deleteLocalRecord() {
+				db.execute("DELETE FROM $collectionName WHERE id = ?", <String>[ localId ]);
+				cleanUp();
+			}
+
 			switch (operationType) {
 				case "UPDATE":
 					try {
-						pb.collection(collectionName).update(pbId, body: params);
-						db.execute("DELETE FROM _operation_queue WHERE id = ?", <String>[ localId ]);
-						db.execute("DELETE FROM _operation_queue_params WHERE id = ?", <String>[ localId ]);
+						await pb.collection(collectionName).update(pbId, body: params);
+						cleanUp();
 					} on ClientException catch (e) {
 						if (!e.toString().contains("refused the network connection")) {
+							deleteLocalRecord();
 							rethrow;
 						}
 					}
 					break;
 				case "DELETE":
 					try {
-						pb.collection(collectionName).delete(pbId);
-						db.execute("DELETE FROM _operation_queue WHERE id = ?", <String>[ localId ]);
-						db.execute("DELETE FROM _operation_queue_params WHERE id = ?", <String>[ localId ]);
+						await pb.collection(collectionName).delete(pbId);
+						cleanUp();
 					} on ClientException catch (e) {
 						if (!e.toString().contains("refused the network connection")) {
+							deleteLocalRecord();
 							rethrow;
 						}
 					}
@@ -129,11 +140,11 @@ class PbOfflineCache {
 				case "INSERT":
 					try {
 						params["id"] = pbId;
-						pb.collection(collectionName).create(body: params);
-						db.execute("DELETE FROM _operation_queue WHERE id = ?", <String>[ localId ]);
-						db.execute("DELETE FROM _operation_queue_params WHERE id = ?", <String>[ localId ]);
+						await pb.collection(collectionName).create(body: params);
+						cleanUp();
 					} on ClientException catch (e) {
 						if (!e.toString().contains("refused the network connection")) {
+							deleteLocalRecord();
 							rethrow;
 						}
 					}
