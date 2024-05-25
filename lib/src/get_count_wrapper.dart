@@ -6,7 +6,7 @@ import 'pocketbase_offline_cache_base.dart';
 
 Future<int> getCountWrapper(String collectionName, {
 	bool forceOffline = false,
-	int? maxItems,
+	(String, List<Object?>)? filter,
 }) async {
 
 	if (!dbAccessible || forceOffline) {
@@ -17,7 +17,7 @@ Future<int> getCountWrapper(String collectionName, {
 		);
 
 		if (result.isNotEmpty) {
-			final ResultSet results = maxItems != null ? db.select("SELECT COUNT(*) FROM $collectionName LIMIT $maxItems") : db.select("SELECT COUNT(*) FROM $collectionName");
+			final ResultSet results = selectBuilder(collectionName, columns: "COUNT(*)", filter: filter);
 			return results.first.values.first as int;
 		}
 

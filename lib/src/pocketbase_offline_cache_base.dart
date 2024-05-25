@@ -1,5 +1,6 @@
 
 import 'dart:io';
+import 'dart:math';
 
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
@@ -47,4 +48,31 @@ Future<void> resetAuth() async {
 			rethrow;
 		}
 	}
+}
+
+ResultSet selectBuilder(String tableName, {String? columns, (String, List<Object?>)? filter, int? maxItems}) {
+	
+	final StringBuffer query = StringBuffer("SELECT ${columns ?? "*"} FROM $tableName");
+	
+	if (filter != null) {
+		query.write(" WHERE ${filter.$1}");
+	}
+
+	if (maxItems != null) {
+		query.write(" LIMIT $maxItems");
+	}
+
+	query.write(";");
+
+	print(query.toString());
+
+	if (filter != null) {
+		return db.select(query.toString(), filter.$2);
+	} else {
+		return db.select(query.toString());
+	}
+}
+
+void executeBuilder() {
+	
 }
