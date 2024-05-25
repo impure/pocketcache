@@ -74,7 +74,3 @@ ResultSet selectBuilder(String tableName, {String? columns, (String, List<Object
 		return db.select(query.toString());
 	}
 }
-
-void executeBuilder() {
-	
-}
