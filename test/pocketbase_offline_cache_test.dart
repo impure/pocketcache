@@ -1,6 +1,9 @@
 
 import 'dart:ffi';
 
+import 'package:http/src/client.dart';
+import 'package:http/src/multipart_file.dart';
+import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketbase_offline_cache/src/pocketbase_offline_cache_base.dart';
 import 'package:test/test.dart';
 import 'package:sqlite3/sqlite3.dart';
@@ -80,14 +83,14 @@ List<dynamic> operations = <dynamic>[];
 // Note: run this from `flutter test` not from the IDE
 void main() {
 
-  db = DatabaseMock();
+  final PbOfflineCache pb = PbOfflineCache.withDb(PocketBase(""), DatabaseMock());
 
   test("selectBuilder", () {
-    selectBuilder("collection");
+    pb.selectBuilder("collection");
     expect(operations[0].toString(), "[SELECT * FROM collection;, []]");
-    selectBuilder("collection", columns: "COUNT(*)");
+    pb.selectBuilder("collection", columns: "COUNT(*)");
     expect(operations[1].toString(), "[SELECT COUNT(*) FROM collection;, []]");
-    selectBuilder("collection", columns: "COUNT(*)", filter: ("abc = ? && xyz = ?", <dynamic>[ 1, "2" ]));
+    pb.selectBuilder("collection", columns: "COUNT(*)", filter: ("abc = ? && xyz = ?", <dynamic>[ 1, "2" ]));
     expect(operations[2].toString(), "[SELECT COUNT(*) FROM collection WHERE abc = ? AND xyz = ?;, [1, 2]]");
   });
 }
