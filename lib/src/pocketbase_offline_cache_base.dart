@@ -20,6 +20,9 @@ class PbOfflineCache {
 	final Database db;
 	final Logger logger;
 
+	String? get id => pb.authStore.model?.id;
+	bool get tokenValid => pb.authStore.isValid;
+
 	PbOfflineCache._(this.pb, this.db, this.logger) {
 		db.execute("""
 	CREATE TABLE IF NOT EXISTS _operation_queue (
