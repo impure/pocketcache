@@ -16,7 +16,7 @@ extension CreateWrapper on PbOfflineCache {
 
       // If table does not exist yet we are unsure of the required schema so can't add anything
       if (tableExists(db, collectionName)) {
-        String id = makePbId();
+        final String id = makePbId();
         queueOperation("INSERT", collectionName, idToModify: id, values: body);
         insertRecordsIntoLocalDb(db, collectionName, <RecordModel>[ RecordModel(
           id: id,
@@ -30,7 +30,7 @@ extension CreateWrapper on PbOfflineCache {
     }
 
     try {
-      RecordModel model = await (pb.collection(collectionName).create(body: body));
+      final RecordModel model = await pb.collection(collectionName).create(body: body);
       insertRecordsIntoLocalDb(db, collectionName, <RecordModel>[ model ], logger);
     } on ClientException catch (e) {
       if (!e.toString().contains("refused the network connection")) {
@@ -47,5 +47,5 @@ final Random random = Random();
 String makePbId() {
   const String chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 
-  return List.generate(15, (index) => chars[random.nextInt(chars.length)]).join();
+  return List.generate(15, (int index) => chars[random.nextInt(chars.length)]).join();
 }

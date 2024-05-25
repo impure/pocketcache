@@ -16,12 +16,9 @@ bool dbAccessible = true;
 
 class PbOfflineCache {
 
-	final PocketBase pb;
-	final Database db;
-	final Logger logger;
-
-	String? get id => pb.authStore.model?.id;
-	bool get tokenValid => pb.authStore.isValid;
+	factory PbOfflineCache(PocketBase pb, String directoryToSave, {Logger? overrideLogger}) {
+		return PbOfflineCache._(pb, sqlite3.open(join(directoryToSave, "offline_cache")), overrideLogger ?? Logger());
+	}
 
 	PbOfflineCache._(this.pb, this.db, this.logger) {
 		db.execute("""
@@ -47,13 +44,16 @@ class PbOfflineCache {
 		}
 	}
 
-	factory PbOfflineCache(PocketBase pb, String directoryToSave, {Logger? overrideLogger}) {
-		return PbOfflineCache._(pb, sqlite3.open(join(directoryToSave, "offline_cache")), overrideLogger ?? Logger());
-	}
-
 	factory PbOfflineCache.withDb(PocketBase pb, Database db, {Logger? overrideLogger}) {
 		return PbOfflineCache._(pb, db, overrideLogger ?? Logger());
 	}
+
+	final PocketBase pb;
+	final Database db;
+	final Logger logger;
+
+	String? get id => pb.authStore.model?.id;
+	bool get tokenValid => pb.authStore.isValid;
 
 	Future<void> _continuouslyCheckDbAccessible() async {
 		while (true) {
@@ -172,10 +172,10 @@ class PbOfflineCache {
 			) async {
 
 		// This is not guaranteed to be unique but if two commands are executed at the same time the order doesn't really matter
-		int created = DateTime.now().millisecondsSinceEpoch;
+		final int created = DateTime.now().millisecondsSinceEpoch;
 
-		ResultSet record = db.select("INSERT INTO _operation_queue (operation_type, created, collection_name, id_to_modify) VALUES ('$operationType', $created, '$collectionName', ?) RETURNING id", <Object>[ idToModify ]);
-		int id = record.first.values.first as int;
+		final ResultSet record = db.select("INSERT INTO _operation_queue (operation_type, created, collection_name, id_to_modify) VALUES ('$operationType', $created, '$collectionName', ?) RETURNING id", <Object>[ idToModify ]);
+		final int id = record.first.values.first! as int;
 
 		if (values != null) {
 			for (final MapEntry<String, dynamic> entry in values.entries) {

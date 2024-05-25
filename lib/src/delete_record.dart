@@ -18,7 +18,7 @@ extension DeleteWrapper on PbOfflineCache {
     }
 
     try {
-      await (pb.collection(collectionName).delete(id));
+      await pb.collection(collectionName).delete(id);
       db.execute("DELETE FROM $collectionName WHERE id = ?", <Object?>[ id ]);
     } on ClientException catch (e) {
       if (!e.toString().contains("refused the network connection")) {

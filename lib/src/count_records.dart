@@ -14,7 +14,7 @@ extension CountWrapper on PbOfflineCache {
 
 			if (tableExists(db, collectionName)) {
 				final ResultSet results = selectBuilder(db, collectionName, columns: "COUNT(*)", filter: filter);
-				return results.first.values.first as int;
+				return results.first.values.first! as int;
 			}
 
 			return 0;
