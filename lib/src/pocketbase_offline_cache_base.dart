@@ -119,8 +119,9 @@ class PbOfflineCache {
 					try {
 						await pb.collection(collectionName).update(pbId, body: params);
 						cleanUp();
-					} on ClientException catch (e) {
+					} on ClientException catch (e, stack) {
 						if (!e.toString().contains("refused the network connection")) {
+							logger.e(e, stackTrace: stack);
 							deleteLocalRecord();
 							rethrow;
 						}
@@ -130,8 +131,9 @@ class PbOfflineCache {
 					try {
 						await pb.collection(collectionName).delete(pbId);
 						cleanUp();
-					} on ClientException catch (e) {
+					} on ClientException catch (e, stack) {
 						if (!e.toString().contains("refused the network connection")) {
+							logger.e(e, stackTrace: stack);
 							deleteLocalRecord();
 							rethrow;
 						}
@@ -142,8 +144,9 @@ class PbOfflineCache {
 						params["id"] = pbId;
 						await pb.collection(collectionName).create(body: params);
 						cleanUp();
-					} on ClientException catch (e) {
+					} on ClientException catch (e, stack) {
 						if (!e.toString().contains("refused the network connection")) {
+							logger.e(e, stackTrace: stack);
 							deleteLocalRecord();
 							rethrow;
 						}
