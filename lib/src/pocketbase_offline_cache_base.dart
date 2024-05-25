@@ -1,4 +1,5 @@
 
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
@@ -21,6 +22,7 @@ Future<void> initPbOffline(PocketBase pbInstance, {Logger? overrideLogger}) asyn
 	logger = overrideLogger ?? Logger();
 	pb = pbInstance;
 	db = sqlite3.open(join((await getApplicationDocumentsDirectory()).path, "offline_cache"));
+	unawaited(continuouslyCheckDbAccessible());
 }
 
 Future<void> continuouslyCheckDbAccessible() async {
@@ -65,8 +67,6 @@ ResultSet selectBuilder(String tableName, {String? columns, (String, List<Object
 	}
 
 	query.write(";");
-
-	print(query.toString());
 
 	if (filter != null) {
 		return db.select(query.toString(), filter.$2);
