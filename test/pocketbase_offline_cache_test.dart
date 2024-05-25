@@ -120,7 +120,7 @@ class PbWrapper implements PocketBase {
 	SettingsService settings = basePb.settings;
 
 	@override
-	Uri buildUrl(String path, [Map<String, dynamic> queryParameters = const <String, >{}]) {
+	Uri buildUrl(String path, [Map<String, dynamic> queryParameters = const <String, dynamic>{}]) {
 		throw UnimplementedError();
 	}
 
@@ -130,17 +130,17 @@ class PbWrapper implements PocketBase {
 	}
 
 	@override
-	String filter(String expr, [Map<String, dynamic> query = const <String, >{}]) {
+	String filter(String expr, [Map<String, dynamic> query = const <String, dynamic>{}]) {
 		throw UnimplementedError();
 	}
 
 	@override
-	Uri getFileUrl(RecordModel record, String filename, {String? thumb, String? token, Map<String, dynamic> query = const <String, >{}}) {
+	Uri getFileUrl(RecordModel record, String filename, {String? thumb, String? token, Map<String, dynamic> query = const <String, dynamic>{}}) {
 		throw UnimplementedError();
 	}
 
 	@override
-	Future<void> send(String path, {String method = "GET", Map<String, String> headers = const <String, String>{}, Map<String, dynamic> query = const <String, >{}, Map<String, dynamic> body = const <String, >{}, List<MultipartFile> files = const <MultipartFile>[]}) {
+	Future<void> send(String path, {String method = "GET", Map<String, String> headers = const <String, String>{}, Map<String, dynamic> query = const <String, dynamic>{}, Map<String, dynamic> body = const <String, dynamic>{}, List<MultipartFile> files = const <MultipartFile>[]}) {
 		throw UnimplementedError();
 	}
 }
@@ -152,22 +152,22 @@ class RecordServiceMock implements RecordService {
 	final String collection;
 
 	@override
-	Future<RecordAuth> authRefresh({String? expand, String? fields, Map<String, dynamic> body = const <String, >{}, Map<String, dynamic> query = const <String, >{}, Map<String, String> headers = const <String, String>{}}) {
+	Future<RecordAuth> authRefresh({String? expand, String? fields, Map<String, dynamic> body = const <String, dynamic>{}, Map<String, dynamic> query = const <String, dynamic>{}, Map<String, String> headers = const <String, String>{}}) {
 		throw UnimplementedError();
 	}
 
 	@override
-	Future<RecordAuth> authWithOAuth2(String providerName, OAuth2UrlCallbackFunc urlCallback, {List<String> scopes = const <String>[], Map<String, dynamic> createData = const <String, >{}, String? expand, String? fields}) {
+	Future<RecordAuth> authWithOAuth2(String providerName, OAuth2UrlCallbackFunc urlCallback, {List<String> scopes = const <String>[], Map<String, dynamic> createData = const <String, dynamic>{}, String? expand, String? fields}) {
 		throw UnimplementedError();
 	}
 
 	@override
-	Future<RecordAuth> authWithOAuth2Code(String provider, String code, String codeVerifier, String redirectUrl, {Map<String, dynamic> createData = const <String, >{}, Map<String, dynamic> body = const <String, >{}, Map<String, dynamic> query = const <String, >{}, Map<String, String> headers = const <String, String>{}, String? expand, String? fields}) {
+	Future<RecordAuth> authWithOAuth2Code(String provider, String code, String codeVerifier, String redirectUrl, {Map<String, dynamic> createData = const <String, dynamic>{}, Map<String, dynamic> body = const <String, dynamic>{}, Map<String, dynamic> query = const <String, dynamic>{}, Map<String, String> headers = const <String, String>{}, String? expand, String? fields}) {
 		throw UnimplementedError();
 	}
 
 	@override
-	Future<RecordAuth> authWithPassword(String usernameOrEmail, String password, {String? expand, String? fields, Map<String, dynamic> body = const <String, >{}, Map<String, dynamic> query = const <String, >{}, Map<String, String> headers = const <String, String>{}}) {
+	Future<RecordAuth> authWithPassword(String usernameOrEmail, String password, {String? expand, String? fields, Map<String, dynamic> body = const <String, dynamic>{}, Map<String, dynamic> query = const <String, dynamic>{}, Map<String, String> headers = const <String, String>{}}) {
 		throw UnimplementedError();
 	}
 
@@ -181,48 +181,48 @@ class RecordServiceMock implements RecordService {
 	PocketBase get client => throw UnimplementedError();
 
 	@override
-	Future<void> confirmEmailChange(String emailChangeToken, String userPassword, {Map<String, dynamic> body = const <String, >{}, Map<String, dynamic> query = const <String, >{}, Map<String, String> headers = const <String, String>{}}) {
+	Future<void> confirmEmailChange(String emailChangeToken, String userPassword, {Map<String, dynamic> body = const <String, dynamic>{}, Map<String, dynamic> query = const <String, dynamic>{}, Map<String, String> headers = const <String, String>{}}) {
 		throw UnimplementedError();
 	}
 
 	@override
-	Future<void> confirmPasswordReset(String passwordResetToken, String password, String passwordConfirm, {Map<String, dynamic> body = const <String, >{}, Map<String, dynamic> query = const <String, >{}, Map<String, String> headers = const <String, String>{}}) {
+	Future<void> confirmPasswordReset(String passwordResetToken, String password, String passwordConfirm, {Map<String, dynamic> body = const <String, dynamic>{}, Map<String, dynamic> query = const <String, dynamic>{}, Map<String, String> headers = const <String, String>{}}) {
 		throw UnimplementedError();
 	}
 
 	@override
-	Future<void> confirmVerification(String verificationToken, {Map<String, dynamic> body = const <String, >{}, Map<String, dynamic> query = const <String, >{}, Map<String, String> headers = const <String, String>{}}) {
+	Future<void> confirmVerification(String verificationToken, {Map<String, dynamic> body = const <String, dynamic>{}, Map<String, dynamic> query = const <String, dynamic>{}, Map<String, String> headers = const <String, String>{}}) {
 		throw UnimplementedError();
 	}
 
 	@override
-	Future<RecordModel> create({Map<String, dynamic> body = const <String, >{}, Map<String, dynamic> query = const <String, >{}, List<MultipartFile> files = const <MultipartFile>[], Map<String, String> headers = const <String, String>{}, String? expand, String? fields}) {
+	Future<RecordModel> create({Map<String, dynamic> body = const <String, dynamic>{}, Map<String, dynamic> query = const <String, dynamic>{}, List<MultipartFile> files = const <MultipartFile>[], Map<String, String> headers = const <String, String>{}, String? expand, String? fields}) {
 		throw UnimplementedError();
 	}
 
 	@override
-	Future<void> delete(String id, {Map<String, dynamic> body = const <String, >{}, Map<String, dynamic> query = const <String, >{}, Map<String, String> headers = const <String, String>{}}) {
+	Future<void> delete(String id, {Map<String, dynamic> body = const <String, dynamic>{}, Map<String, dynamic> query = const <String, dynamic>{}, Map<String, String> headers = const <String, String>{}}) {
 		throw UnimplementedError();
 	}
 
 	@override
-	Future<RecordModel> getFirstListItem(String filter, {String? expand, String? fields, Map<String, dynamic> query = const <String, >{}, Map<String, String> headers = const <String, String>{}}) {
+	Future<RecordModel> getFirstListItem(String filter, {String? expand, String? fields, Map<String, dynamic> query = const <String, dynamic>{}, Map<String, String> headers = const <String, String>{}}) {
 		throw UnimplementedError();
 	}
 
 	@override
-	Future<List<RecordModel>> getFullList({int batch = 500, String? expand, String? filter, String? sort, String? fields, Map<String, dynamic> query = const <String, >{}, Map<String, String> headers = const <String, String>{}}) {
+	Future<List<RecordModel>> getFullList({int batch = 500, String? expand, String? filter, String? sort, String? fields, Map<String, dynamic> query = const <String, dynamic>{}, Map<String, String> headers = const <String, String>{}}) {
 		throw UnimplementedError();
 	}
 
 	@override
-	Future<ResultList<RecordModel>> getList({int page = 1, int perPage = 30, bool skipTotal = false, String? expand, String? filter, String? sort, String? fields, Map<String, dynamic> query = const <String, >{}, Map<String, String> headers = const <String, String>{}}) async {
+	Future<ResultList<RecordModel>> getList({int page = 1, int perPage = 30, bool skipTotal = false, String? expand, String? filter, String? sort, String? fields, Map<String, dynamic> query = const <String, dynamic>{}, Map<String, String> headers = const <String, String>{}}) async {
 		operations.add("getList $page $perPage $skipTotal $filter");
 		return ResultList<RecordModel>();
 	}
 
 	@override
-	Future<RecordModel> getOne(String id, {String? expand, String? fields, Map<String, dynamic> query = const <String, >{}, Map<String, String> headers = const <String, String>{}}) {
+	Future<RecordModel> getOne(String id, {String? expand, String? fields, Map<String, dynamic> query = const <String, dynamic>{}, Map<String, String> headers = const <String, String>{}}) {
 		throw UnimplementedError();
 	}
 
@@ -232,37 +232,37 @@ class RecordServiceMock implements RecordService {
 	}
 
 	@override
-	Future<AuthMethodsList> listAuthMethods({Map<String, dynamic> query = const <String, >{}, Map<String, String> headers = const <String, String>{}}) {
+	Future<AuthMethodsList> listAuthMethods({Map<String, dynamic> query = const <String, dynamic>{}, Map<String, String> headers = const <String, String>{}}) {
 		throw UnimplementedError();
 	}
 
 	@override
-	Future<List<ExternalAuthModel>> listExternalAuths(String recordId, {Map<String, dynamic> query = const <String, >{}, Map<String, String> headers = const <String, String>{}}) {
+	Future<List<ExternalAuthModel>> listExternalAuths(String recordId, {Map<String, dynamic> query = const <String, dynamic>{}, Map<String, String> headers = const <String, String>{}}) {
 		throw UnimplementedError();
 	}
 
 	@override
-	Future<void> requestEmailChange(String newEmail, {Map<String, dynamic> body = const <String, >{}, Map<String, dynamic> query = const <String, >{}, Map<String, String> headers = const <String, String>{}}) {
+	Future<void> requestEmailChange(String newEmail, {Map<String, dynamic> body = const <String, dynamic>{}, Map<String, dynamic> query = const <String, dynamic>{}, Map<String, String> headers = const <String, String>{}}) {
 		throw UnimplementedError();
 	}
 
 	@override
-	Future<void> requestPasswordReset(String email, {Map<String, dynamic> body = const <String, >{}, Map<String, dynamic> query = const <String, >{}, Map<String, String> headers = const <String, String>{}}) {
+	Future<void> requestPasswordReset(String email, {Map<String, dynamic> body = const <String, dynamic>{}, Map<String, dynamic> query = const <String, dynamic>{}, Map<String, String> headers = const <String, String>{}}) {
 		throw UnimplementedError();
 	}
 
 	@override
-	Future<void> requestVerification(String email, {Map<String, dynamic> body = const <String, >{}, Map<String, dynamic> query = const <String, >{}, Map<String, String> headers = const <String, String>{}}) {
+	Future<void> requestVerification(String email, {Map<String, dynamic> body = const <String, dynamic>{}, Map<String, dynamic> query = const <String, dynamic>{}, Map<String, String> headers = const <String, String>{}}) {
 		throw UnimplementedError();
 	}
 
 	@override
-	Future<UnsubscribeFunc> subscribe(String topic, RecordSubscriptionFunc callback, {String? expand, String? filter, String? fields, Map<String, dynamic> query = const <String, >{}, Map<String, String> headers = const <String, String>{}}) {
+	Future<UnsubscribeFunc> subscribe(String topic, RecordSubscriptionFunc callback, {String? expand, String? filter, String? fields, Map<String, dynamic> query = const <String, dynamic>{}, Map<String, String> headers = const <String, String>{}}) {
 		throw UnimplementedError();
 	}
 
 	@override
-	Future<void> unlinkExternalAuth(String recordId, String provider, {Map<String, dynamic> body = const <String, >{}, Map<String, dynamic> query = const <String, >{}, Map<String, String> headers = const <String, String>{}}) {
+	Future<void> unlinkExternalAuth(String recordId, String provider, {Map<String, dynamic> body = const <String, dynamic>{}, Map<String, dynamic> query = const <String, dynamic>{}, Map<String, String> headers = const <String, String>{}}) {
 		throw UnimplementedError();
 	}
 
@@ -272,7 +272,7 @@ class RecordServiceMock implements RecordService {
 	}
 
 	@override
-	Future<RecordModel> update(String id, {Map<String, dynamic> body = const <String, >{}, Map<String, dynamic> query = const <String, >{}, List<MultipartFile> files = const <MultipartFile>[], Map<String, String> headers = const <String, String>{}, String? expand, String? fields}) {
+	Future<RecordModel> update(String id, {Map<String, dynamic> body = const <String, dynamic>{}, Map<String, dynamic> query = const <String, dynamic>{}, List<MultipartFile> files = const <MultipartFile>[], Map<String, String> headers = const <String, String>{}, String? expand, String? fields}) {
 		throw UnimplementedError();
 	}
 }
