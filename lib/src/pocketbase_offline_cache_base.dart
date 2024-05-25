@@ -79,12 +79,12 @@ class PbOfflineCache {
 		final ResultSet data = db.select("SELECT * FROM _operation_queue ORDER BY created ASC");
 
 		for (final Row row in data) {
-			final String localId = row.values[0].toString();
+			final String operationId = row.values[0].toString();
 			final String operationType = row.values[1].toString();
 			final String collectionName = row.values[3].toString();
 			final String pbId = row.values[4].toString();
 
-			final ResultSet data = db.select("SELECT * FROM _operation_queue_params WHERE operation_id = ?", <String>[ localId ]);
+			final ResultSet data = db.select("SELECT * FROM _operation_queue_params WHERE operation_id = ?", <String>[ operationId ]);
 			final Map<String, dynamic> params = <String, dynamic>{};
 			for (final Row row in data) {
 
@@ -104,8 +104,8 @@ class PbOfflineCache {
 			}
 
 			void cleanUp() {
-				db.execute("DELETE FROM _operation_queue WHERE id = ?", <String>[ localId ]);
-				db.execute("DELETE FROM _operation_queue_params WHERE id = ?", <String>[ localId ]);
+				db.execute("DELETE FROM _operation_queue WHERE id = ?", <String>[ operationId ]);
+				db.execute("DELETE FROM _operation_queue_params WHERE id = ?", <String>[ operationId ]);
 			}
 
 			// If we failed to update data (probably due to a key constraint) then we need to delete the local copy of the record as well or we'll be out of sync

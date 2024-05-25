@@ -17,7 +17,7 @@ extension CreateWrapper on PbOfflineCache {
       // If table does not exist yet we are unsure of the required schema so can't add anything
       if (tableExists(db, collectionName)) {
         String id = makePbId();
-        queueOperation("INSERT", collectionName, idToModify: id);
+        queueOperation("INSERT", collectionName, idToModify: id, values: body);
         insertRecordsIntoLocalDb(db, collectionName, <RecordModel>[ RecordModel(
           id: id,
           created: DateTime.now().toString(),
