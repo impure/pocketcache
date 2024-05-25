@@ -8,8 +8,8 @@ extension UpdateWrapper on PbOfflineCache {
 	Future<void> updateRecord(String collectionName, String id, Map<String, dynamic> values, { bool forceOffline = false }) async {
 		if (!dbAccessible || forceOffline) {
 			if (tableExists(collectionName)) {
-				queueOperation("UPDATE", collectionName, values, idToModify: id);
-				updateCache(db, collectionName, id, values);
+				queueOperation("UPDATE", collectionName, values: values, idToModify: id);
+				applyLocalUpdateOperation(db, collectionName, id, values);
 			}
 
 			return;
@@ -22,12 +22,12 @@ extension UpdateWrapper on PbOfflineCache {
 		}
 
 		if (tableExists(collectionName)) {
-			updateCache(db, collectionName, id, values);
+			applyLocalUpdateOperation(db, collectionName, id, values);
 		}
 	}
 }
 
-void updateCache(Database db, String collectionName, String id, Map<String, dynamic> values) {
+void applyLocalUpdateOperation(Database db, String collectionName, String id, Map<String, dynamic> values) {
 	final StringBuffer command = StringBuffer("UPDATE $collectionName SET");
 
 	bool first = true;

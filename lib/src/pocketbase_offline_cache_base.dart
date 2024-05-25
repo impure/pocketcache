@@ -111,6 +111,21 @@ class PbOfflineCache {
 						db.execute("DELETE FROM _operation_queue_params WHERE id = ?", <String>[ localId ]);
 					} on ClientException catch (_) {}
 					break;
+				case "DELETE":
+					try {
+						pb.collection(collectionName).delete(pbId);
+						db.execute("DELETE FROM _operation_queue WHERE id = ?", <String>[ localId ]);
+						db.execute("DELETE FROM _operation_queue_params WHERE id = ?", <String>[ localId ]);
+					} on ClientException catch (_) {}
+					break;
+				case "INSERT":
+					try {
+						params["id"] = pbId;
+						pb.collection(collectionName).create(body: params);
+						db.execute("DELETE FROM _operation_queue WHERE id = ?", <String>[ localId ]);
+						db.execute("DELETE FROM _operation_queue_params WHERE id = ?", <String>[ localId ]);
+					} on ClientException catch (_) {}
+					break;
 				default:
 					logger.e("Unknown operation type: $operationType, row: $row");
 			}
@@ -137,31 +152,32 @@ class PbOfflineCache {
 	Future<void> queueOperation(
 			String operationType,
 			String collectionName,
-			Map<String, dynamic> params,
-			{String idToModify = ""}
+			{Map<String, dynamic>? values, String idToModify = ""}
 			) async {
 
 		// This is not guaranteed to be unique but if two commands are executed at the same time the order doesn't really matter
 		int created = DateTime.now().millisecondsSinceEpoch;
 
-		ResultSet record = db.select("INSERT INTO _operation_queue (operation_type, created, collection_name, id_to_modify) VALUES ('$operationType', $created, '$collectionName', '$idToModify') RETURNING id");
+		ResultSet record = db.select("INSERT INTO _operation_queue (operation_type, created, collection_name, id_to_modify) VALUES ('$operationType', $created, '$collectionName', ?) RETURNING id", <Object>[ idToModify ]);
 		int id = record.first.values.first as int;
 
-		for (final MapEntry<String, dynamic> entry in params.entries) {
+		if (values != null) {
+			for (final MapEntry<String, dynamic> entry in values.entries) {
 
-			String? type;
+				String? type;
 
-			if (entry.value is bool) {
-				type = "bool";
-			} else if (entry.value is int) {
-				type = "int";
-			} else if (entry.value is String) {
-				type = "String";
-			} else {
-				logger.e("Unknown type: ${entry.value.runtimeType}");
+				if (entry.value is bool) {
+					type = "bool";
+				} else if (entry.value is int) {
+					type = "int";
+				} else if (entry.value is String) {
+					type = "String";
+				} else {
+					logger.e("Unknown type: ${entry.value.runtimeType}");
+				}
+
+				db.select("INSERT INTO _operation_queue_params (operation_id, param_key, param_value, type) VALUES (?, ?, ?, ?)", <Object?>[id, entry.key, entry.value, type]);
 			}
-
-			db.select("INSERT INTO _operation_queue_params (operation_id, param_key, param_value, type) VALUES (?, ?, ?, ?)", <Object?>[id, entry.key, entry.value, type]);
 		}
 	}
 }
