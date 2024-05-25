@@ -14,6 +14,7 @@ extension CreateWrapper on PbOfflineCache {
 
     if (!dbAccessible || forceOffline) {
 
+      // If table does not exist yet we are unsure of the required schema so can't add anything
       if (tableExists(db, collectionName)) {
         String id = makePbId();
         queueOperation("INSERT", collectionName, idToModify: id);

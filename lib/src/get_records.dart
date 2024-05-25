@@ -72,13 +72,13 @@ void insertRecordsIntoLocalDb(Database db, String collectionName, List<RecordMod
 
 		for (final MapEntry<String, dynamic> data in records.first.data.entries) {
 			if (data.value is String) {
-				schema.write(",${data.key} TEXT");
+				schema.write(",${data.key} TEXT DEFAULT ''");
 			} else if (data.value is int) {
-				schema.write(",${data.key} INTEGER");
+				schema.write(",${data.key} INTEGER DEFAULT 0");
 			} else if (data.value is bool) {
-				schema.write(",_offline_bool_${data.key} INTEGER");
+				schema.write(",_offline_bool_${data.key} INTEGER DEFAULT 0");
 			} else if (data.value is double) {
-				schema.write(",${data.key} REAL");
+				schema.write(",${data.key} REAL DEFAULT 0.0");
 			} else {
 				logger.e("Unknown type ${data.value.runtimeType}", stackTrace: StackTrace.current);
 			}
