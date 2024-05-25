@@ -37,7 +37,7 @@ Future<void> initPbOffline(PocketBase pbInstance, {Logger? overrideLogger}) asyn
 		operation_id INTEGER,
 		param_key TEXT,
 		param_value TEXT,
-		is_bool INTEGER,
+		type TEXT,
 		FOREIGN KEY(operation_id) REFERENCES operations(id)
 	)""");
 	
@@ -76,15 +76,25 @@ void dequeueCachedOperations() {
 		final ResultSet data = db.select("SELECT * FROM _operation_queue_params WHERE operation_id = ?", <String>[ localId ]);
 		final Map<String, dynamic> params = <String, dynamic>{};
 		for (final Row row in data) {
-			if (row.values[4] == 1) {
-				params[row.values[2].toString()] = params[row.values[3]] == 1 ? true : false;
+
+			dynamic value;
+
+			if (row.values[4] == "bool") {
+				value = row.values[3] == "1" ? true : false;
+			} else if (row.values[4] == "int") {
+				value = int.tryParse(row.values[3].toString());
+			} else if (row.values[4] == "String") {
+				value = row.values[3];
 			} else {
-				params[row.values[2].toString()] = params[row.values[3]];
+				logger.e("Unknown type when loading: ${row.values[4]}");
 			}
+
+			params[row.values[2].toString()] = value;
 		}
 
 		switch (operationType) {
 			case "UPDATE":
+				print("Replaying update $collectionName $pbId $params");
 				try {
 					pb.collection(collectionName).update(pbId, body: params);
 					db.execute("DELETE FROM _operation_queue WHERE id = ?", <String>[ localId ]);
@@ -149,6 +159,19 @@ Future<void> queueOperation(
 	int id = record.first.values.first as int;
 
 	for (final MapEntry<String, dynamic> entry in params.entries) {
-		db.select("INSERT INTO _operation_queue_params (operation_id, param_key, param_value, is_bool) VALUES (?, ?, ?, ${entry.value is bool ? 1 : 0})", <Object?>[id, entry.key, entry.value]);
+
+		String? type;
+
+		if (entry.value is bool) {
+			type = "bool";
+		} else if (entry.value is int) {
+			type = "int";
+		} else if (entry.value is String) {
+			type = "String";
+		} else {
+			logger.e("Unknown type: ${entry.value.runtimeType}");
+		}
+
+		db.select("INSERT INTO _operation_queue_params (operation_id, param_key, param_value, type) VALUES (?, ?, ?, ?)", <Object?>[id, entry.key, entry.value, type]);
 	}
 }
