@@ -8,7 +8,6 @@ Future<List<Map<String, dynamic>>> getListWrapper(String collectionName, {
 	required int page,
 	required int perPage,
 	bool forceOffline = false,
-	bool skipTotal = true,
 }) async {
 
 	if (!dbAccessible || forceOffline) {
@@ -43,7 +42,7 @@ Future<List<Map<String, dynamic>>> getListWrapper(String collectionName, {
 		records = (await pb.collection(collectionName).getList(
 			page: page,
 			perPage: perPage,
-			skipTotal: skipTotal,
+			skipTotal: true,
 		)).items;
 	} on ClientException catch (_) {
 		return getListWrapper(collectionName, page: page, perPage: perPage, forceOffline: true);
