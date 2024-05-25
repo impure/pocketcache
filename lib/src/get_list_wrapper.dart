@@ -5,8 +5,8 @@ import 'package:sqlite3/sqlite3.dart';
 import 'pocketbase_offline_cache_base.dart';
 
 Future<List<Map<String, dynamic>>> getListWrapper(String collectionName, {
-	required int page,
-	required int perPage,
+	int maxItems = defaultMaxItems,
+	(String, List<Object?>)? filter,
 	bool forceOffline = false,
 }) async {
 
@@ -18,7 +18,7 @@ Future<List<Map<String, dynamic>>> getListWrapper(String collectionName, {
 		);
 
 		if (result.isNotEmpty) {
-			final ResultSet results = db.select("SELECT * FROM $collectionName LIMIT $perPage OFFSET ${(page - perPage) * perPage}");
+			final ResultSet results = selectBuilder(collectionName, maxItems: maxItems, filter: filter);
 			final List<Map<String, dynamic>> data = <Map<String, dynamic>>[];
 			for (final Row row in results) {
 				final Map<String, dynamic> entryToInsert = <String, dynamic>{};
@@ -40,12 +40,12 @@ Future<List<Map<String, dynamic>>> getListWrapper(String collectionName, {
 	List<RecordModel>? records;
 	try {
 		records = (await pb.collection(collectionName).getList(
-			page: page,
-			perPage: perPage,
+			page: 1,
+			perPage: maxItems,
 			skipTotal: true,
 		)).items;
 	} on ClientException catch (_) {
-		return getListWrapper(collectionName, page: page, perPage: perPage, forceOffline: true);
+		return getListWrapper(collectionName, maxItems: maxItems, forceOffline: true);
 	}
 
 	if (records.isNotEmpty) {

@@ -13,6 +13,8 @@ late Database db;
 late PocketBase pb;
 late Logger logger;
 
+const int defaultMaxItems = 100000;
+
 bool dbAccessible = true;
 
 Future<void> initPbOffline(PocketBase pbInstance, {Logger? overrideLogger}) async {
