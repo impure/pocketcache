@@ -63,7 +63,7 @@ class PbOfflineCache {
 					dbAccessible = false;
 				} else {
 					dbAccessible = true;
-					dequeueCachedOperations();
+					await dequeueCachedOperations();
 				}
 			} on SocketException catch (e) {
 				if (!e.message.contains("refused")) {
@@ -165,11 +165,11 @@ class PbOfflineCache {
 		}
 	}
 
-	Future<void> queueOperation(
+	void queueOperation(
 			String operationType,
 			String collectionName,
 			{Map<String, dynamic>? values, String idToModify = ""}
-			) async {
+			) {
 
 		// This is not guaranteed to be unique but if two commands are executed at the same time the order doesn't really matter
 		final int created = DateTime.now().millisecondsSinceEpoch;

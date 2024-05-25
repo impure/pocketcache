@@ -47,5 +47,5 @@ final Random random = Random();
 String makePbId() {
   const String chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 
-  return List.generate(15, (int index) => chars[random.nextInt(chars.length)]).join();
+  return List<String>.generate(15, (int index) => chars[random.nextInt(chars.length)]).join();
 }

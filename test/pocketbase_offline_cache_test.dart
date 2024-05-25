@@ -140,7 +140,7 @@ class PbWrapper implements PocketBase {
 	}
 
 	@override
-	Future send(String path, {String method = "GET", Map<String, String> headers = const <String, String>{}, Map<String, dynamic> query = const <String, >{}, Map<String, dynamic> body = const <String, >{}, List<MultipartFile> files = const <MultipartFile>[]}) {
+	Future<void> send(String path, {String method = "GET", Map<String, String> headers = const <String, String>{}, Map<String, dynamic> query = const <String, >{}, Map<String, dynamic> body = const <String, >{}, List<MultipartFile> files = const <MultipartFile>[]}) {
 		throw UnimplementedError();
 	}
 }
@@ -218,7 +218,7 @@ class RecordServiceMock implements RecordService {
 	@override
 	Future<ResultList<RecordModel>> getList({int page = 1, int perPage = 30, bool skipTotal = false, String? expand, String? filter, String? sort, String? fields, Map<String, dynamic> query = const <String, >{}, Map<String, String> headers = const <String, String>{}}) async {
 		operations.add("getList $page $perPage $skipTotal $filter");
-		return ResultList();
+		return ResultList<RecordModel>();
 	}
 
 	@override
