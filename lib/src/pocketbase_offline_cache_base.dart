@@ -5,7 +5,6 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
 import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:sqlite3/sqlite3.dart';
 
@@ -41,7 +40,7 @@ class PbOfflineCache {
 	)""");
 
 		if (!isTest()) {
-			unawaited(continuouslyCheckDbAccessible());
+			unawaited(_continuouslyCheckDbAccessible());
 		}
 	}
 
@@ -53,7 +52,7 @@ class PbOfflineCache {
 		return PbOfflineCache._(pb, db, overrideLogger ?? Logger());
 	}
 
-	Future<void> continuouslyCheckDbAccessible() async {
+	Future<void> _continuouslyCheckDbAccessible() async {
 		while (true) {
 			try {
 				final http.Response response = await http.get(pb.buildUrl("/api/health"));
@@ -103,7 +102,6 @@ class PbOfflineCache {
 
 			switch (operationType) {
 				case "UPDATE":
-					print("Replaying update $collectionName $pbId $params");
 					try {
 						pb.collection(collectionName).update(pbId, body: params);
 						db.execute("DELETE FROM _operation_queue WHERE id = ?", <String>[ localId ]);
@@ -131,27 +129,6 @@ class PbOfflineCache {
 			"SELECT name FROM sqlite_master WHERE type='table' AND name=?",
 			<String> [ tableName ],
 		).isNotEmpty;
-	}
-
-	ResultSet selectBuilder(String tableName, {String? columns, (String, List<Object?>)? filter, int? maxItems}) {
-
-		final StringBuffer query = StringBuffer("SELECT ${columns ?? "*"} FROM $tableName");
-
-		if (filter != null) {
-			query.write(" WHERE ${filter.$1.replaceAll("&&", "AND").replaceAll("||", "OR")}");
-		}
-
-		if (maxItems != null) {
-			query.write(" LIMIT $maxItems");
-		}
-
-		query.write(";");
-
-		if (filter != null) {
-			return db.select(query.toString(), filter.$2);
-		} else {
-			return db.select(query.toString());
-		}
 	}
 
 	Future<void> queueOperation(
@@ -183,5 +160,26 @@ class PbOfflineCache {
 
 			db.select("INSERT INTO _operation_queue_params (operation_id, param_key, param_value, type) VALUES (?, ?, ?, ?)", <Object?>[id, entry.key, entry.value, type]);
 		}
+	}
+}
+
+ResultSet selectBuilder(Database db, String tableName, {String? columns, (String, List<Object?>)? filter, int? maxItems}) {
+
+	final StringBuffer query = StringBuffer("SELECT ${columns ?? "*"} FROM $tableName");
+
+	if (filter != null) {
+		query.write(" WHERE ${filter.$1.replaceAll("&&", "AND").replaceAll("||", "OR")}");
+	}
+
+	if (maxItems != null) {
+		query.write(" LIMIT $maxItems");
+	}
+
+	query.write(";");
+
+	if (filter != null) {
+		return db.select(query.toString(), filter.$2);
+	} else {
+		return db.select(query.toString());
 	}
 }

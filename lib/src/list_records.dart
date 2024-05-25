@@ -14,8 +14,7 @@ extension ListWrapper on PbOfflineCache {
 	}) async {
 		if (!dbAccessible || forceOffline) {
 			if (tableExists(collectionName)) {
-				final ResultSet results = selectBuilder(
-						collectionName, maxItems: maxItems, filter: filter);
+				final ResultSet results = selectBuilder(db, collectionName, maxItems: maxItems, filter: filter);
 				final List<Map<String, dynamic>> data = <Map<String, dynamic>>[];
 				for (final Row row in results) {
 					final Map<String, dynamic> entryToInsert = <String, dynamic>{};
@@ -41,10 +40,10 @@ extension ListWrapper on PbOfflineCache {
 				page: 1,
 				perPage: maxItems,
 				skipTotal: true,
+				filter: makePbFilter(filter),
 			)).items;
-		} on ClientException catch (_) {
-			return listRecords(
-					collectionName, maxItems: maxItems, forceOffline: true);
+		} on ClientException catch (e) {
+			return listRecords(collectionName, maxItems: maxItems, forceOffline: true);
 		}
 
 		if (records.isNotEmpty) {
@@ -144,4 +143,22 @@ extension ListWrapper on PbOfflineCache {
 
 		return data;
 	}
+}
+
+String? makePbFilter((String, List<Object?>)? params) {
+
+	if (params == null) {
+		return null;
+	}
+
+	String filter = params.$1;
+
+	for (final Object? param in params.$2) {
+		if (param is String) {
+			filter = filter.replaceFirst("?", "'$param'");
+		} else {
+			filter = filter.replaceFirst("?", param.toString());
+		}
+	}
+	return filter;
 }
