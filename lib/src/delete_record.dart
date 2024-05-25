@@ -1,7 +1,6 @@
 
 import 'package:pocketbase/pocketbase.dart';
 import 'pocketbase_offline_cache_base.dart';
-import 'package:sqlite3/sqlite3.dart';
 
 extension DeleteWrapper on PbOfflineCache {
   Future<void> deleteRecord(String collectionName, String id, {

@@ -1,6 +1,7 @@
 
 import 'dart:core';
 
+import 'package:logger/logger.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:sqlite3/sqlite3.dart';
 
@@ -47,88 +48,7 @@ extension ListWrapper on PbOfflineCache {
 		}
 
 		if (records.isNotEmpty) {
-			final ResultSet result = db.select(
-				"SELECT name FROM sqlite_master WHERE type='table' AND name=?",
-				<String>[ collectionName],
-			);
-
-			if (result.isEmpty) {
-				final StringBuffer schema = StringBuffer(
-						"id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT");
-
-				for (final MapEntry<String, dynamic> data in records.first.data
-						.entries) {
-					if (data.value is String) {
-						schema.write(",${data.key} TEXT");
-					} else if (data.value is int) {
-						schema.write(",${data.key} INTEGER");
-					} else if (data.value is bool) {
-						schema.write(",_offline_bool_${data.key} INTEGER");
-					} else if (data.value is double) {
-						schema.write(",${data.key} REAL");
-					} else {
-						logger.e("Unknown type ${data.value.runtimeType}",
-								stackTrace: StackTrace.current);
-					}
-				}
-
-				db.execute("CREATE TABLE $collectionName ($schema)");
-			}
-
-			final StringBuffer command = StringBuffer(
-					"INSERT OR REPLACE INTO $collectionName(id, created, updated, _downloaded");
-
-			final List<String> keys = <String>[];
-
-			for (final String key in records.first.data.keys) {
-				keys.add(key);
-				if (records.first.data[key] is bool) {
-					command.write(", _offline_bool_$key");
-				} else {
-					command.write(", $key");
-				}
-			}
-
-			command.write(") VALUES");
-
-			bool first = true;
-			final List<dynamic> parameters = <dynamic>[];
-			final String now = DateTime.now().toString();
-
-			for (final RecordModel record in records) {
-				if (!first) {
-					command.write(",");
-				} else {
-					first = false;
-				}
-
-				command.write("(?, ?, ?, ?");
-
-				parameters.add(record.id);
-				parameters.add(record.created);
-				parameters.add(record.updated);
-				parameters.add(now);
-
-				for (final String key in keys) {
-					command.write(", ?");
-					parameters.add(record.data[key]);
-				}
-
-				command.write(")");
-			}
-
-			command.write(";");
-
-			try {
-				db.execute(command.toString(), parameters);
-			} on SqliteException catch (e) {
-				if (e.message.contains("has no column")) {
-					logger.i("Dropping table $collectionName");
-					db.execute("DROP TABLE $collectionName");
-				} else {
-					rethrow;
-				}
-			}
+			insertRecordsIntoLocalDb(db, collectionName, records, logger);
 		}
 
 		final List<Map<String, dynamic>> data = <Map<String, dynamic>>[];
@@ -142,6 +62,89 @@ extension ListWrapper on PbOfflineCache {
 		}
 
 		return data;
+	}
+}
+
+void insertRecordsIntoLocalDb(Database db, String collectionName, List<RecordModel> records, Logger logger) {
+	final ResultSet result = db.select(
+		"SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+		<String>[ collectionName],
+	);
+
+	// Create table if does not already exist
+	if (result.isEmpty) {
+		final StringBuffer schema = StringBuffer(
+				"id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT");
+
+		for (final MapEntry<String, dynamic> data in records.first.data.entries) {
+			if (data.value is String) {
+				schema.write(",${data.key} TEXT");
+			} else if (data.value is int) {
+				schema.write(",${data.key} INTEGER");
+			} else if (data.value is bool) {
+				schema.write(",_offline_bool_${data.key} INTEGER");
+			} else if (data.value is double) {
+				schema.write(",${data.key} REAL");
+			} else {
+				logger.e("Unknown type ${data.value.runtimeType}", stackTrace: StackTrace.current);
+			}
+		}
+
+		db.execute("CREATE TABLE $collectionName ($schema)");
+	}
+
+	final StringBuffer command = StringBuffer("INSERT OR REPLACE INTO $collectionName(id, created, updated, _downloaded");
+
+	final List<String> keys = <String>[];
+
+	for (final String key in records.first.data.keys) {
+		keys.add(key);
+		if (records.first.data[key] is bool) {
+			command.write(", _offline_bool_$key");
+		} else {
+			command.write(", $key");
+		}
+	}
+
+	command.write(") VALUES");
+
+	bool first = true;
+	final List<dynamic> parameters = <dynamic>[];
+	final String now = DateTime.now().toString();
+
+	for (final RecordModel record in records) {
+		if (!first) {
+			command.write(",");
+		} else {
+			first = false;
+		}
+
+		command.write("(?, ?, ?, ?");
+
+		parameters.add(record.id);
+		parameters.add(record.created);
+		parameters.add(record.updated);
+		parameters.add(now);
+
+		for (final String key in keys) {
+			command.write(", ?");
+			parameters.add(record.data[key]);
+		}
+
+		command.write(")");
+	}
+
+	command.write(";");
+
+	try {
+		db.execute(command.toString(), parameters);
+	} on SqliteException catch (e) {
+		if (e.message.contains("has no column")) {
+			logger.i("Dropping table $collectionName");
+			db.execute("DROP TABLE $collectionName");
+		} else {
+			rethrow;
+		}
 	}
 }
 
