@@ -5,7 +5,7 @@ import 'package:sqlite3/sqlite3.dart';
 import 'pocketbase_offline_cache_base.dart';
 
 extension CountWrapper on PbOfflineCache {
-	Future<int> getCountWrapper(String collectionName, {
+	Future<int> getCount(String collectionName, {
 		bool forceOffline = false,
 		(String, List<Object?>)? filter,
 	}) async {
@@ -27,7 +27,7 @@ extension CountWrapper on PbOfflineCache {
 				skipTotal: false,
 			)).totalItems;
 		} on ClientException catch (_) {
-			return getCountWrapper(collectionName, forceOffline: true);
+			return getCount(collectionName, forceOffline: true);
 		}
 	}
 }

@@ -7,7 +7,7 @@ import 'package:sqlite3/sqlite3.dart';
 import 'pocketbase_offline_cache_base.dart';
 
 extension ListWrapper on PbOfflineCache {
-	Future<List<Map<String, dynamic>>> getListWrapper(String collectionName, {
+	Future<List<Map<String, dynamic>>> getRecords(String collectionName, {
 		int maxItems = defaultMaxItems,
 		(String, List<Object?>)? filter,
 		bool forceOffline = false,
@@ -43,7 +43,7 @@ extension ListWrapper on PbOfflineCache {
 				skipTotal: true,
 			)).items;
 		} on ClientException catch (_) {
-			return getListWrapper(
+			return getRecords(
 					collectionName, maxItems: maxItems, forceOffline: true);
 		}
 
