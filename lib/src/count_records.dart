@@ -26,7 +26,10 @@ extension CountWrapper on PbOfflineCache {
 				perPage: 1,
 				skipTotal: false,
 			)).totalItems;
-		} on ClientException catch (_) {
+		} on ClientException catch (e) {
+			if (!e.toString().contains("refused the network connection")) {
+				rethrow;
+			}
 			return countRecords(collectionName, forceOffline: true);
 		}
 	}

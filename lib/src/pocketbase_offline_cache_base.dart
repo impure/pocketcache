@@ -109,14 +109,22 @@ class PbOfflineCache {
 						pb.collection(collectionName).update(pbId, body: params);
 						db.execute("DELETE FROM _operation_queue WHERE id = ?", <String>[ localId ]);
 						db.execute("DELETE FROM _operation_queue_params WHERE id = ?", <String>[ localId ]);
-					} on ClientException catch (_) {}
+					} on ClientException catch (e) {
+						if (!e.toString().contains("refused the network connection")) {
+							rethrow;
+						}
+					}
 					break;
 				case "DELETE":
 					try {
 						pb.collection(collectionName).delete(pbId);
 						db.execute("DELETE FROM _operation_queue WHERE id = ?", <String>[ localId ]);
 						db.execute("DELETE FROM _operation_queue_params WHERE id = ?", <String>[ localId ]);
-					} on ClientException catch (_) {}
+					} on ClientException catch (e) {
+						if (!e.toString().contains("refused the network connection")) {
+							rethrow;
+						}
+					}
 					break;
 				case "INSERT":
 					try {
@@ -124,7 +132,11 @@ class PbOfflineCache {
 						pb.collection(collectionName).create(body: params);
 						db.execute("DELETE FROM _operation_queue WHERE id = ?", <String>[ localId ]);
 						db.execute("DELETE FROM _operation_queue_params WHERE id = ?", <String>[ localId ]);
-					} on ClientException catch (_) {}
+					} on ClientException catch (e) {
+						if (!e.toString().contains("refused the network connection")) {
+							rethrow;
+						}
+					}
 					break;
 				default:
 					logger.e("Unknown operation type: $operationType, row: $row");

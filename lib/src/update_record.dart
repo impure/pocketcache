@@ -17,7 +17,10 @@ extension UpdateWrapper on PbOfflineCache {
 
 		try {
 			await pb.collection(collectionName).update(id, body: values);
-		} on ClientException catch (_) {
+		} on ClientException catch (e) {
+			if (!e.toString().contains("refused the network connection")) {
+				rethrow;
+			}
 			return updateRecord(collectionName, id, values, forceOffline: true);
 		}
 

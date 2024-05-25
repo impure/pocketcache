@@ -43,7 +43,10 @@ extension ListWrapper on PbOfflineCache {
 				skipTotal: true,
 				filter: makePbFilter(filter),
 			)).items;
-		} on ClientException catch (_) {
+		} on ClientException catch (e) {
+			if (!e.toString().contains("refused the network connection")) {
+				rethrow;
+			}
 			return getRecords(collectionName, maxItems: maxItems, forceOffline: true);
 		}
 

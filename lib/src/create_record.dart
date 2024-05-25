@@ -32,7 +32,10 @@ extension CreateWrapper on PbOfflineCache {
     try {
       RecordModel model = await (pb.collection(collectionName).create(body: body));
       insertRecordsIntoLocalDb(db, collectionName, <RecordModel>[ model ], logger);
-    } on ClientException catch (_) {
+    } on ClientException catch (e) {
+      if (!e.toString().contains("refused the network connection")) {
+        rethrow;
+      }
       return createRecord(collectionName, body, forceOffline: true);
     }
   }
