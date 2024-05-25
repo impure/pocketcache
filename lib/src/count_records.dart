@@ -2,6 +2,7 @@
 import 'package:pocketbase/pocketbase.dart';
 import 'package:sqlite3/sqlite3.dart';
 
+import 'get_records.dart';
 import 'pocketbase_offline_cache_base.dart';
 
 extension CountWrapper on PbOfflineCache {
@@ -25,6 +26,7 @@ extension CountWrapper on PbOfflineCache {
 				page: 1,
 				perPage: 1,
 				skipTotal: false,
+				filter: makePbFilter(filter),
 			)).totalItems;
 		} on ClientException catch (e) {
 			if (!e.toString().contains("refused the network connection")) {
