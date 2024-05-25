@@ -147,9 +147,9 @@ class PbWrapper implements PocketBase {
 
 class RecordServiceMock implements RecordService {
 
-  final String collection;
+	final String collection;
 
-  RecordServiceMock(this.collection);
+	RecordServiceMock(this.collection);
 
 	@override
 	Future<RecordAuth> authRefresh({String? expand, String? fields, Map<String, dynamic> body = const {}, Map<String, dynamic> query = const {}, Map<String, String> headers = const {}}) {
