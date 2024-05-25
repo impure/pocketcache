@@ -11,12 +11,7 @@ Future<int> getCountWrapper(String collectionName, {
 
 	if (!dbAccessible || forceOffline) {
 
-		final ResultSet result = db.select(
-			"SELECT name FROM sqlite_master WHERE type='table' AND name=?",
-			<String> [ collectionName ],
-		);
-
-		if (result.isNotEmpty) {
+		if (tableExists(collectionName)) {
 			final ResultSet results = selectBuilder(collectionName, columns: "COUNT(*)", filter: filter);
 			return results.first.values.first as int;
 		}

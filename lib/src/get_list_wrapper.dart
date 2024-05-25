@@ -12,12 +12,7 @@ Future<List<Map<String, dynamic>>> getListWrapper(String collectionName, {
 
 	if (!dbAccessible || forceOffline) {
 
-		final ResultSet result = db.select(
-			"SELECT name FROM sqlite_master WHERE type='table' AND name=?",
-			<String> [ collectionName ],
-		);
-
-		if (result.isNotEmpty) {
+		if (tableExists(collectionName)) {
 			final ResultSet results = selectBuilder(collectionName, maxItems: maxItems, filter: filter);
 			final List<Map<String, dynamic>> data = <Map<String, dynamic>>[];
 			for (final Row row in results) {

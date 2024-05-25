@@ -8,15 +8,10 @@ Future<void> updateWrapper(String collectionName, String id, Map<String, dynamic
 
 	if (!dbAccessible || forceOffline) {
 
-		final ResultSet result = db.select(
-			"SELECT name FROM sqlite_master WHERE type='table' AND name=?",
-			<String> [ collectionName ],
-		);
-
-		if (result.isNotEmpty) {
+		if (tableExists(collectionName)) {
+			queueOperation("UPDATE", collectionName, values, idToModify: id);
+			updateCache(collectionName, id, values);
 		}
-
-		updateCache(collectionName, id, values);
 
 		return;
 	}
@@ -27,7 +22,9 @@ Future<void> updateWrapper(String collectionName, String id, Map<String, dynamic
 		return updateWrapper(collectionName, id, values, forceOffline: true);
 	}
 
-	updateCache(collectionName, id, values);
+	if (tableExists(collectionName)) {
+		updateCache(collectionName, id, values);
+	}
 }
 
 void updateCache(String collectionName, String id, Map<String, dynamic> values) {
