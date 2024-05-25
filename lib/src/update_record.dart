@@ -7,7 +7,7 @@ import 'pocketbase_offline_cache_base.dart';
 extension UpdateWrapper on PbOfflineCache {
 	Future<void> updateRecord(String collectionName, String id, Map<String, dynamic> values, { bool forceOffline = false }) async {
 		if (!dbAccessible || forceOffline) {
-			if (tableExists(collectionName)) {
+			if (tableExists(db, collectionName)) {
 				queueOperation("UPDATE", collectionName, values: values, idToModify: id);
 				applyLocalUpdateOperation(db, collectionName, id, values);
 			}
@@ -21,7 +21,7 @@ extension UpdateWrapper on PbOfflineCache {
 			return updateRecord(collectionName, id, values, forceOffline: true);
 		}
 
-		if (tableExists(collectionName)) {
+		if (tableExists(db, collectionName)) {
 			applyLocalUpdateOperation(db, collectionName, id, values);
 		}
 	}

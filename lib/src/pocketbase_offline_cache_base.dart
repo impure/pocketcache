@@ -142,13 +142,6 @@ class PbOfflineCache {
 		}
 	}
 
-	bool tableExists(String tableName) {
-		return db.select(
-			"SELECT name FROM sqlite_master WHERE type='table' AND name=?",
-			<String> [ tableName ],
-		).isNotEmpty;
-	}
-
 	Future<void> queueOperation(
 			String operationType,
 			String collectionName,
@@ -180,6 +173,13 @@ class PbOfflineCache {
 			}
 		}
 	}
+}
+
+bool tableExists(Database db, String tableName) {
+	return db.select(
+		"SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+		<String> [ tableName ],
+	).isNotEmpty;
 }
 
 ResultSet selectBuilder(Database db, String tableName, {String? columns, (String, List<Object?>)? filter, int? maxItems}) {

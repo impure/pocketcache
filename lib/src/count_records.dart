@@ -12,7 +12,7 @@ extension CountWrapper on PbOfflineCache {
 
 		if (!dbAccessible || forceOffline) {
 
-			if (tableExists(collectionName)) {
+			if (tableExists(db, collectionName)) {
 				final ResultSet results = selectBuilder(db, collectionName, columns: "COUNT(*)", filter: filter);
 				return results.first.values.first as int;
 			}

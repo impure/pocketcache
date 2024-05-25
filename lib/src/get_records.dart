@@ -14,7 +14,7 @@ extension ListWrapper on PbOfflineCache {
 		bool forceOffline = false,
 	}) async {
 		if (!dbAccessible || forceOffline) {
-			if (tableExists(collectionName)) {
+			if (tableExists(db, collectionName)) {
 				final ResultSet results = selectBuilder(db, collectionName, maxItems: maxItems, filter: filter);
 				final List<Map<String, dynamic>> data = <Map<String, dynamic>>[];
 				for (final Row row in results) {
@@ -66,15 +66,9 @@ extension ListWrapper on PbOfflineCache {
 }
 
 void insertRecordsIntoLocalDb(Database db, String collectionName, List<RecordModel> records, Logger logger) {
-	final ResultSet result = db.select(
-		"SELECT name FROM sqlite_master WHERE type='table' AND name=?",
-		<String>[ collectionName],
-	);
 
-	// Create table if does not already exist
-	if (result.isEmpty) {
-		final StringBuffer schema = StringBuffer(
-				"id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT");
+	if (!tableExists(db, collectionName)) {
+		final StringBuffer schema = StringBuffer("id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT");
 
 		for (final MapEntry<String, dynamic> data in records.first.data.entries) {
 			if (data.value is String) {

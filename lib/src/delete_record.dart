@@ -9,7 +9,7 @@ extension DeleteWrapper on PbOfflineCache {
 
     if (!dbAccessible || forceOffline) {
 
-      if (tableExists(collectionName)) {
+      if (tableExists(db, collectionName)) {
         queueOperation("DELETE", collectionName, idToModify: id);
         db.execute("DELETE FROM $collectionName WHERE id = ?", <Object?>[ id ]);
       }
