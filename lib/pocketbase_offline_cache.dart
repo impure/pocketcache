@@ -1,6 +1,6 @@
 library;
 
 export 'src/pocketbase_offline_cache_base.dart' show PbOfflineCache;
-export 'src/list_records.dart';
-export 'src/count_records.dart';
-export 'src/update_record.dart';
+export 'src/get_records.dart' show ListWrapper;
+export 'src/count_records.dart' show CountWrapper;
+export 'src/update_record.dart' show UpdateWrapper;

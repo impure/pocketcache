@@ -298,16 +298,16 @@ void main() {
 	});
 
 	test("listRecords", () async {
-		await pb.listRecords("abc");
+		await pb.getRecords("abc");
 		expect(operations.toString(), "[getList 1 100000 true null]");
 		operations.clear();
-		await pb.listRecords("abc", maxItems: 50);
+		await pb.getRecords("abc", maxItems: 50);
 		expect(operations.toString(), "[getList 1 50 true null]");
 		operations.clear();
-		await pb.listRecords("abc", maxItems: 50, filter: ("abc = ? && xyz = ?", <int>[1, 2]));
+		await pb.getRecords("abc", maxItems: 50, filter: ("abc = ? && xyz = ?", <int>[1, 2]));
 		expect(operations.toString(), "[getList 1 50 true abc = 1 && xyz = 2]");
 		operations.clear();
-		await pb.listRecords("abc", maxItems: 50, filter: ("status = ? && created >= ?", <Object>[true, "2022-08-01"]));
+		await pb.getRecords("abc", maxItems: 50, filter: ("status = ? && created >= ?", <Object>[true, "2022-08-01"]));
 		expect(operations.toString(), "[getList 1 50 true status = true && created >= '2022-08-01']");
 	});
 }
