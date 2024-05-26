@@ -94,6 +94,8 @@ class PbOfflineCache {
 					value = row.values[3] == "1" ? true : false;
 				} else if (row.values[4] == "int") {
 					value = int.tryParse(row.values[3].toString());
+				} else if (row.values[4] == "double") {
+					value = double.tryParse(row.values[3].toString());
 				} else if (row.values[4] == "String") {
 					value = row.values[3];
 				} else {
@@ -186,6 +188,8 @@ class PbOfflineCache {
 					type = "bool";
 				} else if (entry.value is int) {
 					type = "int";
+				} else if (entry.value is double) {
+					type = "double";
 				} else if (entry.value is String) {
 					type = "String";
 				} else {
