@@ -155,7 +155,7 @@ String? makePbFilter((String, List<Object?>)? params) {
 	String filter = params.$1;
 
 	for (final Object? param in params.$2) {
-		if (param is String) {
+		if (param is String || param is DateTime) {
 			filter = filter.replaceFirst("?", "'$param'");
 		} else {
 			filter = filter.replaceFirst("?", param.toString());

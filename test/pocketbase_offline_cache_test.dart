@@ -299,7 +299,7 @@ void main() {
 
 	test("listRecords", () async {
 		await pb.getRecords("abc");
-		expect(operations.toString(), "[getList 1 100000 true null]");
+		expect(operations.toString(), "[getList 1 500 true null]");
 		operations.clear();
 		await pb.getRecords("abc", maxItems: 50);
 		expect(operations.toString(), "[getList 1 50 true null]");
@@ -309,5 +309,8 @@ void main() {
 		operations.clear();
 		await pb.getRecords("abc", maxItems: 50, filter: ("status = ? && created >= ?", <Object>[true, "2022-08-01"]));
 		expect(operations.toString(), "[getList 1 50 true status = true && created >= '2022-08-01']");
+		operations.clear();
+		await pb.getRecords("abc", maxItems: 50, filter: ("status = ? && created >= ?", <Object>[true, DateTime(2024)]));
+		expect(operations.toString(), "[getList 1 50 true status = true && created >= '2024-01-01 00:00:00.000']");
 	});
 }
