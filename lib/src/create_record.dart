@@ -42,9 +42,9 @@ extension CreateWrapper on PbOfflineCache {
       insertRecordsIntoLocalDb(db, collectionName, <RecordModel>[ model ], logger);
       final Map<String, dynamic> data = model.data;
 
-      body["id"] = model.id;
-      body["created"] = model.created;
-      body["updated"] = model.updated;
+      data["id"] = model.id;
+      data["created"] = model.created;
+      data["updated"] = model.updated;
 
       return data;
     } on ClientException catch (e) {
