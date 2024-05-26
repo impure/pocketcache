@@ -6,12 +6,12 @@ import 'get_records.dart';
 import 'pocketbase_offline_cache_base.dart';
 
 extension CountWrapper on PbOfflineCache {
-	Future<int> countRecords(String collectionName, {
-		bool forceOffline = false,
+	Future<int?> countRecords(String collectionName, {
 		(String, List<Object?>)? filter,
+		QuerySource source = QuerySource.any,
 	}) async {
 
-		if (!dbAccessible || forceOffline) {
+		if ((source != QuerySource.server) && !dbAccessible || source == QuerySource.client) {
 
 			if (tableExists(db, collectionName)) {
 				final ResultSet results = selectBuilder(db, collectionName, columns: "COUNT(*)", filter: filter);
@@ -32,7 +32,10 @@ extension CountWrapper on PbOfflineCache {
 			if (!e.toString().contains("refused the network connection")) {
 				rethrow;
 			}
-			return countRecords(collectionName, forceOffline: true);
+			if (source == QuerySource.any) {
+				return countRecords(collectionName, source: QuerySource.client);
+			}
+			return null;
 		}
 	}
 }
