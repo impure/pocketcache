@@ -11,9 +11,9 @@ extension ListWrapper on PbOfflineCache {
 	Future<List<Map<String, dynamic>>> getRecords(String collectionName, {
 		int maxItems = defaultMaxItems,
 		(String, List<Object?>)? filter,
-		bool forceOffline = false,
+		QuerySource source = QuerySource.any,
 	}) async {
-		if (!dbAccessible || forceOffline) {
+		if (source != QuerySource.server && (!dbAccessible || source == QuerySource.client)) {
 			if (tableExists(db, collectionName)) {
 				final ResultSet results = selectBuilder(db, collectionName, maxItems: maxItems, filter: filter);
 				final List<Map<String, dynamic>> data = <Map<String, dynamic>>[];
@@ -35,36 +35,39 @@ extension ListWrapper on PbOfflineCache {
 			return <Map<String, dynamic>>[];
 		}
 
-		List<RecordModel>? records;
 		try {
-			records = (await pb.collection(collectionName).getList(
+			final List<RecordModel> records = (await pb.collection(collectionName).getList(
 				page: 1,
 				perPage: maxItems,
 				skipTotal: true,
 				filter: makePbFilter(filter),
 			)).items;
+
+			if (records.isNotEmpty) {
+				insertRecordsIntoLocalDb(db, collectionName, records, logger);
+			}
+
+			final List<Map<String, dynamic>> data = <Map<String, dynamic>>[];
+
+			for (final RecordModel record in records) {
+				final Map<String, dynamic> entry = record.data;
+				entry["id"] = record.id;
+				entry["created"] = record.created;
+				entry["updated"] = record.updated;
+				data.add(entry);
+			}
+
+			return data;
 		} on ClientException catch (e) {
 			if (!e.toString().contains("refused the network connection")) {
 				rethrow;
 			}
-			return getRecords(collectionName, maxItems: maxItems, forceOffline: true);
+			if (source == QuerySource.any) {
+				return getRecords(collectionName, maxItems: maxItems, source: QuerySource.client);
+			} else {
+				return <Map<String, dynamic>>[];
+			}
 		}
-
-		if (records.isNotEmpty) {
-			insertRecordsIntoLocalDb(db, collectionName, records, logger);
-		}
-
-		final List<Map<String, dynamic>> data = <Map<String, dynamic>>[];
-
-		for (final RecordModel record in records) {
-			final Map<String, dynamic> entry = record.data;
-			entry["id"] = record.id;
-			entry["created"] = record.created;
-			entry["updated"] = record.updated;
-			data.add(entry);
-		}
-
-		return data;
 	}
 }
 
