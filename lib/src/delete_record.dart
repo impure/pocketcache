@@ -4,10 +4,10 @@ import 'pocketbase_offline_cache_base.dart';
 
 extension DeleteWrapper on PbOfflineCache {
   Future<void> deleteRecord(String collectionName, String id, {
-    bool forceOffline = false,
+    QuerySource source = QuerySource.any,
   }) async {
 
-    if (!dbAccessible || forceOffline) {
+    if (source != QuerySource.server && (!dbAccessible || source == QuerySource.client)) {
 
       if (tableExists(db, collectionName)) {
         queueOperation("DELETE", collectionName, idToModify: id);
@@ -24,7 +24,9 @@ extension DeleteWrapper on PbOfflineCache {
       if (!e.toString().contains("refused the network connection")) {
         rethrow;
       }
-      return deleteRecord(collectionName, id, forceOffline: true);
+      if (source == QuerySource.any) {
+        return deleteRecord(collectionName, id, source: QuerySource.client);
+      }
     }
   }
 

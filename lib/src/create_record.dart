@@ -9,10 +9,10 @@ import 'pocketbase_offline_cache_base.dart';
 
 extension CreateWrapper on PbOfflineCache {
   Future<Map<String, dynamic>?> createRecord(String collectionName, Map<String, dynamic> body, {
-    bool forceOffline = false,
+    QuerySource source = QuerySource.any,
   }) async {
 
-    if (!dbAccessible || forceOffline) {
+    if (source != QuerySource.server && (!dbAccessible || source == QuerySource.client)) {
 
       // If table does not exist yet we are unsure of the required schema so can't add anything
       if (tableExists(db, collectionName)) {
@@ -51,7 +51,9 @@ extension CreateWrapper on PbOfflineCache {
       if (!e.toString().contains("refused the network connection")) {
         rethrow;
       }
-      return createRecord(collectionName, body, forceOffline: true);
+      if (source == QuerySource.any) {
+        return createRecord(collectionName, body, source: QuerySource.client);
+      }
     }
   }
 

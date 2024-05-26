@@ -5,8 +5,8 @@ import 'package:sqlite3/sqlite3.dart';
 import 'pocketbase_offline_cache_base.dart';
 
 extension UpdateWrapper on PbOfflineCache {
-	Future<void> updateRecord(String collectionName, String id, Map<String, dynamic> values, { bool forceOffline = false }) async {
-		if (!dbAccessible || forceOffline) {
+	Future<void> updateRecord(String collectionName, String id, Map<String, dynamic> values, { QuerySource source = QuerySource.any }) async {
+		if (source != QuerySource.server && (!dbAccessible || source == QuerySource.client)) {
 			if (tableExists(db, collectionName)) {
 				queueOperation("UPDATE", collectionName, values: values, idToModify: id);
 				applyLocalUpdateOperation(db, collectionName, id, values);
@@ -21,7 +21,11 @@ extension UpdateWrapper on PbOfflineCache {
 			if (!e.toString().contains("refused the network connection")) {
 				rethrow;
 			}
-			return updateRecord(collectionName, id, values, forceOffline: true);
+			if (source == QuerySource.any) {
+				return updateRecord(collectionName, id, values, source: QuerySource.client);
+			} else {
+				return;
+			}
 		}
 
 		if (tableExists(db, collectionName)) {

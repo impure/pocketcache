@@ -304,13 +304,13 @@ void main() {
 		await pb.getRecords("abc", maxItems: 50);
 		expect(operations.toString(), "[getList 1 50 true null]");
 		operations.clear();
-		await pb.getRecords("abc", maxItems: 50, filter: ("abc = ? && xyz = ?", <int>[1, 2]));
+		await pb.getRecords("abc", maxItems: 50, where: ("abc = ? && xyz = ?", <int>[1, 2]));
 		expect(operations.toString(), "[getList 1 50 true abc = 1 && xyz = 2]");
 		operations.clear();
-		await pb.getRecords("abc", maxItems: 50, filter: ("status = ? && created >= ?", <Object>[true, "2022-08-01"]));
+		await pb.getRecords("abc", maxItems: 50, where: ("status = ? && created >= ?", <Object>[true, "2022-08-01"]));
 		expect(operations.toString(), "[getList 1 50 true status = true && created >= '2022-08-01']");
 		operations.clear();
-		await pb.getRecords("abc", maxItems: 50, filter: ("status = ? && created >= ?", <Object>[true, DateTime(2024)]));
+		await pb.getRecords("abc", maxItems: 50, where: ("status = ? && created >= ?", <Object>[true, DateTime(2024)]));
 		expect(operations.toString(), "[getList 1 50 true status = true && created >= '2024-01-01 00:00:00.000']");
 	});
 }

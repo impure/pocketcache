@@ -10,12 +10,12 @@ import 'pocketbase_offline_cache_base.dart';
 extension ListWrapper on PbOfflineCache {
 	Future<List<Map<String, dynamic>>> getRecords(String collectionName, {
 		int maxItems = defaultMaxItems,
-		(String, List<Object?>)? filter,
+		(String, List<Object?>)? where,
 		QuerySource source = QuerySource.any,
 	}) async {
 		if (source != QuerySource.server && (!dbAccessible || source == QuerySource.client)) {
 			if (tableExists(db, collectionName)) {
-				final ResultSet results = selectBuilder(db, collectionName, maxItems: maxItems, filter: filter);
+				final ResultSet results = selectBuilder(db, collectionName, maxItems: maxItems, filter: where);
 				final List<Map<String, dynamic>> data = <Map<String, dynamic>>[];
 				for (final Row row in results) {
 					final Map<String, dynamic> entryToInsert = <String, dynamic>{};
@@ -40,7 +40,7 @@ extension ListWrapper on PbOfflineCache {
 				page: 1,
 				perPage: maxItems,
 				skipTotal: true,
-				filter: makePbFilter(filter),
+				filter: makePbFilter(where),
 			)).items;
 
 			if (records.isNotEmpty) {
