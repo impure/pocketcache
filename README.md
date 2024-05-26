@@ -35,15 +35,18 @@ In addition it expects all of PocketBases data to have the `id`, `created`, and 
 Init the package:
 
 ```dart
-initPbOffline(pb);
+final String path = (await getApplicationDocumentsDirectory()).path;
+pb = PbOfflineCache(PocketBase('http://127.0.0.1:8090/'), path);
 ```
 
 Then you can use any of the exposed wrappers.
 
 ```dart
-resetAuth();
-
-List<Map<String, dynamic>> data = getListWrapper("some_collection", page: 1, page_count: 1));
+List<Map<String, dynamic>> data = await pb.getRecords("some_collection", page: 1, page_count: 1);
+await pb.deleteRecord("some_collection", id);
+await pb.updateRecord("some_collection", id, data);
+await pb.createRecord("some_collection", data);
+await pb.countRecords("some_collection");
 ```
 
 ## Additional information
