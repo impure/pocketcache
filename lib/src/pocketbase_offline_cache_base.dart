@@ -8,7 +8,14 @@ import 'package:path/path.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:sqlite3/sqlite3.dart';
 
-const int defaultMaxItems = 100000;
+// PocketBase does not support getting more than 500 items at once
+const int defaultMaxItems = 500;
+
+enum QuerySource {
+	server,
+	client,
+	any,
+}
 
 bool isTest() => Platform.environment.containsKey('FLUTTER_TEST');
 
