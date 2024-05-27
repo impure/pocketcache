@@ -1,12 +1,13 @@
 
 import 'package:pocketbase/pocketbase.dart';
+import 'package:pocketbase_offline_cache/pocketbase_offline_cache.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 import 'create_record.dart';
 import 'pocketbase_offline_cache_base.dart';
 
 extension UpdateWrapper on PbOfflineCache {
-	Future<void> updateRecord(String collectionName, String id, Map<String, dynamic> values, { QuerySource source = QuerySource.any }) async {
+	Future<Map<String, dynamic>?> updateRecord(String collectionName, String id, Map<String, dynamic> values, { QuerySource source = QuerySource.any }) async {
 
 		convertDates(values);
 
@@ -14,13 +15,27 @@ extension UpdateWrapper on PbOfflineCache {
 			if (tableExists(db, collectionName)) {
 				queueOperation("UPDATE", collectionName, values: values, idToModify: id);
 				applyLocalUpdateOperation(db, collectionName, id, values);
+				return getSingleRecord(collectionName, id, source: QuerySource.client);
 			}
 
-			return;
+			return null;
 		}
 
 		try {
-			await pb.collection(collectionName).update(id, body: values);
+			final RecordModel record = await pb.collection(collectionName).update(id, body: values);
+
+			if (tableExists(db, collectionName)) {
+				applyLocalUpdateOperation(db, collectionName, id, values);
+			}
+
+			final Map<String, dynamic> newValues = record.data;
+
+			values["id"] = id;
+			values["created"] = record.created;
+			values["updated"] = record.updated;
+
+			return newValues;
+
 		} on ClientException catch (e) {
 			if (!e.toString().contains("refused the network connection")) {
 				rethrow;
@@ -28,12 +43,8 @@ extension UpdateWrapper on PbOfflineCache {
 			if (source == QuerySource.any) {
 				return updateRecord(collectionName, id, values, source: QuerySource.client);
 			} else {
-				return;
+				return null;
 			}
-		}
-
-		if (tableExists(db, collectionName)) {
-			applyLocalUpdateOperation(db, collectionName, id, values);
 		}
 	}
 }
