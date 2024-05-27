@@ -73,19 +73,24 @@ extension ListWrapper on PbOfflineCache {
 	}
 }
 
-void insertRecordsIntoLocalDb(Database db, String collectionName, List<RecordModel> records, Logger logger, {Map<String, List<(bool unique, List<String> columns)>> indexInstructions = const <String, List<(bool, List<String>)>>{}, String? overrideDownloadTime}) {
+void insertRecordsIntoLocalDb(Database db, String collectionName, List<RecordModel> records, Logger logger, {Map<String, List<(String name, bool unique, List<String> columns)>> indexInstructions = const <String, List<(String, bool, List<String>)>>{}, String? overrideDownloadTime}) {
 
 	if (!tableExists(db, collectionName)) {
 		final StringBuffer schema = StringBuffer("id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT");
+		final Set<String> tableKeys = <String>{"id", "created", "updated", "_downloaded"};
 
 		for (final MapEntry<String, dynamic> data in records.first.data.entries) {
 			if (data.value is String) {
+				tableKeys.add(data.key);
 				schema.write(",${data.key} TEXT DEFAULT ''");
 			} else if (data.value is bool) {
+				tableKeys.add("_offline_bool_${data.key}");
 				schema.write(",_offline_bool_${data.key} INTEGER DEFAULT 0");
 			} else if (data.value is double || data.value is int) {
+				tableKeys.add(data.key);
 				schema.write(",${data.key} REAL DEFAULT 0.0");
 			} else if (data.value is List<dynamic> || data.value is Map<dynamic, dynamic>) {
+				tableKeys.add("_offline_json_${data.key}");
 				schema.write(",_offline_json_${data.key} TEXT DEFAULT '[]'");
 			} else {
 				logger.e("Unknown type ${data.value.runtimeType}", stackTrace: StackTrace.current);
@@ -93,6 +98,25 @@ void insertRecordsIntoLocalDb(Database db, String collectionName, List<RecordMod
 		}
 
 		db.execute("CREATE TABLE $collectionName ($schema)");
+
+		// TODO: needs more work to set up indexes for JSON, relations, and bools. Fix that.
+		final List<(String name, bool unique, List<String> columns)>? indexesToCreate = indexInstructions[collectionName];
+		if (indexesToCreate != null) {
+			for (final (String name, bool unique, List<String> columns) entry in indexesToCreate) {
+				if (!tableKeys.containsAll(entry.$3)) {
+					print(tableKeys);
+					logger.e("Unable to create index on columns ${entry.$3}");
+				} else {
+
+					String columnNames = entry.$3.toString();
+					columnNames = columnNames.substring(1, columnNames.length - 1);
+
+					db.execute("CREATE${entry.$2 ? " UNIQUE" : ""} INDEX ${entry.$1} ON $collectionName($columnNames)");
+				}
+			}
+		}
+
+
 	}
 
 	final StringBuffer command = StringBuffer("INSERT OR REPLACE INTO $collectionName(id, created, updated, _downloaded");

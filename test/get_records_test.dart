@@ -120,13 +120,43 @@ void main() {
 			);
 		});
 
+		test("single index success", () {
+			insertRecordsIntoLocalDb(db, "test", <RecordModel>[ RecordModel(
+				id: "abc",
+				data: <String, dynamic> { "1" : 1, "2" : DateTime(2022).toString() },
+				created: DateTime(2024, 1).toString(),
+				updated: DateTime(2024, 2).toString(),
+			) ], testLogger, indexInstructions: <String, List<(String, bool, List<String>)>>{"test" : <(String, bool, List<String>)>[ ("index1", false, <String>["1"]) ]}, overrideDownloadTime: DateTime(2024, 3).toString());
+			expect(operations.toString(),
+				"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
+				"[CREATE TABLE test (id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT,1 REAL DEFAULT 0.0,2 TEXT DEFAULT ''), []], "
+				"[CREATE INDEX index1 ON test(1), []], "
+				"[INSERT OR REPLACE INTO test(id, created, updated, _downloaded, 1, 2) VALUES(?, ?, ?, ?, ?, ?);, [abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, 2024-03-01 00:00:00.000, 1, 2022-01-01 00:00:00.000]]]"
+			);
+		});
+
+		test("single index success", () {
+			insertRecordsIntoLocalDb(db, "test", <RecordModel>[ RecordModel(
+				id: "abc",
+				data: <String, dynamic> { "1" : 1, "2" : DateTime(2022).toString() },
+				created: DateTime(2024, 1).toString(),
+				updated: DateTime(2024, 2).toString(),
+			) ], testLogger, indexInstructions: <String, List<(String, bool, List<String>)>>{"test" : <(String, bool, List<String>)>[ ("index1", false, <String>["3"]) ]}, overrideDownloadTime: DateTime(2024, 3).toString());
+			expect(operations.toString(),
+				"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
+				"[CREATE TABLE test (id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT,1 REAL DEFAULT 0.0,2 TEXT DEFAULT ''), []], "
+				"e: Unable to create index on columns [3], "
+				"[INSERT OR REPLACE INTO test(id, created, updated, _downloaded, 1, 2) VALUES(?, ?, ?, ?, ?, ?);, [abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, 2024-03-01 00:00:00.000, 1, 2022-01-01 00:00:00.000]]]"
+			);
+		});
+
 		test("irrelevant index", () {
 			insertRecordsIntoLocalDb(db, "test", <RecordModel>[ RecordModel(
 				id: "abc",
 				data: <String, dynamic> { "1" : <String>["1", "2"], "2" : DateTime(2022).toString() },
 				created: DateTime(2024, 1).toString(),
 				updated: DateTime(2024, 2).toString(),
-			) ], testLogger, indexInstructions: <String, List<(bool, List<String>)>>{"3" : <(bool, List<String>)>[ (false, <String>["4", "5"]) ]}, overrideDownloadTime: DateTime(2024, 3).toString());
+			) ], testLogger, indexInstructions: <String, List<(String, bool, List<String>)>>{"3" : <(String, bool, List<String>)>[ ("index1", false, <String>["4", "5"]) ]}, overrideDownloadTime: DateTime(2024, 3).toString());
 			expect(operations.toString(),
 				"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
 				"[CREATE TABLE test (id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT,_offline_json_1 TEXT DEFAULT '[]',2 TEXT DEFAULT ''), []], "
@@ -134,5 +164,40 @@ void main() {
 			);
 		});
 
+		test("double index success", () {
+			insertRecordsIntoLocalDb(db, "test", <RecordModel>[ RecordModel(
+				id: "abc",
+				data: <String, dynamic> { "1" : 1, "2" : DateTime(2022).toString() },
+				created: DateTime(2024, 1).toString(),
+				updated: DateTime(2024, 2).toString(),
+			) ], testLogger, indexInstructions: <String, List<(String, bool, List<String>)>>{"test" : <(String, bool, List<String>)>[
+				("index1", false, <String>["1", "2"]),
+			]}, overrideDownloadTime: DateTime(2024, 3).toString());
+			expect(operations.toString(),
+				"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
+				"[CREATE TABLE test (id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT,1 REAL DEFAULT 0.0,2 TEXT DEFAULT ''), []], "
+				"[CREATE INDEX index1 ON test(1, 2), []], "
+				"[INSERT OR REPLACE INTO test(id, created, updated, _downloaded, 1, 2) VALUES(?, ?, ?, ?, ?, ?);, [abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, 2024-03-01 00:00:00.000, 1, 2022-01-01 00:00:00.000]]]"
+			);
+		});
+
+		test("multiple indexes at the same time (and one unique)", () {
+			insertRecordsIntoLocalDb(db, "test", <RecordModel>[ RecordModel(
+				id: "abc",
+				data: <String, dynamic> { "1" : 1, "2" : DateTime(2022).toString() },
+				created: DateTime(2024, 1).toString(),
+				updated: DateTime(2024, 2).toString(),
+			) ], testLogger, indexInstructions: <String, List<(String, bool, List<String>)>>{"test" : <(String, bool, List<String>)>[
+				("index1", true, <String>["1", "2"]),
+				("index2", false, <String>["2"]),
+			]}, overrideDownloadTime: DateTime(2024, 3).toString());
+			expect(operations.toString(),
+				"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
+				"[CREATE TABLE test (id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT,1 REAL DEFAULT 0.0,2 TEXT DEFAULT ''), []], "
+				"[CREATE UNIQUE INDEX index1 ON test(1, 2), []], "
+				"[CREATE INDEX index2 ON test(2), []], "
+				"[INSERT OR REPLACE INTO test(id, created, updated, _downloaded, 1, 2) VALUES(?, ?, ?, ?, ?, ?);, [abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, 2024-03-01 00:00:00.000, 1, 2022-01-01 00:00:00.000]]]"
+			);
+		});
 	});
 }
