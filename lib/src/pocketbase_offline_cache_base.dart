@@ -58,8 +58,13 @@ class PbOfflineCache {
 		return PbOfflineCache._(pb, db, overrideLogger ?? Logger());
 	}
 
+	void dropAllTables(String directoryToSave) {
+		File(join(directoryToSave, "offline_cache")).deleteSync();
+		db = sqlite3.open(join(directoryToSave, "offline_cache"));
+	}
+
 	final PocketBase pb;
-	final Database db;
+	Database db;
 	final Logger logger;
 	final Map<String, List<(String name, bool unique, List<String> columns)>> indexInstructions;
 
