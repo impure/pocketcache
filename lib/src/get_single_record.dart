@@ -2,7 +2,6 @@
 import 'dart:convert';
 import 'dart:core';
 
-import 'package:logger/logger.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:sqlite3/sqlite3.dart';
 
