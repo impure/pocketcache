@@ -162,14 +162,16 @@ String? makePbFilter((String, List<Object?>)? params) {
 		return null;
 	}
 
-	String filter = params.$1;
+	int i = 0;
+	return params.$1.replaceAllMapped(RegExp(r'\?'), (Match match) {
 
-	for (final Object? param in params.$2) {
+		final dynamic param = params.$2[i];
+		i++;
+
 		if (param is String || param is DateTime) {
-			filter = filter.replaceFirst("?", "'$param'");
+			return "'$param'";
 		} else {
-			filter = filter.replaceFirst("?", param.toString());
+			return param.toString();
 		}
-	}
-	return filter;
+	});
 }
