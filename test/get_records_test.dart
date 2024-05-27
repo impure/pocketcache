@@ -14,22 +14,22 @@ class TestLogger implements Logger {
   }
 
   @override
-  void d(message, {DateTime? time, Object? error, StackTrace? stackTrace}) {
+  void d(dynamic message, {DateTime? time, Object? error, StackTrace? stackTrace}) {
 		operations.add("d: $message");
   }
 
   @override
-  void e(message, {DateTime? time, Object? error, StackTrace? stackTrace}) {
+  void e(dynamic message, {DateTime? time, Object? error, StackTrace? stackTrace}) {
 		operations.add("e: $message");
   }
 
   @override
-  void f(message, {DateTime? time, Object? error, StackTrace? stackTrace}) {
+  void f(dynamic message, {DateTime? time, Object? error, StackTrace? stackTrace}) {
 		operations.add("f: $message");
   }
 
   @override
-  void i(message, {DateTime? time, Object? error, StackTrace? stackTrace}) {
+  void i(dynamic message, {DateTime? time, Object? error, StackTrace? stackTrace}) {
 		operations.add("i: $message");
   }
 
@@ -42,27 +42,27 @@ class TestLogger implements Logger {
   }
 
   @override
-  void log(Level level, message, {DateTime? time, Object? error, StackTrace? stackTrace}) {
+  void log(Level level, dynamic message, {DateTime? time, Object? error, StackTrace? stackTrace}) {
 		operations.add("$level: $message");
   }
 
   @override
-  void t(message, {DateTime? time, Object? error, StackTrace? stackTrace}) {
+  void t(dynamic message, {DateTime? time, Object? error, StackTrace? stackTrace}) {
 		operations.add("t: $message");
   }
 
   @override
-  void v(message, {DateTime? time, Object? error, StackTrace? stackTrace}) {
+  void v(dynamic message, {DateTime? time, Object? error, StackTrace? stackTrace}) {
 		operations.add("v: $message");
   }
 
   @override
-  void w(message, {DateTime? time, Object? error, StackTrace? stackTrace}) {
+  void w(dynamic message, {DateTime? time, Object? error, StackTrace? stackTrace}) {
 		operations.add("w: $message");
   }
 
   @override
-  void wtf(message, {DateTime? time, Object? error, StackTrace? stackTrace}) {
+  void wtf(dynamic message, {DateTime? time, Object? error, StackTrace? stackTrace}) {
 		operations.add("wtf: $message");
   }
 
