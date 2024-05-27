@@ -42,6 +42,7 @@ class DatabaseMock implements Database {
 
 	@override
 	void execute(String sql, [List<Object?> parameters = const <Object?>[]]) {
+		operations.add(<dynamic>[ sql, parameters]);
 	}
 
 	@override
@@ -282,7 +283,7 @@ List<dynamic> operations = <dynamic>[];
 // Note: run this from `flutter test` not from the IDE
 void main() {
 
-	setUp(() {
+	tearDown(() {
 		operations.clear();
 	});
 

@@ -27,7 +27,7 @@ extension CreateWrapper on PbOfflineCache {
           created: now,
           updated: now,
           data: values,
-        ) ], logger);
+        ) ], logger, indexInstructions: indexInstructions);
 
         values["id"] = id;
         values["created"] = now;
@@ -41,7 +41,7 @@ extension CreateWrapper on PbOfflineCache {
 
     try {
       final RecordModel model = await pb.collection(collectionName).create(body: values);
-      insertRecordsIntoLocalDb(db, collectionName, <RecordModel>[ model ], logger);
+      insertRecordsIntoLocalDb(db, collectionName, <RecordModel>[ model ], logger, indexInstructions: indexInstructions);
       final Map<String, dynamic> data = model.data;
 
       data["id"] = model.id;

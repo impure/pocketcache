@@ -40,7 +40,7 @@ extension GetOneWrapper on PbOfflineCache {
 		try {
 			final RecordModel record = await pb.collection(collectionName).getOne(id);
 
-			insertRecordsIntoLocalDb(db, collectionName, <RecordModel>[ record ], logger);
+			insertRecordsIntoLocalDb(db, collectionName, <RecordModel>[ record ], logger, indexInstructions: indexInstructions);
 
 			final Map<String, dynamic> data = record.data;
 

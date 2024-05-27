@@ -23,11 +23,14 @@ bool dbAccessible = true;
 
 class PbOfflineCache {
 
-	factory PbOfflineCache(PocketBase pb, String directoryToSave, {Logger? overrideLogger}) {
-		return PbOfflineCache._(pb, sqlite3.open(join(directoryToSave, "offline_cache")), overrideLogger ?? Logger());
+	factory PbOfflineCache(PocketBase pb, String directoryToSave, {
+		Logger? overrideLogger,
+		Map<String, List<(bool unique, List<String> columns)>>? indexInstructions,
+	}) {
+		return PbOfflineCache._(pb, sqlite3.open(join(directoryToSave, "offline_cache")), overrideLogger ?? Logger(), indexInstructions ?? const <String, List<(bool unique, List<String>)>>{});
 	}
 
-	PbOfflineCache._(this.pb, this.db, this.logger) {
+	PbOfflineCache._(this.pb, this.db, this.logger, [this.indexInstructions = const <String, List<(bool unique, List<String>)>>{}]) {
 		db.execute("""
 	CREATE TABLE IF NOT EXISTS _operation_queue (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,6 +61,7 @@ class PbOfflineCache {
 	final PocketBase pb;
 	final Database db;
 	final Logger logger;
+	final Map<String, List<(bool unique, List<String> columns)>> indexInstructions;
 
 	String? get id => pb.authStore.model?.id;
 	bool get tokenValid => pb.authStore.isValid;

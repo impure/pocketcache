@@ -46,7 +46,7 @@ extension ListWrapper on PbOfflineCache {
 			)).items;
 
 			if (records.isNotEmpty) {
-				insertRecordsIntoLocalDb(db, collectionName, records, logger);
+				insertRecordsIntoLocalDb(db, collectionName, records, logger, indexInstructions: indexInstructions);
 			}
 
 			final List<Map<String, dynamic>> data = <Map<String, dynamic>>[];
@@ -73,7 +73,7 @@ extension ListWrapper on PbOfflineCache {
 	}
 }
 
-void insertRecordsIntoLocalDb(Database db, String collectionName, List<RecordModel> records, Logger logger) {
+void insertRecordsIntoLocalDb(Database db, String collectionName, List<RecordModel> records, Logger logger, {Map<String, List<(bool unique, List<String> columns)>> indexInstructions = const <String, List<(bool, List<String>)>>{}, String? overrideDownloadTime}) {
 
 	if (!tableExists(db, collectionName)) {
 		final StringBuffer schema = StringBuffer("id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT");
@@ -114,7 +114,7 @@ void insertRecordsIntoLocalDb(Database db, String collectionName, List<RecordMod
 
 	bool first = true;
 	final List<dynamic> parameters = <dynamic>[];
-	final String now = DateTime.now().toString();
+	final String now = overrideDownloadTime ?? DateTime.now().toString();
 
 	for (final RecordModel record in records) {
 		if (!first) {
