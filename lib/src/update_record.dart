@@ -1,8 +1,8 @@
 
 import 'package:pocketbase/pocketbase.dart';
-import 'package:pocketbase_offline_cache/src/create_record.dart';
 import 'package:sqlite3/sqlite3.dart';
 
+import 'create_record.dart';
 import 'pocketbase_offline_cache_base.dart';
 
 extension UpdateWrapper on PbOfflineCache {
