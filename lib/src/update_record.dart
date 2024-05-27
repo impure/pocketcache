@@ -1,11 +1,15 @@
 
 import 'package:pocketbase/pocketbase.dart';
+import 'package:pocketbase_offline_cache/src/create_record.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 import 'pocketbase_offline_cache_base.dart';
 
 extension UpdateWrapper on PbOfflineCache {
 	Future<void> updateRecord(String collectionName, String id, Map<String, dynamic> values, { QuerySource source = QuerySource.any }) async {
+
+		convertDates(values);
+
 		if (source != QuerySource.server && (!dbAccessible || source == QuerySource.client)) {
 			if (tableExists(db, collectionName)) {
 				queueOperation("UPDATE", collectionName, values: values, idToModify: id);
