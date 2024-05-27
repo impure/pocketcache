@@ -24,7 +24,7 @@ This package uses `sqlite3`. It should work on all platforms except for web with
 
 Note that this package reserves the following:
 
-- Column names starting in `_offline_bool_`
+- Column names starting in `_offline_bool_` and `_offline_json_`
 - The column name `_downloaded`
 - The tables `_offline_queue` and `_offline_queue_params`
 

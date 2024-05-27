@@ -51,6 +51,8 @@ void applyLocalUpdateOperation(Database db, String collectionName, String id, Ma
 
 		if (entry.value is bool) {
 			command.write(" _offline_bool_${entry.key} = ?");
+		} else if (entry.value is List<dynamic> || entry.value is Map<dynamic, dynamic>) {
+			command.write(" _offline_json_${entry.key} = ?");
 		} else {
 			command.write(" ${entry.key} = ?");
 		}

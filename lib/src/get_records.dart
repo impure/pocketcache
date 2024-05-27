@@ -1,4 +1,5 @@
 
+import 'dart:convert';
 import 'dart:core';
 
 import 'package:logger/logger.dart';
@@ -21,8 +22,9 @@ extension ListWrapper on PbOfflineCache {
 					final Map<String, dynamic> entryToInsert = <String, dynamic>{};
 					for (final MapEntry<String, dynamic> data in row.entries) {
 						if (data.key.startsWith("_offline_bool_")) {
-							entryToInsert[data.key.substring(14)] =
-							data.value == 1 ? true : false;
+							entryToInsert[data.key.substring(14)] = data.value == 1 ? true : false;
+						} else if (data.key.startsWith("_offline_json_")) {
+							entryToInsert[data.key.substring(14)] = jsonDecode(data.value);
 						} else {
 							entryToInsert[data.key] = data.value;
 						}
@@ -83,6 +85,8 @@ void insertRecordsIntoLocalDb(Database db, String collectionName, List<RecordMod
 				schema.write(",_offline_bool_${data.key} INTEGER DEFAULT 0");
 			} else if (data.value is double || data.value is int) {
 				schema.write(",${data.key} REAL DEFAULT 0.0");
+			} else if (data.value is List<dynamic> || data.value is Map<dynamic, dynamic>) {
+				schema.write(",_offline_json_${data.key} TEXT DEFAULT '[]'");
 			} else {
 				logger.e("Unknown type ${data.value.runtimeType}", stackTrace: StackTrace.current);
 			}
@@ -99,6 +103,8 @@ void insertRecordsIntoLocalDb(Database db, String collectionName, List<RecordMod
 		keys.add(key);
 		if (records.first.data[key] is bool) {
 			command.write(", _offline_bool_$key");
+		} else if (records.first.data[key] is List<dynamic> || records.first.data[key] is Map<dynamic, dynamic>) {
+			command.write(", _offline_json_$key");
 		} else {
 			command.write(", $key");
 		}
@@ -126,7 +132,11 @@ void insertRecordsIntoLocalDb(Database db, String collectionName, List<RecordMod
 
 		for (final String key in keys) {
 			command.write(", ?");
-			parameters.add(record.data[key]);
+			if (record.data[key] is List<dynamic> || record.data[key] is Map<dynamic, dynamic>) {
+				parameters.add(record.data[key].toString());
+			} else{
+				parameters.add(record.data[key]);
+			}
 		}
 
 		command.write(")");

@@ -1,4 +1,5 @@
 
+import 'dart:convert';
 import 'dart:core';
 
 import 'package:logger/logger.dart';
@@ -22,6 +23,8 @@ extension GetOneWrapper on PbOfflineCache {
 					for (final MapEntry<String, dynamic> data in row.entries) {
 						if (data.key.startsWith("_offline_bool_")) {
 							entryToInsert[data.key.substring(14)] = data.value == 1 ? true : false;
+						} else if (data.key.startsWith("_offline_json_")) {
+							entryToInsert[data.key.substring(14)] = jsonDecode(data.value);
 						} else {
 							entryToInsert[data.key] = data.value;
 						}
