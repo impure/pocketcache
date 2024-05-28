@@ -110,7 +110,7 @@ void main() {
 
 		test("single start after multi condition getRecords", () async {
 			await pb.getRecords("abc", where: ("status = ? && created >= ?", <Object>[true, "2022-08-01"]), startAfter: <String, dynamic>{"status": true});
-			expect(operations.toString(), "[getList 1 500 true status = true && created >= '2022-08-01' AND (status) > (true)]");
+			expect(operations.toString(), "[getList 1 500 true status = true && created >= '2022-08-01' && (status) > (true)]");
 		});
 
 		test("multi start after no conditions getRecords", () async {

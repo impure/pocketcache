@@ -44,7 +44,7 @@ extension ListWrapper on PbOfflineCache {
 				page: 1,
 				perPage: maxItems,
 				skipTotal: true,
-				filter: makePbFilter(where, startAfter: startAfter),
+				filter: makePbFilter(where, sort: sort, startAfter: startAfter),
 				sort: makeSortFilter(sort),
 			)).items;
 
@@ -182,39 +182,37 @@ void insertRecordsIntoLocalDb(Database db, String collectionName, List<RecordMod
 	}
 }
 
-String? makePbFilter((String, List<Object?>)? params, { Map<String, dynamic>? startAfter }) {
+String? makePbFilter((String, List<Object?>)? params, { (String column, bool descending)? sort, Map<String, dynamic>? startAfter }) {
 
-	String makeSortFilter(Map<String, dynamic> startAfter) {
-		if (startAfter.isEmpty) {
-			return "";
-		}
+	print("$sort $startAfter");
+	assert(startAfter == null || (startAfter != null && sort != null), "If start after is not null sort must also be not null");
 
-		final List<String> keys = startAfter.keys.toList();
-		final List<dynamic> values = startAfter.values.toList();
-
-		final String keysPart = keys.join(", ");
-		final String valuesPart = values.map((value) {
-			if (value is String) {
-				return "'$value'";
+	if (startAfter != null && sort != null && startAfter.containsKey(sort.$1)) {
+		if (params != null) {
+			if (sort.$2) {
+				params.$2.add(startAfter[sort.$1]);
+				params = ("${params.$1} && ${sort.$1} < ?", params.$2);
 			} else {
-				return value.toString();
+				params.$2.add(startAfter[sort.$1]);
+				params = ("${params.$1} && ${sort.$1} > ?", params.$2);
 			}
-		}).join(', ');
-
-		return '($keysPart) > ($valuesPart)';
+		} else {
+			if (sort.$2) {
+				params = ("${sort.$1} < ?", <Object?> [ startAfter[sort.$1] ]);
+			} else {
+				params = ("${sort.$1} > ?", <Object?> [ startAfter[sort.$1] ]);
+			}
+		}
 	}
 
 	if (params == null) {
-		if (startAfter != null) {
-			return makeSortFilter(startAfter);
-		}
 		return null;
 	}
 
 	int i = 0;
 	final String filter = params.$1.replaceAllMapped(RegExp(r'\?'), (Match match) {
 
-		final dynamic param = params.$2[i];
+		final dynamic param = params!.$2[i];
 		i++;
 
 		if (param is String || param is DateTime) {
@@ -224,11 +222,7 @@ String? makePbFilter((String, List<Object?>)? params, { Map<String, dynamic>? st
 		}
 	});
 
-	if (startAfter != null) {
-		return "$filter AND ${makeSortFilter(startAfter)}";
-	} else {
-		return filter;
-	}
+	return filter;
 
 }
 

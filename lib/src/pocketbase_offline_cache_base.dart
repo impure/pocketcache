@@ -295,6 +295,9 @@ class QueryBuilder {
 	final List<dynamic> args;
 	final (String, bool descending)? orderRule;
 
+	@override
+	String toString() => "$collectionName $currentFilter $args $orderRule";
+
 	QueryBuilder where(String column, {
 		dynamic isEqualTo,
 		dynamic isNotEqualTo,
@@ -345,7 +348,7 @@ class QueryBuilder {
 	}
 
 	Future<List<Map<String, dynamic>>> get({ int maxItems = defaultMaxItems, QuerySource source = QuerySource.any, Map<String, dynamic>? startAfter }) {
-		return pb.getRecords(collectionName, where: (currentFilter, args), maxItems: maxItems, source: source, startAfter: startAfter);
+		return pb.getRecords(collectionName, where: (currentFilter, args), maxItems: maxItems, source: source, sort: orderRule, startAfter: startAfter);
 	}
 
 	Future<int?> getCount({ QuerySource source = QuerySource.any }) {
