@@ -9,7 +9,7 @@ import 'pocketbase_offline_cache_base.dart';
 extension UpdateWrapper on PbOfflineCache {
 	Future<Map<String, dynamic>?> updateRecord(String collectionName, String id, Map<String, dynamic> values, { QuerySource source = QuerySource.any }) async {
 
-		convertDates(values);
+		convertToPbTypes(values);
 
 		if (source != QuerySource.server && (!dbAccessible || source == QuerySource.client)) {
 			if (tableExists(db, collectionName)) {

@@ -12,7 +12,7 @@ extension CreateWrapper on PbOfflineCache {
     QuerySource source = QuerySource.any,
   }) async {
 
-    convertDates(values);
+    convertToPbTypes(values);
 
     if (source != QuerySource.server && (!dbAccessible || source == QuerySource.client)) {
 
@@ -71,9 +71,11 @@ String makePbId() {
   return List<String>.generate(15, (int index) => chars[random.nextInt(chars.length)]).join();
 }
 
-void convertDates(Map<String, dynamic> map) {
+void convertToPbTypes(Map<String, dynamic> map) {
   for (final String key in map.keys) {
     if (map[key] is DateTime) {
+      map[key] = map[key].toString();
+    } else if (map[key] is Uri) {
       map[key] = map[key].toString();
     }
   }
