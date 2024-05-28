@@ -107,7 +107,7 @@ void insertRecordsIntoLocalDb(Database db, String collectionName, List<RecordMod
 		if (indexesToCreate != null) {
 			for (final (String name, bool unique, List<String> columns) entry in indexesToCreate) {
 				if (!tableKeys.containsAll(entry.$3)) {
-					logger.e("Unable to create index on columns ${entry.$3}");
+					logger.e("Unable to create index ${entry.$1} on $collectionName($tableKeys), could not find all columns: ${entry.$3}");
 				} else {
 
 					String columnNames = entry.$3.toString();

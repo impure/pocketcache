@@ -65,7 +65,6 @@ class PbOfflineCache {
 		try {
 			final ResultSet tables = db.select("SELECT name FROM sqlite_master WHERE type = 'table'");
 
-			// Drop each table
 			for (final Row table in tables) {
 				final String tableName = table['name'] as String;
 
