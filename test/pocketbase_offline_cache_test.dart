@@ -291,11 +291,12 @@ void main() {
 
 	test("selectBuilder", () {
 		selectBuilder(pb.db, "collection");
-		expect(operations[0].toString(), "[SELECT * FROM collection;, []]");
+		// The two first commands are to create the queue tables
+		expect(operations[2].toString(), "[SELECT * FROM collection;, []]");
 		selectBuilder(pb.db, "collection", columns: "COUNT(*)");
-		expect(operations[1].toString(), "[SELECT COUNT(*) FROM collection;, []]");
+		expect(operations[3].toString(), "[SELECT COUNT(*) FROM collection;, []]");
 		selectBuilder(pb.db, "collection", columns: "COUNT(*)", filter: ("abc = ? && xyz = ?", <dynamic>[ 1, "2" ]));
-		expect(operations[2].toString(), "[SELECT COUNT(*) FROM collection WHERE abc = ? AND xyz = ?;, [1, 2]]");
+		expect(operations[4].toString(), "[SELECT COUNT(*) FROM collection WHERE abc = ? AND xyz = ?;, [1, 2]]");
 	});
 
 	test("listRecords", () async {
@@ -313,5 +314,26 @@ void main() {
 		operations.clear();
 		await pb.getRecords("abc", maxItems: 50, where: ("status = ? && created >= ?", <Object>[true, DateTime(2024)]));
 		expect(operations.toString(), "[getList 1 50 true status = true && created >= '2024-01-01 00:00:00.000']");
+	});
+
+	group("QueryBuilder", () {
+		test("Empty", () async {
+			expect((await pb.collection("test").get()).toString(), "[]");
+			expect(operations.toString(), "[getList 1 500 true ]");
+		});
+		
+		test("Single condition", () async {
+			expect((await pb.collection("test").where("abc", isEqualTo: "xyz").get()).toString(), "[]");
+			expect(operations.toString(), "[getList 1 500 true abc == 'xyz']");
+		});
+
+		test("Multiple conditions", () async {
+			expect((await pb.collection("test")
+				.where("abc", isNotEqualTo: "xyz")
+				.where("1", isGreaterThan: 3)
+				.where("2", isLessThan: 6)
+				.where("abc", isGreaterThanOrEqualTo: 44).get()).toString(), "[]");
+			expect(operations.toString(), "[getList 1 500 true abc != 'xyz' && 1 > 3 && 2 < 6 && abc >= 44]");
+		});
 	});
 }

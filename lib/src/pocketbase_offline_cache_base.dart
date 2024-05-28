@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
 import 'package:path/path.dart';
 import 'package:pocketbase/pocketbase.dart';
+import 'package:pocketbase_offline_cache/pocketbase_offline_cache.dart';
+import 'package:pocketbase_offline_cache/src/get_records.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 // PocketBase does not support getting more than 500 items at once
@@ -216,6 +218,10 @@ class PbOfflineCache {
 			}
 		}
 	}
+
+	QueryBuilder collection(String collectionName) {
+		return QueryBuilder._(this, collectionName, "", <dynamic>[] );
+	}
 }
 
 bool tableExists(Database db, String tableName) {
@@ -243,5 +249,55 @@ ResultSet selectBuilder(Database db, String tableName, {String? columns, (String
 		return db.select(query.toString(), filter.$2);
 	} else {
 		return db.select(query.toString());
+	}
+}
+
+class QueryBuilder {
+
+	const QueryBuilder._(this.pb, this.collectionName, this.currentFilter, this.args);
+
+	final PbOfflineCache pb;
+	final String collectionName;
+	final String currentFilter;
+	final List<dynamic> args;
+
+	QueryBuilder where(String column, {
+		dynamic isEqualTo,
+		dynamic isNotEqualTo,
+		dynamic isGreaterThan,
+		dynamic isLessThan,
+		dynamic isGreaterThanOrEqualTo,
+		dynamic isLessThanOrEqualTo,
+	}) {
+		assert((isEqualTo != null ? 1 : 0)
+				+ (isNotEqualTo != null ? 1 : 0)
+				+ (isGreaterThan != null ? 1 : 0)
+				+ (isLessThan != null ? 1 : 0)
+				+ (isGreaterThanOrEqualTo != null ? 1 : 0)
+				+ (isLessThanOrEqualTo != null ? 1 : 0) == 1);
+
+		if (isEqualTo != null) {
+			args.add(isEqualTo);
+			return QueryBuilder._(pb, collectionName, "${currentFilter != "" ? "$currentFilter && " : ""}$column == ?", args);
+		} else if (isNotEqualTo != null) {
+			args.add(isNotEqualTo);
+			return QueryBuilder._(pb, collectionName, "${currentFilter != "" ? "$currentFilter && " : ""}$column != ?", args);
+		} else if (isGreaterThan != null) {
+			args.add(isGreaterThan);
+			return QueryBuilder._(pb, collectionName, "${currentFilter != "" ? "$currentFilter && " : ""}$column > ?", args);
+		} else if (isLessThan != null) {
+			args.add(isLessThan);
+			return QueryBuilder._(pb, collectionName, "${currentFilter != "" ? "$currentFilter && " : ""}$column < ?", args);
+		} else if (isLessThanOrEqualTo != null) {
+			args.add(isLessThanOrEqualTo);
+			return QueryBuilder._(pb, collectionName, "${currentFilter != "" ? "$currentFilter && " : ""}$column <= ?", args);
+		} else {
+			args.add(isGreaterThanOrEqualTo);
+			return QueryBuilder._(pb, collectionName, "${currentFilter != "" ? "$currentFilter && " : ""}$column >= ?", args);
+		}
+	}
+
+	Future<List<Map<String, dynamic>>> get({ int maxItems = defaultMaxItems, QuerySource source = QuerySource.any }) {
+		return pb.getRecords(collectionName, where: (currentFilter, args), maxItems: maxItems, source: source);
 	}
 }
