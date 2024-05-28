@@ -317,28 +317,28 @@ class QueryBuilder {
 
 		if (isNull == true) {
 			args.add(null);
-			return QueryBuilder._(pb, collectionName, "${currentFilter != "" ? "$currentFilter && " : ""}$column = ?", args, orderRule);
+			return QueryBuilder._(pb, collectionName, "${currentFilter != "" ? "$currentFilter && " : ""}$column = ?", List<dynamic>.from(args), orderRule);
 		} else if (isNull == false) {
 			args.add(null);
-			return QueryBuilder._(pb, collectionName, "${currentFilter != "" ? "$currentFilter && " : ""}$column != ?", args, orderRule);
+			return QueryBuilder._(pb, collectionName, "${currentFilter != "" ? "$currentFilter && " : ""}$column != ?", List<dynamic>.from(args), orderRule);
 		} else if (isEqualTo != null) {
 			args.add(isEqualTo);
-			return QueryBuilder._(pb, collectionName, "${currentFilter != "" ? "$currentFilter && " : ""}$column = ?", args, orderRule);
+			return QueryBuilder._(pb, collectionName, "${currentFilter != "" ? "$currentFilter && " : ""}$column = ?", List<dynamic>.from(args), orderRule);
 		} else if (isNotEqualTo != null) {
 			args.add(isNotEqualTo);
-			return QueryBuilder._(pb, collectionName, "${currentFilter != "" ? "$currentFilter && " : ""}$column != ?", args, orderRule);
+			return QueryBuilder._(pb, collectionName, "${currentFilter != "" ? "$currentFilter && " : ""}$column != ?", List<dynamic>.from(args), orderRule);
 		} else if (isGreaterThan != null) {
 			args.add(isGreaterThan);
-			return QueryBuilder._(pb, collectionName, "${currentFilter != "" ? "$currentFilter && " : ""}$column > ?", args, orderRule);
+			return QueryBuilder._(pb, collectionName, "${currentFilter != "" ? "$currentFilter && " : ""}$column > ?", List<dynamic>.from(args), orderRule);
 		} else if (isLessThan != null) {
 			args.add(isLessThan);
-			return QueryBuilder._(pb, collectionName, "${currentFilter != "" ? "$currentFilter && " : ""}$column < ?", args, orderRule);
+			return QueryBuilder._(pb, collectionName, "${currentFilter != "" ? "$currentFilter && " : ""}$column < ?", List<dynamic>.from(args), orderRule);
 		} else if (isLessThanOrEqualTo != null) {
 			args.add(isLessThanOrEqualTo);
-			return QueryBuilder._(pb, collectionName, "${currentFilter != "" ? "$currentFilter && " : ""}$column <= ?", args, orderRule);
+			return QueryBuilder._(pb, collectionName, "${currentFilter != "" ? "$currentFilter && " : ""}$column <= ?", List<dynamic>.from(args), orderRule);
 		} else {
 			args.add(isGreaterThanOrEqualTo);
-			return QueryBuilder._(pb, collectionName, "${currentFilter != "" ? "$currentFilter && " : ""}$column >= ?", args, orderRule);
+			return QueryBuilder._(pb, collectionName, "${currentFilter != "" ? "$currentFilter && " : ""}$column >= ?", List<dynamic>.from(args), orderRule);
 		}
 	}
 
