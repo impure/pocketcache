@@ -49,6 +49,16 @@ await pb.createRecord("some_collection", data);
 await pb.countRecords("some_collection");
 ```
 
+Alternately you can use the NoSQL-like builder syntax which allows you to build your query up. This can be useful for simplifying your querying building logic or making two versions of the same base query.
+
+```dart
+await pb.collection("test")
+    .where("abc", isNotEqualTo: "xyz")
+    .where("1", isGreaterThan: 3)
+    .where("2", isLessThan: 6)
+    .where("abc", isGreaterThanOrEqualTo: 44).get();
+```
+
 ## Additional information
 
 Be careful about updating columns with uniqueness constraints or adding rows with uniqueness constraints. Database rules are not enforced on the client and these operations may fail when sent to the server.
