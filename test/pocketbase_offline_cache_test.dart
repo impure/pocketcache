@@ -283,37 +283,47 @@ List<dynamic> operations = <dynamic>[];
 // Note: run this from `flutter test` not from the IDE
 void main() {
 
+	setUp(() {
+		operations.clear();
+	});
+
 	tearDown(() {
 		operations.clear();
 	});
 
 	final PbOfflineCache pb = PbOfflineCache.withDb(PbWrapper(), DatabaseMock());
 
-	test("selectBuilder", () {
-		selectBuilder(pb.db, "collection");
-		// The two first commands are to create the queue tables
-		expect(operations[2].toString(), "[SELECT * FROM collection;, []]");
-		selectBuilder(pb.db, "collection", columns: "COUNT(*)");
-		expect(operations[3].toString(), "[SELECT COUNT(*) FROM collection;, []]");
-		selectBuilder(pb.db, "collection", columns: "COUNT(*)", filter: ("abc = ? && xyz = ?", <dynamic>[ 1, "2" ]));
-		expect(operations[4].toString(), "[SELECT COUNT(*) FROM collection WHERE abc = ? AND xyz = ?;, [1, 2]]");
-	});
+	group("selectBuilder", () {
+		test("basic selectBuilder", () {
+			selectBuilder(pb.db, "collection");
+			expect(operations.toString(), "[[SELECT * FROM collection;, []]]");
+		});
 
-	test("listRecords", () async {
-		await pb.getRecords("abc");
-		expect(operations.toString(), "[getList 1 500 true null]");
-		operations.clear();
-		await pb.getRecords("abc", maxItems: 50);
-		expect(operations.toString(), "[getList 1 50 true null]");
-		operations.clear();
-		await pb.getRecords("abc", maxItems: 50, where: ("abc = ? && xyz = ?", <int>[1, 2]));
-		expect(operations.toString(), "[getList 1 50 true abc = 1 && xyz = 2]");
-		operations.clear();
-		await pb.getRecords("abc", maxItems: 50, where: ("status = ? && created >= ?", <Object>[true, "2022-08-01"]));
-		expect(operations.toString(), "[getList 1 50 true status = true && created >= '2022-08-01']");
-		operations.clear();
-		await pb.getRecords("abc", maxItems: 50, where: ("status = ? && created >= ?", <Object>[true, DateTime(2024)]));
-		expect(operations.toString(), "[getList 1 50 true status = true && created >= '2024-01-01 00:00:00.000']");
+		test("count selectBuilder", () {
+			selectBuilder(pb.db, "collection", columns: "COUNT(*)");
+			expect(operations.toString(), "[[SELECT COUNT(*) FROM collection;, []]]");
+		});
+
+		test("single conditions selectBuilder", () {
+			selectBuilder(pb.db, "collection", filter: ("abc >= ?", <dynamic>[ DateTime(2024) ]));
+			expect(operations.toString(), "[[SELECT * FROM collection WHERE abc >= ?;, [2024-01-01 00:00:00.000]]]");
+		});
+
+		test("multiple conditions selectBuilder", () {
+			selectBuilder(pb.db, "collection", columns: "COUNT(*)", filter: ("abc = ? && xyz = ?", <dynamic>[ 1, "2" ]));
+			expect(operations.toString(), "[[SELECT COUNT(*) FROM collection WHERE abc = ? AND xyz = ?;, [1, 2]]]");
+		});
+
+		test("start after multiple conditions selectBuilder", () {
+			selectBuilder(pb.db, "collection", filter: ("abc = ? && xyz = ?", <dynamic>[ 1, "2" ]), startAfter: <String, dynamic>{ "a" : 1, "b" : 2 });
+			expect(operations.toString(), "[[SELECT * FROM collection WHERE abc = ? AND xyz = ? AND (a, b) > (?, ?);, [1, 2, 1, 2]]]");
+		});
+
+		test("start after no conditions selectBuilder", () {
+			selectBuilder(pb.db, "collection", startAfter: <String, dynamic>{ "a" : 1 });
+			expect(operations.toString(), "[[SELECT * FROM collection WHERE (a) > (?);, [1]]]");
+		});
+
 	});
 
 	group("QueryBuilder", () {

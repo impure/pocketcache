@@ -13,10 +13,12 @@ extension ListWrapper on PbOfflineCache {
 		int maxItems = defaultMaxItems,
 		(String, List<Object?>)? where,
 		QuerySource source = QuerySource.any,
+		(String column, bool descending)? sort,
+		Map<String, dynamic>? startAfter,
 	}) async {
 		if (source != QuerySource.server && (!dbAccessible || source == QuerySource.client)) {
 			if (tableExists(db, collectionName)) {
-				final ResultSet results = selectBuilder(db, collectionName, maxItems: maxItems, filter: where);
+				final ResultSet results = selectBuilder(db, collectionName, maxItems: maxItems, filter: where, startAfter: startAfter);
 				final List<Map<String, dynamic>> data = <Map<String, dynamic>>[];
 				for (final Row row in results) {
 					final Map<String, dynamic> entryToInsert = <String, dynamic>{};
@@ -42,7 +44,8 @@ extension ListWrapper on PbOfflineCache {
 				page: 1,
 				perPage: maxItems,
 				skipTotal: true,
-				filter: makePbFilter(where),
+				filter: makePbFilter(where, startAfter: startAfter),
+				sort: makeSortFilter(sort),
 			)).items;
 
 			if (records.isNotEmpty) {
@@ -179,14 +182,37 @@ void insertRecordsIntoLocalDb(Database db, String collectionName, List<RecordMod
 	}
 }
 
-String? makePbFilter((String, List<Object?>)? params) {
+String? makePbFilter((String, List<Object?>)? params, { Map<String, dynamic>? startAfter }) {
+
+	String makeSortFilter(Map<String, dynamic> startAfter) {
+		if (startAfter.isEmpty) {
+			return "";
+		}
+
+		final List<String> keys = startAfter.keys.toList();
+		final List<dynamic> values = startAfter.values.toList();
+
+		final String keysPart = keys.join(", ");
+		final String valuesPart = values.map((value) {
+			if (value is String) {
+				return "'$value'";
+			} else {
+				return value.toString();
+			}
+		}).join(', ');
+
+		return '($keysPart) > ($valuesPart)';
+	}
 
 	if (params == null) {
+		if (startAfter != null) {
+			return makeSortFilter(startAfter);
+		}
 		return null;
 	}
 
 	int i = 0;
-	return params.$1.replaceAllMapped(RegExp(r'\?'), (Match match) {
+	final String filter = params.$1.replaceAllMapped(RegExp(r'\?'), (Match match) {
 
 		final dynamic param = params.$2[i];
 		i++;
@@ -197,4 +223,19 @@ String? makePbFilter((String, List<Object?>)? params) {
 			return param.toString();
 		}
 	});
+
+	if (startAfter != null) {
+		return "$filter AND ${makeSortFilter(startAfter)}";
+	} else {
+		return filter;
+	}
+
+}
+
+String? makeSortFilter((String column, bool descending)? data) {
+	if (data == null) {
+		return null;
+	} else {
+		return "${data.$2 ? "-" : "+"}${data.$1}";
+	}
 }

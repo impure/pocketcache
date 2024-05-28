@@ -1,6 +1,7 @@
 
 import 'package:logger/logger.dart';
 import 'package:pocketbase/pocketbase.dart';
+import 'package:pocketbase_offline_cache/pocketbase_offline_cache.dart';
 import 'package:pocketbase_offline_cache/src/get_records.dart';
 import 'package:sqlite3/sqlite3.dart';
 import 'package:test/test.dart';
@@ -70,12 +71,53 @@ class TestLogger implements Logger {
 
 void main() {
 
+	setUp(() {
+		operations.clear();
+	});
 	tearDown(() {
 		operations.clear();
 	});
 
+	final PbOfflineCache pb = PbOfflineCache.withDb(PbWrapper(), DatabaseMock());
 	final Database db = DatabaseMock();
 	final Logger testLogger = TestLogger();
+
+	group("listRecords", () {
+		test("basic getRecords", () async {
+			await pb.getRecords("abc");
+			expect(operations.toString(), "[getList 1 500 true null]");
+		});
+
+		test("limit items getRecords", () async {
+			await pb.getRecords("abc", maxItems: 50);
+			expect(operations.toString(), "[getList 1 50 true null]");
+		});
+
+		test("multi condition 1 getRecords", () async {
+			await pb.getRecords("abc", maxItems: 50, where: ("abc = ? && xyz = ?", <int>[1, 2]));
+			expect(operations.toString(), "[getList 1 50 true abc = 1 && xyz = 2]");
+		});
+
+		test("multi condition 2 getRecords", () async {
+			await pb.getRecords("abc", where: ("status = ? && created >= ?", <Object>[true, "2022-08-01"]));
+			expect(operations.toString(), "[getList 1 500 true status = true && created >= '2022-08-01']");
+		});
+
+		test("single condition getRecords", () async {
+			await pb.getRecords("abc", maxItems: 50, where: ("created >= ?", <Object>[DateTime(2024)]));
+			expect(operations.toString(), "[getList 1 50 true created >= '2024-01-01 00:00:00.000']");
+		});
+
+		test("single start after multi condition getRecords", () async {
+			await pb.getRecords("abc", where: ("status = ? && created >= ?", <Object>[true, "2022-08-01"]), startAfter: <String, dynamic>{"status": true});
+			expect(operations.toString(), "[getList 1 500 true status = true && created >= '2022-08-01' AND (status) > (true)]");
+		});
+
+		test("multi start after no conditions getRecords", () async {
+			await pb.getRecords("abc", startAfter: <String, dynamic>{"status": DateTime(2024), "1" : 2});
+			expect(operations.toString(), "[getList 1 500 true (status, 1) > (2024-01-01 00:00:00.000, 2)]");
+		});
+	});
 
 	group("insertRecordsIntoLocalDb", () {
 
