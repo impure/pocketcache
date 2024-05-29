@@ -74,7 +74,7 @@ String makePbId() {
 void convertToPbTypes(Map<String, dynamic> map) {
   for (final String key in map.keys) {
     if (map[key] is DateTime) {
-      map[key] = map[key].toString();
+      map[key] = map[key].toUtc().toString();
     } else if (map[key] is Uri) {
       map[key] = map[key].toString();
     }
