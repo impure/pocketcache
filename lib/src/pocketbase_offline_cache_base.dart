@@ -282,8 +282,39 @@ ResultSet selectBuilder(Database db, String tableName, {
 		return '${and ? " AND " : ""}($keysPart) > ($valuesPart)';
 	}
 
+	String preprocessQuery(String query, List<dynamic> params) {
+		final List<String> operators = <String>['=', '!=', '>=', '>', '<=', '<'];
+		final String regexPattern = operators.map((String op) => RegExp.escape(op)).join('|');
+		final RegExp regex = RegExp(r'(.*?)(' + regexPattern + r')(.*)');
+
+		final List<String> parts = query.split('&&');
+		final List<String> updatedParts = <String>[];
+		int paramIndex = 0;
+
+		for (final String part in parts) {
+			if (paramIndex < params.length && params[paramIndex] is bool) {
+				final RegExpMatch? match = regex.firstMatch(part);
+				if (match != null) {
+					final String columnName = match.group(1) ?? '';
+					final String operator = match.group(2) ?? '';
+					final String rest = match.group(3) ?? '';
+
+					final String updatedPart = "_offline_bool_$columnName$operator$rest";
+					updatedParts.add(updatedPart);
+				} else {
+					updatedParts.add(part);
+				}
+			} else {
+				updatedParts.add(part);
+			}
+			paramIndex++;
+		}
+
+		return updatedParts.join('AND');
+	}
+
 	if (filter != null) {
-		query.write(" WHERE ${filter.$1.replaceAll("&&", "AND").replaceAll("||", "OR")}${generateSortCondition(startAfter, true)}");
+		query.write(" WHERE ${preprocessQuery(filter.$1, filter.$2)}${generateSortCondition(startAfter, true)}");
 		if (startAfter != null) {
 			filter.$2.addAll(startAfter.values);
 		}

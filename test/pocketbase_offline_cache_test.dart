@@ -9,6 +9,8 @@ import 'package:pocketbase_offline_cache/src/pocketbase_offline_cache_base.dart'
 import 'package:sqlite3/sqlite3.dart';
 import 'package:test/test.dart';
 
+(List<String>, List<List<Object?>>)? testResults;
+
 class DatabaseMock implements Database {
 	@override
 	int userVersion = 0;
@@ -69,7 +71,7 @@ class DatabaseMock implements Database {
 	@override
 	ResultSet select(String sql, [List<Object?> parameters = const <Object?>[]]) {
 		operations.add(<dynamic>[ sql, parameters]);
-		return ResultSet(<String>[], <String>[], <List<Object?>>[]);
+		return ResultSet(testResults?.$1 ?? <String>[], <String>[], testResults?.$2 ?? <List<Object?>>[]);
 	}
 
 	@override
@@ -289,6 +291,7 @@ void main() {
 
 	tearDown(() {
 		operations.clear();
+		testResults = null;
 	});
 
 	final PbOfflineCache pb = PbOfflineCache.withDb(PbWrapper(), DatabaseMock());
@@ -322,6 +325,12 @@ void main() {
 		test("start after no conditions selectBuilder", () {
 			selectBuilder(pb.db, "collection", startAfter: <String, dynamic>{ "a" : 1 });
 			expect(operations.toString(), "[[SELECT * FROM collection WHERE (a) > (?);, [1]]]");
+		});
+
+		test("single condition bool selectBuilder", () {
+			testResults = (<String>["_offline_bool_abc"], <List<Object?>>[<Object?>[true]]);
+			expect(selectBuilder(pb.db, "collection", filter: ("abc = ?", <dynamic>[ true ])).toString(), "[{_offline_bool_abc: true}]");
+			expect(operations.toString(), "[[SELECT * FROM collection WHERE _offline_bool_abc = ?;, [true]]]");
 		});
 
 	});
