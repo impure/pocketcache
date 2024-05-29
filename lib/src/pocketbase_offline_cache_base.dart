@@ -276,6 +276,16 @@ ResultSet selectBuilder(Database db, String tableName, {
 			return '';
 		}
 
+		final List<String> removeKeys = <String>[];
+
+		for (final MapEntry<String, dynamic> data in startAfter.entries) {
+			if (data.value is bool || data.value is List<dynamic> || data.value is Map<dynamic, dynamic> || data.value is DateTime || data.value is Uri) {
+				removeKeys.add(data.key);
+			}
+		}
+
+		removeKeys.forEach(startAfter.remove);
+
 		final List<String> keys = startAfter.keys.toList();
 		final List<dynamic> values = startAfter.values.toList();
 
@@ -304,7 +314,7 @@ ResultSet selectBuilder(Database db, String tableName, {
 					final String operator = match.group(2) ?? '';
 					final String rest = match.group(3) ?? '';
 
-					final String updatedPart = "_offline_bool_$columnName$operator$rest";
+					final String updatedPart = "_offline_bool_${columnName.trimLeft()}$operator$rest";
 					updatedParts.add(updatedPart);
 				} else {
 					updatedParts.add(part);
@@ -315,7 +325,7 @@ ResultSet selectBuilder(Database db, String tableName, {
 			paramIndex++;
 		}
 
-		return updatedParts.join('AND');
+		return updatedParts.join('AND ');
 	}
 
 	if (filter != null) {
@@ -339,6 +349,13 @@ ResultSet selectBuilder(Database db, String tableName, {
 	query.write(";");
 
 	if (filter != null) {
+
+		for (int i = 0; i < filter.$2.length; i++) {
+			if (filter.$2[i] is DateTime) {
+				filter.$2[i] = filter.$2[i].toString();
+			}
+		}
+
 		return db.select(query.toString(), filter.$2);
 	} else {
 		return db.select(query.toString());
