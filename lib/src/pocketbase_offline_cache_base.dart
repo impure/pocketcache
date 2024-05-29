@@ -73,6 +73,11 @@ class PbOfflineCache {
 					continue;
 				}
 
+				// Don't drop these tables because they're probably empty and that causes errors
+				if (tableName == "_operation_queue" || tableName == "_operation_queue_params") {
+					continue;
+				}
+
 				db.execute('DROP TABLE IF EXISTS $tableName');
 				logger.i('Dropped table: $tableName');
 			}
