@@ -184,16 +184,19 @@ void insertRecordsIntoLocalDb(Database db, String collectionName, List<RecordMod
 
 String? makePbFilter((String, List<Object?>)? params, { (String column, bool descending)? sort, Map<String, dynamic>? startAfter }) {
 
+	print("PB filter: $params");
 	assert(startAfter == null || (startAfter != null && sort != null), "If start after is not null sort must also be not null");
 
 	if (startAfter != null && sort != null && startAfter.containsKey(sort.$1)) {
 		if (params != null) {
 			if (sort.$2) {
-				params.$2.add(startAfter[sort.$1]);
-				params = ("${params.$1} && ${sort.$1} < ?", params.$2);
+				final List<Object?> objects = List<Object?>.from(params.$2);
+				objects.add(startAfter[sort.$1]);
+				params = ("${params.$1} && ${sort.$1} < ?", objects);
 			} else {
-				params.$2.add(startAfter[sort.$1]);
-				params = ("${params.$1} && ${sort.$1} > ?", params.$2);
+				final List<Object?> objects = List<Object?>.from(params.$2);
+				objects.add(startAfter[sort.$1]);
+				params = ("${params.$1} && ${sort.$1} > ?", objects);
 			}
 		} else {
 			if (sort.$2) {
@@ -222,6 +225,8 @@ String? makePbFilter((String, List<Object?>)? params, { (String column, bool des
 			return param.toString();
 		}
 	});
+
+	assert(i == params.$2.length, "Incorrect number of parameters ($i, ${params.$2.length})");
 
 	return filter;
 
