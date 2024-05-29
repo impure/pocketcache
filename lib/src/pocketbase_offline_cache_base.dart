@@ -216,10 +216,10 @@ class PbOfflineCache {
 	}
 
 	void queueOperation(
-			String operationType,
-			String collectionName,
-			{Map<String, dynamic>? values, String idToModify = ""}
-			) {
+		String operationType,
+		String collectionName,
+		{Map<String, dynamic>? values, String idToModify = ""}
+	) {
 
 		// This is not guaranteed to be unique but if two commands are executed at the same time the order doesn't really matter
 		final int created = DateTime.now().millisecondsSinceEpoch;
