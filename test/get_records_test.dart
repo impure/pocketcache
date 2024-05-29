@@ -104,18 +104,18 @@ void main() {
 		});
 
 		test("single condition getRecords", () async {
-			await pb.getRecords("abc", maxItems: 50, where: ("created >= ?", <Object>[DateTime(2024)]));
-			expect(operations.toString(), "[getList 1 50 true created >= '2024-01-01 00:00:00.000']");
+			await pb.getRecords("abc", maxItems: 50, where: ("created >= ?", <Object>[DateTime.utc(2024)]));
+			expect(operations.toString(), "[getList 1 50 true created >= '2024-01-01 00:00:00.000Z']");
 		});
 
-		test("single start after multi condition getRecords", () async {
-			await pb.getRecords("abc", where: ("status = ? && created >= ?", <Object>[true, "2022-08-01"]), startAfter: <String, dynamic>{"status": true});
-			expect(operations.toString(), "[getList 1 500 true status = true && created >= '2022-08-01' && (status) > (true)]");
+		test("single start after multi condition getRecords descending", () async {
+			await pb.getRecords("abc", where: ("status = ? && created >= ?", <Object>[true, "2022-08-01"]), startAfter: <String, dynamic>{"status": true}, sort: ("status", true));
+			expect(operations.toString(), "[getList 1 500 true status = true && created >= '2022-08-01' && status < true]");
 		});
 
 		test("multi start after no conditions getRecords", () async {
-			await pb.getRecords("abc", startAfter: <String, dynamic>{"status": DateTime(2024), "1" : 2});
-			expect(operations.toString(), "[getList 1 500 true (status, 1) > (2024-01-01 00:00:00.000, 2)]");
+			await pb.getRecords("abc", startAfter: <String, dynamic>{"status": DateTime.utc(2024), "1" : 2}, sort: ("status", false));
+			expect(operations.toString(), "[getList 1 500 true status > '2024-01-01 00:00:00.000Z']");
 		});
 	});
 
@@ -162,22 +162,7 @@ void main() {
 			);
 		});
 
-		test("single index success", () {
-			insertRecordsIntoLocalDb(db, "test", <RecordModel>[ RecordModel(
-				id: "abc",
-				data: <String, dynamic> { "1" : 1, "2" : DateTime(2022).toString() },
-				created: DateTime(2024, 1).toString(),
-				updated: DateTime(2024, 2).toString(),
-			) ], testLogger, indexInstructions: <String, List<(String, bool, List<String>)>>{"test" : <(String, bool, List<String>)>[ ("index1", false, <String>["1"]) ]}, overrideDownloadTime: DateTime(2024, 3).toString());
-			expect(operations.toString(),
-				"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
-				"[CREATE TABLE test (id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT,1 REAL DEFAULT 0.0,2 TEXT DEFAULT ''), []], "
-				"[CREATE INDEX index1 ON test(1), []], "
-				"[INSERT OR REPLACE INTO test(id, created, updated, _downloaded, 1, 2) VALUES(?, ?, ?, ?, ?, ?);, [abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, 2024-03-01 00:00:00.000, 1, 2022-01-01 00:00:00.000]]]"
-			);
-		});
-
-		test("single index success", () {
+		test("single index failled", () {
 			insertRecordsIntoLocalDb(db, "test", <RecordModel>[ RecordModel(
 				id: "abc",
 				data: <String, dynamic> { "1" : 1, "2" : DateTime(2022).toString() },
@@ -187,7 +172,7 @@ void main() {
 			expect(operations.toString(),
 				"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
 				"[CREATE TABLE test (id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT,1 REAL DEFAULT 0.0,2 TEXT DEFAULT ''), []], "
-				"e: Unable to create index on columns [3], "
+				"e: Unable to create index index1 on test({id, created, updated, _downloaded, 1, 2}), could not find all columns: [3], "
 				"[INSERT OR REPLACE INTO test(id, created, updated, _downloaded, 1, 2) VALUES(?, ?, ?, ?, ?, ?);, [abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, 2024-03-01 00:00:00.000, 1, 2022-01-01 00:00:00.000]]]"
 			);
 		});

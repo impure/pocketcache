@@ -305,8 +305,8 @@ void main() {
 		});
 
 		test("single conditions selectBuilder", () {
-			selectBuilder(pb.db, "collection", filter: ("abc >= ?", <dynamic>[ DateTime(2024) ]));
-			expect(operations.toString(), "[[SELECT * FROM collection WHERE abc >= ?;, [2024-01-01 00:00:00.000]]]");
+			selectBuilder(pb.db, "collection", filter: ("abc >= ?", <dynamic>[ DateTime.utc(2024) ]));
+			expect(operations.toString(), "[[SELECT * FROM collection WHERE abc >= ?;, [2024-01-01 00:00:00.000Z]]]");
 		});
 
 		test("multiple conditions selectBuilder", () {
@@ -334,7 +334,7 @@ void main() {
 		
 		test("Single condition", () async {
 			expect((await pb.collection("test").where("abc", isEqualTo: "xyz").get()).toString(), "[]");
-			expect(operations.toString(), "[getList 1 500 true abc == 'xyz']");
+			expect(operations.toString(), "[getList 1 500 true abc = 'xyz']");
 		});
 
 		test("Multiple conditions", () async {
