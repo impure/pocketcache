@@ -14,7 +14,7 @@ extension CreateWrapper on PbOfflineCache {
 
     convertToPbTypes(values);
 
-    if (source != QuerySource.server && (!dbAccessible || source == QuerySource.client)) {
+    if (source != QuerySource.server && (!dbAccessible || source == QuerySource.cache)) {
 
       // If table does not exist yet we are unsure of the required schema so can't add anything
       if (tableExists(db, collectionName)) {
@@ -54,7 +54,7 @@ extension CreateWrapper on PbOfflineCache {
         rethrow;
       }
       if (source == QuerySource.any) {
-        return createRecord(collectionName, values, source: QuerySource.client);
+        return createRecord(collectionName, values, source: QuerySource.cache);
       } else {
         return null;
       }

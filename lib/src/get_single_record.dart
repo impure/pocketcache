@@ -12,7 +12,7 @@ extension GetOneWrapper on PbOfflineCache {
 	Future<Map<String, dynamic>?> getSingleRecord(String collectionName, String id, {
 		QuerySource source = QuerySource.any,
 	}) async {
-		if (source != QuerySource.server && (!dbAccessible || source == QuerySource.client)) {
+		if (source != QuerySource.server && (!dbAccessible || source == QuerySource.cache)) {
 			if (tableExists(db, collectionName)) {
 				final ResultSet results = selectBuilder(db, collectionName, maxItems: 1, filter: ("id = ?", <Object>[ id ]));
 				final List<Map<String, dynamic>> data = <Map<String, dynamic>>[];
@@ -54,7 +54,7 @@ extension GetOneWrapper on PbOfflineCache {
 				rethrow;
 			}
 			if (source == QuerySource.any) {
-				return getSingleRecord(collectionName, id, source: QuerySource.client);
+				return getSingleRecord(collectionName, id, source: QuerySource.cache);
 			} else {
 				return null;
 			}

@@ -11,7 +11,7 @@ extension CountWrapper on PbOfflineCache {
 		QuerySource source = QuerySource.any,
 	}) async {
 
-		if ((source != QuerySource.server) && !dbAccessible || source == QuerySource.client) {
+		if ((source != QuerySource.server) && !dbAccessible || source == QuerySource.cache) {
 
 			if (tableExists(db, collectionName)) {
 				final ResultSet results = selectBuilder(db, collectionName, columns: "COUNT(*)", filter: where);
@@ -33,7 +33,7 @@ extension CountWrapper on PbOfflineCache {
 				rethrow;
 			}
 			if (source == QuerySource.any) {
-				return getRecordCount(collectionName, source: QuerySource.client);
+				return getRecordCount(collectionName, source: QuerySource.cache);
 			}
 			return null;
 		}

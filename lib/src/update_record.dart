@@ -11,11 +11,11 @@ extension UpdateWrapper on PbOfflineCache {
 
 		convertToPbTypes(values);
 
-		if (source != QuerySource.server && (!dbAccessible || source == QuerySource.client)) {
+		if (source != QuerySource.server && (!dbAccessible || source == QuerySource.cache)) {
 			if (tableExists(db, collectionName)) {
 				queueOperation("UPDATE", collectionName, values: values, idToModify: id);
 				applyLocalUpdateOperation(db, collectionName, id, values);
-				return getSingleRecord(collectionName, id, source: QuerySource.client);
+				return getSingleRecord(collectionName, id, source: QuerySource.cache);
 			}
 
 			return null;
@@ -41,7 +41,7 @@ extension UpdateWrapper on PbOfflineCache {
 				rethrow;
 			}
 			if (source == QuerySource.any) {
-				return updateRecord(collectionName, id, values, source: QuerySource.client);
+				return updateRecord(collectionName, id, values, source: QuerySource.cache);
 			} else {
 				return null;
 			}

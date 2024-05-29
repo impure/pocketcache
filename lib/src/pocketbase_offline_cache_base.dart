@@ -16,7 +16,7 @@ const int defaultMaxItems = 500;
 
 enum QuerySource {
 	server,
-	client,
+	cache,
 	any,
 }
 

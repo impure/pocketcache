@@ -16,7 +16,7 @@ extension ListWrapper on PbOfflineCache {
 		(String column, bool descending)? sort,
 		Map<String, dynamic>? startAfter,
 	}) async {
-		if (source != QuerySource.server && (!dbAccessible || source == QuerySource.client)) {
+		if (source != QuerySource.server && (!dbAccessible || source == QuerySource.cache)) {
 			if (tableExists(db, collectionName)) {
 				final ResultSet results = selectBuilder(db, collectionName, maxItems: maxItems, filter: where, startAfter: startAfter);
 				final List<Map<String, dynamic>> data = <Map<String, dynamic>>[];
@@ -68,7 +68,7 @@ extension ListWrapper on PbOfflineCache {
 				rethrow;
 			}
 			if (source == QuerySource.any) {
-				return getRecords(collectionName, maxItems: maxItems, source: QuerySource.client);
+				return getRecords(collectionName, maxItems: maxItems, source: QuerySource.cache);
 			} else {
 				return <Map<String, dynamic>>[];
 			}

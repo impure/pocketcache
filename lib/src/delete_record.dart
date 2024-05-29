@@ -7,7 +7,7 @@ extension DeleteWrapper on PbOfflineCache {
     QuerySource source = QuerySource.any,
   }) async {
 
-    if (source != QuerySource.server && (!dbAccessible || source == QuerySource.client)) {
+    if (source != QuerySource.server && (!dbAccessible || source == QuerySource.cache)) {
 
       if (tableExists(db, collectionName)) {
         queueOperation("DELETE", collectionName, idToModify: id);
@@ -25,7 +25,7 @@ extension DeleteWrapper on PbOfflineCache {
         rethrow;
       }
       if (source == QuerySource.any) {
-        return deleteRecord(collectionName, id, source: QuerySource.client);
+        return deleteRecord(collectionName, id, source: QuerySource.cache);
       }
     }
   }
