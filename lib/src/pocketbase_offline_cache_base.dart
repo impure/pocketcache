@@ -273,7 +273,7 @@ ResultSet selectBuilder(Database db, String tableName, {
 
 	String generateSortCondition(Map<String, dynamic>? startAfter, bool and) {
 		if (startAfter == null || startAfter.isEmpty) {
-			return '';
+			return "";
 		}
 
 		final List<String> removeKeys = <String>[];
@@ -353,6 +353,8 @@ ResultSet selectBuilder(Database db, String tableName, {
 		for (int i = 0; i < filter.$2.length; i++) {
 			if (filter.$2[i] is DateTime) {
 				filter.$2[i] = filter.$2[i].toString();
+			} else if (filter.$2[i] == null) {
+				filter.$2[i] = "";
 			}
 		}
 
