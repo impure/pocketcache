@@ -184,7 +184,6 @@ void insertRecordsIntoLocalDb(Database db, String collectionName, List<RecordMod
 
 String? makePbFilter((String, List<Object?>)? params, { (String column, bool descending)? sort, Map<String, dynamic>? startAfter }) {
 
-	print("$sort $startAfter");
 	assert(startAfter == null || (startAfter != null && sort != null), "If start after is not null sort must also be not null");
 
 	if (startAfter != null && sort != null && startAfter.containsKey(sort.$1)) {
@@ -215,8 +214,10 @@ String? makePbFilter((String, List<Object?>)? params, { (String column, bool des
 		final dynamic param = params!.$2[i];
 		i++;
 
-		if (param is String || param is DateTime) {
+		if (param is String) {
 			return "'$param'";
+		} else if (param is DateTime) {
+			return "'${param.toUtc()}'";
 		} else {
 			return param.toString();
 		}
