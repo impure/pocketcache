@@ -31,10 +31,10 @@ extension GetOneWrapper on PbOfflineCache {
 					data.add(entryToInsert);
 				}
 
-				return data.first;
+				return data.firstOrNull;
 			}
 
-			return <String, dynamic>{};
+			return null;
 		}
 
 		try {
@@ -56,7 +56,7 @@ extension GetOneWrapper on PbOfflineCache {
 			if (source == QuerySource.any) {
 				return getSingleRecord(collectionName, id, source: QuerySource.client);
 			} else {
-				return <String, dynamic>{};
+				return null;
 			}
 		}
 	}
