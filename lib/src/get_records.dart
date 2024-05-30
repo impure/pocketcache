@@ -68,7 +68,7 @@ extension ListWrapper on PbOfflineCache {
 				rethrow;
 			}
 			if (source == QuerySource.any) {
-				return getRecords(collectionName, maxItems: maxItems, source: QuerySource.cache);
+				return getRecords(collectionName, where: where, sort: sort, maxItems: maxItems, startAfter: startAfter, source: QuerySource.cache);
 			} else {
 				return <Map<String, dynamic>>[];
 			}
