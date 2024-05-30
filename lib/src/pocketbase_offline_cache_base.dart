@@ -339,7 +339,7 @@ ResultSet selectBuilder(Database db, String tableName, {
 	}
 
 	if (sort != null) {
-		query.write(" SORT BY ${sort.$1} ${sort.$2 ? "DESC" : "ASC"}");
+		query.write(" ORDER BY ${sort.$1} ${sort.$2 ? "DESC" : "ASC"}");
 	}
 
 	if (maxItems != null) {
@@ -352,6 +352,8 @@ ResultSet selectBuilder(Database db, String tableName, {
 
 		for (int i = 0; i < filter.$2.length; i++) {
 			if (filter.$2[i] is DateTime) {
+				filter.$2[i] = (filter.$2[i] as DateTime?)?.toUtc().toString();
+			} else if (filter.$2[i] is List<dynamic> || filter.$2[i] is Map<dynamic, dynamic>) {
 				filter.$2[i] = filter.$2[i].toString();
 			} else if (filter.$2[i] == null) {
 				filter.$2[i] = "";

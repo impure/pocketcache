@@ -7,7 +7,9 @@ import 'get_single_record.dart';
 import 'pocketbase_offline_cache_base.dart';
 
 extension UpdateWrapper on PbOfflineCache {
-	Future<Map<String, dynamic>?> updateRecord(String collectionName, String id, Map<String, dynamic> values, { QuerySource source = QuerySource.any }) async {
+	Future<Map<String, dynamic>?> updateRecord(String collectionName, String id, Map<String, dynamic> values, {
+		QuerySource source = QuerySource.any,
+	}) async {
 
 		convertToPbTypes(values);
 

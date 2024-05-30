@@ -18,7 +18,7 @@ extension ListWrapper on PbOfflineCache {
 	}) async {
 		if (source != QuerySource.server && (!dbAccessible || source == QuerySource.cache)) {
 			if (tableExists(db, collectionName)) {
-				final ResultSet results = selectBuilder(db, collectionName, maxItems: maxItems, filter: where, startAfter: startAfter);
+				final ResultSet results = selectBuilder(db, collectionName, maxItems: maxItems, filter: where, startAfter: startAfter, sort: sort);
 				final List<Map<String, dynamic>> data = <Map<String, dynamic>>[];
 				for (final Row row in results) {
 					final Map<String, dynamic> entryToInsert = <String, dynamic>{};
@@ -118,7 +118,6 @@ void insertRecordsIntoLocalDb(Database db, String collectionName, List<RecordMod
 			}
 		}
 
-
 	}
 
 	final StringBuffer command = StringBuffer("INSERT OR REPLACE INTO $collectionName(id, created, updated, _downloaded");
@@ -159,7 +158,7 @@ void insertRecordsIntoLocalDb(Database db, String collectionName, List<RecordMod
 		for (final String key in keys) {
 			command.write(", ?");
 			if (record.data[key] is List<dynamic> || record.data[key] is Map<dynamic, dynamic>) {
-				parameters.add(record.data[key].toString());
+				parameters.add(jsonEncode(record.data[key]));
 			} else{
 				parameters.add(record.data[key]);
 			}
