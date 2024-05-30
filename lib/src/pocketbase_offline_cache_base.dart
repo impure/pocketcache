@@ -331,7 +331,7 @@ ResultSet selectBuilder(Database db, String tableName, {
 	if (filter != null) {
 		query.write(" WHERE ${preprocessQuery(filter.$1, filter.$2)}${generateSortCondition(startAfter, true)}");
 		if (startAfter != null) {
-			filter.$2.addAll(startAfter.values);
+			filter = (filter.$1, List<dynamic>.from(filter.$2)..addAll(startAfter.values));
 		}
 	} else if (startAfter != null) {
 		query.write(" WHERE ${generateSortCondition(startAfter, false)}");
