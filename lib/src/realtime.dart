@@ -24,7 +24,7 @@ extension Realtime on PbOfflineCache {
 				}
 			});
 		} on ClientException catch (e) {
-			if (!e.toString().contains("refused network connection")) {
+			if (!e.toString().contains("refused network connection") && !e.toString().contains("The remote computer refused the network connection")) {
 				rethrow;
 			}
 		}

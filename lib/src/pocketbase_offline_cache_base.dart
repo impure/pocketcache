@@ -1,5 +1,6 @@
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
@@ -48,7 +49,6 @@ class PbOfflineCache {
 		operation_id INTEGER,
 		param_key TEXT,
 		param_value TEXT,
-		type TEXT,
 		FOREIGN KEY(operation_id) REFERENCES operations(id)
 	)""");
 
@@ -126,31 +126,16 @@ class PbOfflineCache {
 	Future<void> dequeueCachedOperations() async {
 		final ResultSet data = db.select("SELECT * FROM _operation_queue ORDER BY created ASC");
 
-		for (final Row row in data) {
-			final String operationId = row.values[0].toString();
-			final String operationType = row.values[1].toString();
-			final String collectionName = row.values[3].toString();
-			final String pbId = row.values[4].toString();
+		for (final Row operation in data) {
+			final String operationId = operation.values[0].toString();
+			final String operationType = operation.values[1].toString();
+			final String collectionName = operation.values[3].toString();
+			final String pbId = operation.values[4].toString();
 
 			final ResultSet data = db.select("SELECT * FROM _operation_queue_params WHERE operation_id = ?", <String>[ operationId ]);
 			final Map<String, dynamic> params = <String, dynamic>{};
-			for (final Row row in data) {
-
-				dynamic value;
-
-				if (row.values[4] == "bool") {
-					value = row.values[3] == "1" ? true : false;
-				} else if (row.values[4] == "int") {
-					value = int.tryParse(row.values[3].toString());
-				} else if (row.values[4] == "double") {
-					value = double.tryParse(row.values[3].toString());
-				} else if (row.values[4] == "String") {
-					value = row.values[3];
-				} else {
-					logger.e("Unknown type when loading: ${row.values[4]}");
-				}
-
-				params[row.values[2].toString()] = value;
+			for (final Row operationParam in data) {
+				params[operationParam.values[2].toString()] = operationParam.values[3];
 			}
 
 			void cleanUp() {
@@ -200,7 +185,7 @@ class PbOfflineCache {
 					}
 					break;
 				default:
-					logger.e("Unknown operation type: $operationType, row: $row");
+					logger.e("Unknown operation type: $operationType, operation: $operation");
 			}
 		}
 	}
@@ -230,21 +215,26 @@ class PbOfflineCache {
 		if (values != null) {
 			for (final MapEntry<String, dynamic> entry in values.entries) {
 
-				String? type;
+				String valueToWrite;
 
 				if (entry.value is bool) {
-					type = "bool";
+					valueToWrite = entry.value.toString();
 				} else if (entry.value is int) {
-					type = "int";
+					valueToWrite = entry.value.toString();
 				} else if (entry.value is double) {
-					type = "double";
+					valueToWrite = entry.value.toString();
 				} else if (entry.value is String) {
-					type = "String";
+					valueToWrite = entry.value.toString();
+				} else if (entry.value is List<dynamic> || entry.value is Map<dynamic, dynamic>) {
+					valueToWrite = jsonEncode(entry.value);
+				} else if (entry.value == null) {
+					valueToWrite = "";
 				} else {
+					valueToWrite = "";
 					logger.e("Unknown type: ${entry.value.runtimeType}");
 				}
 
-				db.select("INSERT INTO _operation_queue_params (operation_id, param_key, param_value, type) VALUES (?, ?, ?, ?)", <Object?>[id, entry.key, entry.value, type]);
+				db.select("INSERT INTO _operation_queue_params (operation_id, param_key, param_value) VALUES (?, ?, ?)", <Object?>[id, entry.key, valueToWrite]);
 			}
 		}
 	}
