@@ -205,7 +205,7 @@ class PbOfflineCache {
 		}
 	}
 
-	Future<void> resetAuth() async {
+	Future<void> refreshAuth() async {
 		try {
 			await pb.collection('users').authRefresh();
 		} on ClientException catch (e) {
