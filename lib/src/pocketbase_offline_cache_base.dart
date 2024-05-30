@@ -271,30 +271,44 @@ ResultSet selectBuilder(Database db, String tableName, {
 
 	final StringBuffer query = StringBuffer("SELECT ${columns ?? "*"} FROM $tableName");
 
-	String generateSortCondition(Map<String, dynamic>? startAfter, bool and) {
+	(String, List<dynamic> newValues) generateSortCondition(Map<String, dynamic>? startAfter, (String, bool descending)? sort, bool and, List<dynamic> parameters) {
+
 		if (startAfter == null || startAfter.isEmpty) {
-			return "";
+			return ("", parameters);
+		}
+
+		assert(sort != null, "Start after requires a sort condition");
+
+		if (sort == null) {
+			return ("", parameters);
 		}
 
 		final List<String> removeKeys = <String>[];
 
-		for (final MapEntry<String, dynamic> data in startAfter.entries) {
-			if (data.value is bool || data.value is List<dynamic> || data.value is Map<dynamic, dynamic> || data.value is DateTime || data.value is Uri) {
-				removeKeys.add(data.key);
-			}
+		final Map<String, dynamic> relevantStartKeys = <String, dynamic>{};
+
+		if (startAfter.containsKey(sort.$1)) {
+			relevantStartKeys[sort.$1] = startAfter[sort.$1];
 		}
 
-		removeKeys.forEach(startAfter.remove);
+		assert(relevantStartKeys.isNotEmpty, "Unable to find sort key in sort!");
+		if (relevantStartKeys.isEmpty) {
+			return ("", <dynamic>[]);
+		}
 
-		final List<String> keys = startAfter.keys.toList();
-		final List<dynamic> values = startAfter.values.toList();
+		if (!relevantStartKeys.containsKey("id")) {
+			relevantStartKeys["id"] = startAfter["id"];
+		}
+
+		final List<String> keys = relevantStartKeys.keys.toList();
+		final List<dynamic> values = relevantStartKeys.values.toList();
 
 		final String keysPart = keys.join(', ');
 		final String valuesPart = values.map((dynamic val) {
 			return "?";
 		}).join(', ');
 
-		return '${and ? " AND " : ""}($keysPart) > ($valuesPart)';
+		return ("${and ? " AND " : ""}($keysPart) ${sort.$2 ? "<" : ">"} ($valuesPart)", List<dynamic>.from(parameters)..addAll(values));
 	}
 
 	String preprocessQuery(String query, List<dynamic> params) {
@@ -329,13 +343,18 @@ ResultSet selectBuilder(Database db, String tableName, {
 	}
 
 	if (filter != null) {
-		query.write(" WHERE ${preprocessQuery(filter.$1, filter.$2)}${generateSortCondition(startAfter, true)}");
-		if (startAfter != null) {
-			filter = (filter.$1, List<dynamic>.from(filter.$2)..addAll(startAfter.values));
-		}
+
+		final (String whereClause, List<dynamic> items) orderBy = generateSortCondition(startAfter, sort, true, filter.$2);
+
+		query.write(" WHERE ${preprocessQuery(filter.$1, filter.$2)}${orderBy.$1}");
+		filter = (filter.$1, orderBy.$2);
+
 	} else if (startAfter != null) {
-		query.write(" WHERE ${generateSortCondition(startAfter, false)}");
-		filter = ("", startAfter.values.toList());
+
+		final (String whereClause, List<dynamic> items) orderBy = generateSortCondition(startAfter, sort, true, <dynamic>[]);
+
+		query.write(" WHERE ${generateSortCondition(startAfter, sort, false, <dynamic>[])}");
+		filter = ("", orderBy.$2);
 	}
 
 	if (sort != null) {
