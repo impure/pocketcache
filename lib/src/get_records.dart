@@ -139,7 +139,7 @@ void insertRecordsIntoLocalDb(Database db, String collectionName, List<RecordMod
 
 	bool first = true;
 	final List<dynamic> parameters = <dynamic>[];
-	final String now = overrideDownloadTime ?? DateTime.now().toString();
+	final String now = overrideDownloadTime ?? DateTime.now().toUtc().toString();
 
 	for (final RecordModel record in records) {
 		if (!first) {
