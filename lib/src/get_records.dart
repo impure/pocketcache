@@ -157,7 +157,13 @@ void insertRecordsIntoLocalDb(Database db, String collectionName, List<RecordMod
 
 		for (final String key in keys) {
 			command.write(", ?");
-			if (record.data[key] is List<dynamic> || record.data[key] is Map<dynamic, dynamic>) {
+			if (record.data[key] == null) {
+				if (key.startsWith("_offline_bool_")) {
+					parameters.add("false");
+				} else {
+					parameters.add("");
+				}
+			} else if (record.data[key] is List<dynamic> || record.data[key] is Map<dynamic, dynamic>) {
 				parameters.add(jsonEncode(record.data[key]));
 			} else{
 				parameters.add(record.data[key]);
