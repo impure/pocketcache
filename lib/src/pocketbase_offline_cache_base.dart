@@ -155,9 +155,10 @@ class PbOfflineCache {
 						await pb.collection(collectionName).update(pbId, body: params);
 						cleanUp();
 					} on ClientException catch (e) {
-						if (!e.toString().contains("refused the network connection")) {
+						if (!e.isNetworkError()) {
 							logger.e(e, stackTrace: StackTrace.current);
 							deleteLocalRecord();
+							cleanUp();
 						}
 					}
 					break;
@@ -166,7 +167,7 @@ class PbOfflineCache {
 						await pb.collection(collectionName).delete(pbId);
 						cleanUp();
 					} on ClientException catch (e) {
-						if (!e.toString().contains("refused the network connection")) {
+						if (!e.isNetworkError()) {
 							logger.e(e, stackTrace: StackTrace.current);
 							cleanUp();
 						}
@@ -178,9 +179,10 @@ class PbOfflineCache {
 						await pb.collection(collectionName).create(body: params);
 						cleanUp();
 					} on ClientException catch (e) {
-						if (!e.toString().contains("refused the network connection")) {
+						if (!e.isNetworkError()) {
 							logger.e(e, stackTrace: StackTrace.current);
 							deleteLocalRecord();
+							cleanUp();
 						}
 					}
 					break;
@@ -194,7 +196,7 @@ class PbOfflineCache {
 		try {
 			await pb.collection('users').authRefresh();
 		} on ClientException catch (e) {
-			if (!e.toString().contains("refused the network connection")) {
+			if (!e.isNetworkError()) {
 				rethrow;
 			}
 		}
@@ -241,6 +243,12 @@ class PbOfflineCache {
 
 	QueryBuilder collection(String collectionName) {
 		return QueryBuilder._(this, collectionName, "", <dynamic>[] );
+	}
+}
+
+extension NetworkErrorCheck on ClientException{
+	bool isNetworkError() {
+		return toString().contains("refused the network connection") ||	toString().contains("refused the connection");
 	}
 }
 

@@ -39,7 +39,7 @@ extension UpdateWrapper on PbOfflineCache {
 			return newValues;
 
 		} on ClientException catch (e) {
-			if (!e.toString().contains("refused the network connection")) {
+			if (!e.isNetworkError()) {
 				rethrow;
 			}
 			if (source == QuerySource.any) {

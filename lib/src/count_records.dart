@@ -29,7 +29,7 @@ extension CountWrapper on PbOfflineCache {
 				filter: makePbFilter(where),
 			)).totalItems;
 		} on ClientException catch (e) {
-			if (!e.toString().contains("refused the network connection")) {
+			if (!e.isNetworkError()) {
 				rethrow;
 			}
 			if (source == QuerySource.any) {
