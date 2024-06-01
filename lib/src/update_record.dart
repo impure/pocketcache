@@ -32,9 +32,9 @@ extension UpdateWrapper on PbOfflineCache {
 
 			final Map<String, dynamic> newValues = record.data;
 
-			values["id"] = id;
-			values["created"] = record.created;
-			values["updated"] = record.updated;
+			newValues["id"] = id;
+			newValues["created"] = record.created;
+			newValues["updated"] = record.updated;
 
 			return newValues;
 
