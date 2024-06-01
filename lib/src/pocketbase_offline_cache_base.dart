@@ -273,8 +273,6 @@ ResultSet selectBuilder(Database db, String tableName, {
 			return ("", parameters);
 		}
 
-		final List<String> removeKeys = <String>[];
-
 		final Map<String, dynamic> relevantStartKeys = <String, dynamic>{};
 
 		if (startAfter.containsKey(sort.$1)) {
