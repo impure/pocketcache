@@ -145,7 +145,7 @@ class PbOfflineCache {
 
 			// If we failed to update data (probably due to a key constraint) then we need to delete the local copy of the record as well or we'll be out of sync
 			void deleteLocalRecord() {
-				db.execute("DELETE FROM $collectionName WHERE id = ?", <String>[ pbId ]);
+				db.execute("DELETE FROM $collectionName WHERE id = ?", <String>[ operationId ]);
 				cleanUp();
 			}
 
