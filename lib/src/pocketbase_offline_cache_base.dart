@@ -145,7 +145,7 @@ class PbOfflineCache {
 
 			// If we failed to update data (probably due to a key constraint) then we need to delete the local copy of the record as well or we'll be out of sync
 			void deleteLocalRecord() {
-				db.execute("DELETE FROM $collectionName WHERE id = ?", <String>[ operationId ]);
+				db.execute("DELETE FROM $collectionName WHERE id = ?", <String>[ pbId ]);
 				cleanUp();
 			}
 
@@ -180,7 +180,7 @@ class PbOfflineCache {
 						cleanUp();
 					} on ClientException catch (e) {
 						if (!e.isNetworkError()) {
-							logger.e(e, stackTrace: StackTrace.current);
+							logger.e("Failed to insert $params into $collectionName ($e)", stackTrace: StackTrace.current);
 							deleteLocalRecord();
 							cleanUp();
 						}
