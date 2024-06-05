@@ -209,7 +209,7 @@ class PbOfflineCache {
 	) {
 
 		// This is not guaranteed to be unique but if two commands are executed at the same time the order doesn't really matter
-		final int created = DateTime.now().millisecondsSinceEpoch;
+		final int created = DateTime.now().toUtc().millisecondsSinceEpoch;
 
 		final ResultSet record = db.select("INSERT INTO _operation_queue (operation_type, created, collection_name, id_to_modify) VALUES ('$operationType', $created, '$collectionName', ?) RETURNING id", <Object>[ idToModify ]);
 		final int id = record.first.values.first! as int;

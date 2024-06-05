@@ -50,6 +50,9 @@ extension GetOneWrapper on PbOfflineCache {
 
 			return data;
 		} on ClientException catch (e) {
+			if (e.toString().contains("The requested resource wasn't found.")) {
+				return null;
+			}
 			if (!e.isNetworkError()) {
 				rethrow;
 			}
