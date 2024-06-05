@@ -24,13 +24,19 @@ extension Realtime on PbOfflineCache {
 				}
 			});
 		} on ClientException catch (e) {
-			if (!e.toString().contains("refused network connection") && !e.toString().contains("The remote computer refused the network connection")) {
+			if (!e.isNetworkError()) {
 				rethrow;
 			}
 		}
 	}
 
-	Future<void> unsubscribeFromId(String collection, String id) {
-		return pb.collection(collection).unsubscribe(id);
+	Future<void> unsubscribeFromId(String collection, String id) async {
+		try {
+			return pb.collection(collection).unsubscribe(id);
+		} on ClientException catch (e) {
+			if (!e.isNetworkError()) {
+				rethrow;
+			}
+		}
 	}
 }
