@@ -9,7 +9,9 @@ extension Realtime on PbOfflineCache {
 
 		final Map<String, dynamic>? data = await getSingleRecord(collection, id, source: QuerySource.server);
 
-		if (data != null) {
+		// We need the update time check or if we re-init the widget too often it may result in getting old data here
+		// I'm not exactly sure why this is, maybe it's a caching issue
+		if (data != null && updateTime.isAfter(DateTime.tryParse(data["updated"] ?? "") ?? DateTime(2024))) {
 			callback(data);
 		}
 
