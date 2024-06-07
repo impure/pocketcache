@@ -23,8 +23,6 @@ enum QuerySource {
 
 bool isTest() => Platform.environment.containsKey('FLUTTER_TEST');
 
-bool dbAccessible = true;
-
 class PbOfflineCache {
 
 	factory PbOfflineCache(PocketBase pb, String directoryToSave, {
@@ -95,6 +93,7 @@ class PbOfflineCache {
 		}
 	}
 
+	bool dbAccessible = true;
 	final PocketBase pb;
 	Database db;
 	final Logger logger;
