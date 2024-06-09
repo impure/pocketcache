@@ -50,6 +50,10 @@ extension CreateWrapper on PbOfflineCache {
 
       return data;
     } on ClientException catch (e) {
+      if (e.toString().contains("Failed to find all relation records")) {
+        logger.e("Failed to insert $values into $collectionName");
+        rethrow;
+      }
       if (!e.isNetworkError()) {
         rethrow;
       }
