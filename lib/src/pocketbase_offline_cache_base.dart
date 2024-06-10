@@ -247,7 +247,7 @@ class PbOfflineCache {
 
 extension NetworkErrorCheck on ClientException{
 	bool isNetworkError() {
-		return toString().contains("refused the network connection") ||	toString().contains("refused the connection");
+		return toString().contains("refused the network connection") ||	toString().contains("refused the connection") || toString().contains("Failed host lookup");
 	}
 }
 
