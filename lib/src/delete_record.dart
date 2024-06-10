@@ -26,6 +26,8 @@ extension DeleteWrapper on PbOfflineCache {
       }
       if (source == QuerySource.any) {
         return deleteRecord(collectionName, id, source: QuerySource.cache);
+      } else {
+        rethrow;
       }
     }
   }

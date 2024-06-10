@@ -45,7 +45,7 @@ extension UpdateWrapper on PbOfflineCache {
 			if (source == QuerySource.any) {
 				return updateRecord(collectionName, id, values, source: QuerySource.cache);
 			} else {
-				return null;
+				rethrow;
 			}
 		}
 	}

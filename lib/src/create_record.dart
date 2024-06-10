@@ -60,7 +60,7 @@ extension CreateWrapper on PbOfflineCache {
       if (source == QuerySource.any) {
         return createRecord(collectionName, values, source: QuerySource.cache);
       } else {
-        return null;
+        rethrow;
       }
     }
   }

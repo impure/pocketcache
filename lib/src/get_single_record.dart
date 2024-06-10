@@ -59,7 +59,7 @@ extension GetOneWrapper on PbOfflineCache {
 			if (source == QuerySource.any) {
 				return getSingleRecord(collectionName, id, source: QuerySource.cache);
 			} else {
-				return null;
+				rethrow;
 			}
 		}
 	}

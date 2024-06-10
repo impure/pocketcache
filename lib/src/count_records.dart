@@ -34,8 +34,9 @@ extension CountWrapper on PbOfflineCache {
 			}
 			if (source == QuerySource.any) {
 				return getRecordCount(collectionName, where: where, source: QuerySource.cache);
+			} else {
+				rethrow;
 			}
-			return null;
 		}
 	}
 }
