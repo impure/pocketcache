@@ -129,7 +129,8 @@ class PbOfflineCache {
 				}
 			} on SocketException catch (e) {
 				if (!(e.message.contains("refused") || e.message.contains("timeout") ||
-						e.message.contains("No such host") || e.message.contains("No address associated with hostname") || e.message.contains("Failed host lookup"))) {
+						e.message.contains("No such host") || e.message.contains("No address associated with hostname") ||
+						e.message.contains("Failed host lookup") || e.message.contains("Network is unreachable"))) {
 					rethrow;
 				}
 				if (dbAccessible) {
