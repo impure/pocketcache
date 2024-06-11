@@ -127,7 +127,7 @@ class PbOfflineCache {
 					}
 					await dequeueCachedOperations();
 				}
-			} on SocketException catch (e) {
+			} on SocketException catch (_) {
 				if (dbAccessible) {
 					dbAccessible = false;
 					logger.i("DB do longer accessible");
