@@ -28,11 +28,18 @@ class PbOfflineCache {
 	factory PbOfflineCache(PocketBase pb, String directoryToSave, {
 		Logger? overrideLogger,
 		Map<String, List<(String name, bool unique, List<String> columns)>>? indexInstructions,
+		Function(bool online)? networkStateListener,
 	}) {
-		return PbOfflineCache._(pb, sqlite3.open(join(directoryToSave, "offline_cache")), overrideLogger ?? Logger(), indexInstructions ?? const <String, List<(String name, bool unique, List<String>)>>{});
+		return PbOfflineCache._(
+			pb,
+			sqlite3.open(join(directoryToSave, "offline_cache")),
+			overrideLogger ?? Logger(),
+			indexInstructions ?? const <String, List<(String name, bool unique, List<String>)>>{},
+			networkStateListener,
+		);
 	}
 
-	PbOfflineCache._(this.pb, this.db, this.logger, [this.indexInstructions = const <String, List<(String name, bool unique, List<String>)>>{}]) {
+	PbOfflineCache._(this.pb, this.db, this.logger, [this.indexInstructions = const <String, List<(String name, bool unique, List<String>)>>{}, this._networkStateListener]) {
 		db.execute("""
 	CREATE TABLE IF NOT EXISTS _operation_queue (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -98,6 +105,7 @@ class PbOfflineCache {
 	Database db;
 	final Logger logger;
 	final Map<String, List<(String name, bool unique, List<String> columns)>> indexInstructions;
+	final Function(bool online)? _networkStateListener;
 
 	String? get id => pb.authStore.model?.id;
 	bool get tokenValid => pb.authStore.isValid;
@@ -110,8 +118,12 @@ class PbOfflineCache {
 					dbAccessible = false;
 				} else {
 					if (!dbAccessible) {
-						logger.i("DB accessible again");
 						dbAccessible = true;
+						logger.i("DB accessible again");
+						if (_networkStateListener != null) {
+							// ignore: unnecessary_non_null_assertion
+							_networkStateListener!(true);
+						}
 					}
 					await dequeueCachedOperations();
 				}
@@ -121,8 +133,12 @@ class PbOfflineCache {
 					rethrow;
 				}
 				if (dbAccessible) {
-					logger.i("DB do longer accessible");
 					dbAccessible = false;
+					logger.i("DB do longer accessible");
+					if (_networkStateListener != null) {
+						// ignore: unnecessary_non_null_assertion
+						_networkStateListener!(false);
+					}
 				}
 			}
 			await Future<void>.delayed(const Duration(seconds: 10));
