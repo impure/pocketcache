@@ -113,7 +113,7 @@ class PbOfflineCache {
 					await dequeueCachedOperations();
 				}
 			} on SocketException catch (e) {
-				if (!e.message.contains("refused")) {
+				if (!(e.message.contains("refused") || e.message.contains("timeout") || e.message.contains("No such host"))) {
 					rethrow;
 				}
 				dbAccessible = false;
@@ -247,7 +247,9 @@ class PbOfflineCache {
 
 extension NetworkErrorCheck on ClientException{
 	bool isNetworkError() {
-		return toString().contains("refused the network connection") ||	toString().contains("refused the connection") || toString().contains("Failed host lookup");
+		return toString().contains("refused the network connection")
+				||toString().contains("refused the connection")
+				|| toString().contains("Failed host lookup");
 	}
 }
 
