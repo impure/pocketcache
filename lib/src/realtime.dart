@@ -7,7 +7,16 @@ import 'pocketbase_offline_cache_base.dart';
 extension Realtime on PbOfflineCache {
 	Future<void> subscribeToId(String collection, String id, DateTime updateTime, Function(Map<String, dynamic>) callback) async {
 
-		final Map<String, dynamic>? data = await getSingleRecord(collection, id, source: QuerySource.server);
+		final Map<String, dynamic>? data;
+		try {
+			data = await getSingleRecord(collection, id, source: QuerySource.server);
+		} on ClientException catch (e) {
+			if (!e.isNetworkError()) {
+				rethrow;
+			} else {
+				return;
+			}
+		}
 
 		// We need the update time check or if we re-init the widget too often it may result in getting old data here
 		// I'm not exactly sure why this is, maybe it's a caching issue

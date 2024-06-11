@@ -109,14 +109,21 @@ class PbOfflineCache {
 				if (response.statusCode != 200) {
 					dbAccessible = false;
 				} else {
-					dbAccessible = true;
+					if (!dbAccessible) {
+						logger.i("DB accessible again");
+						dbAccessible = true;
+					}
 					await dequeueCachedOperations();
 				}
 			} on SocketException catch (e) {
-				if (!(e.message.contains("refused") || e.message.contains("timeout") || e.message.contains("No such host"))) {
+				if (!(e.message.contains("refused") || e.message.contains("timeout") ||
+						e.message.contains("No such host") || e.message.contains("No address associated with hostname") || e.message.contains("Failed host lookup"))) {
 					rethrow;
 				}
-				dbAccessible = false;
+				if (dbAccessible) {
+					logger.i("DB do longer accessible");
+					dbAccessible = false;
+				}
 			}
 			await Future<void>.delayed(const Duration(seconds: 10));
 		}
@@ -248,8 +255,9 @@ class PbOfflineCache {
 extension NetworkErrorCheck on ClientException{
 	bool isNetworkError() {
 		return toString().contains("refused the network connection")
-				||toString().contains("refused the connection")
-				|| toString().contains("Failed host lookup");
+				|| toString().contains("refused the connection")
+				|| toString().contains("Failed host lookup")
+				|| toString().contains("No address associated with hostname");
 	}
 }
 
