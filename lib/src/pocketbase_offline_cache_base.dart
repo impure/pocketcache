@@ -30,16 +30,18 @@ class PbOfflineCache {
 		Map<String, List<(String name, bool unique, List<String> columns)>>? indexInstructions,
 		Function(bool online)? networkStateListener,
 	}) {
+		final String path = join(directoryToSave, "offline_cache");
 		return PbOfflineCache._(
 			pb,
-			sqlite3.open(join(directoryToSave, "offline_cache")),
+			sqlite3.open(path),
 			overrideLogger ?? Logger(),
 			indexInstructions ?? const <String, List<(String name, bool unique, List<String>)>>{},
 			networkStateListener,
+			path,
 		);
 	}
 
-	PbOfflineCache._(this.pb, this.db, this.logger, [this.indexInstructions = const <String, List<(String name, bool unique, List<String>)>>{}, this._networkStateListener]) {
+	PbOfflineCache._(this.pb, this.db, this.logger, [this.indexInstructions = const <String, List<(String name, bool unique, List<String>)>>{}, this._networkStateListener, this.dbPath = ""]) {
 		db.execute("""
 	CREATE TABLE IF NOT EXISTS _operation_queue (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -100,6 +102,7 @@ class PbOfflineCache {
 		}
 	}
 
+	String dbPath;
 	bool dbAccessible = true;
 	final PocketBase pb;
 	Database db;
