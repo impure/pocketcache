@@ -65,6 +65,7 @@ extension ListWrapper on PbOfflineCache {
 			return data;
 		} on ClientException catch (e) {
 			if (!e.isNetworkError()) {
+				logger.e("$e: filter: ${makePbFilter(where, sort: sort, startAfter: startAfter)}, sort: ${makeSortFilter(sort)}");
 				rethrow;
 			}
 			if (source == QuerySource.any) {
@@ -225,6 +226,8 @@ String? makePbFilter((String, List<Object?>)? params, { (String column, bool des
 			return "'$param'";
 		} else if (param is DateTime) {
 			return "'${param.toUtc()}'";
+		} else if (param == null) {
+			return "''";
 		} else {
 			return param.toString();
 		}
