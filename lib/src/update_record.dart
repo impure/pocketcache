@@ -38,9 +38,11 @@ extension UpdateWrapper on PbOfflineCache {
 
 			return newValues;
 
-		} on ClientException catch (e) {
-			if (!e.isNetworkError()) {
-				rethrow;
+		} catch (e) {
+			if (e is! ClientException){
+				logger.w("Unknown non-client exception when updating record: $e values: $values");
+			} else if (!e.isNetworkError()) {
+				logger.w("Unknown exception when updating record: $e values: $values");
 			}
 			if (source == QuerySource.any) {
 				return updateRecord(collectionName, id, values, source: QuerySource.cache);

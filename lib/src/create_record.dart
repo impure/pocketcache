@@ -49,14 +49,17 @@ extension CreateWrapper on PbOfflineCache {
       data["updated"] = model.updated;
 
       return data;
-    } on ClientException catch (e) {
-      if (e.toString().contains("Failed to find all relation records")) {
+    } catch (e) {
+
+      if (e is! ClientException){
+        logger.w("Unknown non-client exception when inserting record: $e");
+      } else if (e.toString().contains("Failed to find all relation records")) {
         logger.e("Failed to insert $values into $collectionName");
         rethrow;
+      } else if (!e.isNetworkError()) {
+        logger.w("Unknown exception when inserting record: $e");
       }
-      if (!e.isNetworkError()) {
-        rethrow;
-      }
+
       if (source == QuerySource.any) {
         return createRecord(collectionName, values, source: QuerySource.cache);
       } else {

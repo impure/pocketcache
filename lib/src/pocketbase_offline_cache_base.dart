@@ -139,6 +139,8 @@ class PbOfflineCache {
 						_networkStateListener!(false);
 					}
 				}
+			} catch (e) {
+				logger.w("Unknown db check error: $e");
 			}
 			await Future<void>.delayed(const Duration(seconds: 10));
 		}
