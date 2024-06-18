@@ -1,11 +1,46 @@
 
+import 'dart:async';
+
 import 'package:pocketbase/pocketbase.dart';
 
 import 'get_single_record.dart';
 import 'pocketbase_offline_cache_base.dart';
 
+// The reason why we need this and not to cancel the subscription directly is because subscribeToId() is async meaning if we unsubscribed directly
+// it's possible to request a subscription, unsubscribe, and then get a subscription resulting in a leak.
+class PbSubscriptionDetails {
+
+	PbSubscriptionDetails({required this.pb, required this.collectionName, required this.id});
+
+	final PocketBase pb;
+	final String collectionName;
+	final String id;
+	bool allowSubscribe = true;
+
+	Future<void> unsubscribe() async {
+		allowSubscribe = false;
+		try {
+			return pb.collection(collectionName).unsubscribe(id);
+		} on ClientException catch (e) {
+			if (!e.isNetworkError()) {
+				rethrow;
+			}
+		}
+	}
+}
+
 extension Realtime on PbOfflineCache {
-	Future<void> subscribeToId(String collection, String id, DateTime updateTime, Function(Map<String, dynamic>) callback) async {
+
+	PbSubscriptionDetails subscribeToId(String collection, String id, DateTime updateTime, Function(Map<String, dynamic>) callback) {
+
+		final PbSubscriptionDetails details = PbSubscriptionDetails(pb: pb, collectionName: collection, id: id);
+
+		unawaited(_subscribeToId(details, collection, id, updateTime, callback));
+
+		return details;
+	}
+
+	Future<void> _subscribeToId(PbSubscriptionDetails details, String collection, String id, DateTime updateTime, Function(Map<String, dynamic>) callback) async {
 
 		final Map<String, dynamic>? data;
 		try {
@@ -18,6 +53,10 @@ extension Realtime on PbOfflineCache {
 			}
 		}
 
+		if (!details.allowSubscribe) {
+			return;
+		}
+
 		// We need the update time check or if we re-init the widget too often it may result in getting old data here
 		// I'm not exactly sure why this is, maybe it's a caching issue
 		if (data != null && (DateTime.tryParse(data["updated"] ?? "") ?? DateTime(2024)).isAfter(updateTime)) {
@@ -25,28 +64,24 @@ extension Realtime on PbOfflineCache {
 		}
 
 		try {
-			await pb.collection(collection).subscribe(id, (RecordSubscriptionEvent event) {
-				if (event.record != null) {
-					final Map<String, dynamic> data = event.record!.data;
+			if (details.allowSubscribe) {
+				await pb.collection(collection).subscribe(id, (RecordSubscriptionEvent event) {
+					if (event.record != null) {
+						final Map<String, dynamic> data = event.record!.data;
 
-					data["updated"] = event.record!.updated;
+						data["updated"] = event.record!.updated;
 
-					callback(event.record!.data);
-				}
-			});
+						callback(event.record!.data);
+					}
+				});
+			}
 		} on ClientException catch (e) {
 			if (!e.isNetworkError()) {
 				rethrow;
 			}
-		}
-	}
-
-	Future<void> unsubscribeFromId(String collection, String id) async {
-		try {
-			return pb.collection(collection).unsubscribe(id);
-		} on ClientException catch (e) {
-			if (!e.isNetworkError()) {
-				rethrow;
+		} finally {
+			if (!details.allowSubscribe) {
+				unawaited(details.unsubscribe());
 			}
 		}
 	}
