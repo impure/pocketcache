@@ -9,10 +9,10 @@ import 'package:logger/logger.dart';
 import 'package:path/path.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:sqlite3/common.dart';
-import 'package:sqlite3/sqlite3.dart'; // Remove import when building to web
 
 import 'count_records.dart';
 import 'get_records.dart';
+import 'make_db.dart' if (dart.library.io) 'make_db_io.dart' if (dart.library.html) 'make_db_web.dart';
 
 // PocketBase does not support getting more than 500 items at once
 const int defaultMaxItems = 500;
@@ -39,7 +39,7 @@ class PbOfflineCache {
 
 		return PbOfflineCache._(
 			pb,
-			sqlite3.open(path!), // Switch to null to build to web
+			makeDb(path),
 			overrideLogger ?? Logger(),
 			indexInstructions ?? const <String, List<(String name, bool unique, List<String>)>>{},
 			networkStateListener,
