@@ -80,6 +80,7 @@ void main() {
 
 	final PbOfflineCache pb = PbOfflineCache.withDb(PbWrapper(), DatabaseMock());
 	final Database db = DatabaseMock();
+	pb.dbAccessible = true;
 	final Logger testLogger = TestLogger();
 
 	group("listRecords", () {
@@ -187,7 +188,7 @@ void main() {
 			expect(operations.toString(),
 				"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
 				"[CREATE TABLE test (id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT,_offline_json_1 TEXT DEFAULT '[]',2 TEXT DEFAULT ''), []], "
-				"[INSERT OR REPLACE INTO test(id, created, updated, _downloaded, _offline_json_1, 2) VALUES(?, ?, ?, ?, ?, ?);, [abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, 2024-03-01 00:00:00.000, [1, 2], 2022-01-01 00:00:00.000]]]"
+				"[INSERT OR REPLACE INTO test(id, created, updated, _downloaded, _offline_json_1, 2) VALUES(?, ?, ?, ?, ?, ?);, [abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, 2024-03-01 00:00:00.000, [\"1\",\"2\"], 2022-01-01 00:00:00.000]]]"
 			);
 		});
 

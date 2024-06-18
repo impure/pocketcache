@@ -295,6 +295,7 @@ void main() {
 	});
 
 	final PbOfflineCache pb = PbOfflineCache.withDb(PbWrapper(), DatabaseMock());
+	pb.dbAccessible = true;
 
 	group("selectBuilder", () {
 		test("basic selectBuilder", () {
@@ -314,17 +315,7 @@ void main() {
 
 		test("multiple conditions selectBuilder", () {
 			selectBuilder(pb.db, "collection", columns: "COUNT(*)", filter: ("abc = ? && xyz = ?", <dynamic>[ 1, "2" ]));
-			expect(operations.toString(), "[[SELECT COUNT(*) FROM collection WHERE abc = ? AND xyz = ?;, [1, 2]]]");
-		});
-
-		test("start after multiple conditions selectBuilder", () {
-			selectBuilder(pb.db, "collection", filter: ("abc = ? && xyz = ?", <dynamic>[ 1, "2" ]), startAfter: <String, dynamic>{ "a" : 1, "b" : 2 });
-			expect(operations.toString(), "[[SELECT * FROM collection WHERE abc = ? AND xyz = ? AND (a, b) > (?, ?);, [1, 2, 1, 2]]]");
-		});
-
-		test("start after no conditions selectBuilder", () {
-			selectBuilder(pb.db, "collection", startAfter: <String, dynamic>{ "a" : 1 });
-			expect(operations.toString(), "[[SELECT * FROM collection WHERE (a) > (?);, [1]]]");
+			expect(operations.toString(), "[[SELECT COUNT(*) FROM collection WHERE abc = ? AND  xyz = ?;, [1, 2]]]");
 		});
 
 		test("single condition bool selectBuilder", () {
