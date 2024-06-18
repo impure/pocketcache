@@ -3,7 +3,7 @@ import 'package:logger/logger.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketbase_offline_cache/pocketbase_offline_cache.dart';
 import 'package:pocketbase_offline_cache/src/get_records.dart';
-import 'package:sqlite3/sqlite3.dart';
+import 'package:sqlite3/common.dart';
 import 'package:test/test.dart';
 
 import 'pocketbase_offline_cache_test.dart';
@@ -79,7 +79,7 @@ void main() {
 	});
 
 	final PbOfflineCache pb = PbOfflineCache.withDb(PbWrapper(), DatabaseMock());
-	final Database db = DatabaseMock();
+	final CommonDatabase db = DatabaseMock();
 	pb.dbAccessible = true;
 	final Logger testLogger = TestLogger();
 

@@ -17,12 +17,12 @@ extension CreateWrapper on PbOfflineCache {
     if (source != QuerySource.server && (!dbAccessible || source == QuerySource.cache)) {
 
       // If table does not exist yet we are unsure of the required schema so can't add anything
-      if (tableExists(db, collectionName)) {
+      if (db != null && tableExists(db!, collectionName)) {
         final String id = makePbId();
         final String now = DateTime.now().toUtc().toString();
 
         queueOperation("INSERT", collectionName, idToModify: id, values: values);
-        insertRecordsIntoLocalDb(db, collectionName, <RecordModel>[ RecordModel(
+        insertRecordsIntoLocalDb(db!, collectionName, <RecordModel>[ RecordModel(
           id: id,
           created: now,
           updated: now,
@@ -41,7 +41,9 @@ extension CreateWrapper on PbOfflineCache {
 
     try {
       final RecordModel model = await pb.collection(collectionName).create(body: values);
-      insertRecordsIntoLocalDb(db, collectionName, <RecordModel>[ model ], logger, indexInstructions: indexInstructions);
+      if (db != null) {
+        insertRecordsIntoLocalDb(db!, collectionName, <RecordModel>[ model ], logger, indexInstructions: indexInstructions);
+      }
       final Map<String, dynamic> data = model.data;
 
       data["id"] = model.id;

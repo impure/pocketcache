@@ -3,11 +3,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
 import 'package:path/path.dart';
 import 'package:pocketbase/pocketbase.dart';
-import 'package:sqlite3/sqlite3.dart';
+import 'package:sqlite3/common.dart';
+import 'package:sqlite3/sqlite3.dart'; // Remove import when building to web
 
 import 'count_records.dart';
 import 'get_records.dart';
@@ -21,19 +23,23 @@ enum QuerySource {
 	any,
 }
 
-bool isTest() => Platform.environment.containsKey('FLUTTER_TEST');
+bool isTest() => kIsWeb ? false : Platform.environment.containsKey('FLUTTER_TEST');
 
 class PbOfflineCache {
 
-	factory PbOfflineCache(PocketBase pb, String directoryToSave, {
+	factory PbOfflineCache(PocketBase pb, String? directoryToSave, {
 		Logger? overrideLogger,
 		Map<String, List<(String name, bool unique, List<String> columns)>>? indexInstructions,
 		Function(bool online)? networkStateListener,
 	}) {
-		final String path = join(directoryToSave, "offline_cache");
+
+		assert(kIsWeb || directoryToSave != null, "Directory to save to should only be null if building to web.");
+
+		final String? path = directoryToSave == null ? null : join(directoryToSave, "offline_cache");
+
 		return PbOfflineCache._(
 			pb,
-			sqlite3.open(path),
+			sqlite3.open(path!), // Switch to null to build to web
 			overrideLogger ?? Logger(),
 			indexInstructions ?? const <String, List<(String name, bool unique, List<String>)>>{},
 			networkStateListener,
@@ -42,7 +48,7 @@ class PbOfflineCache {
 	}
 
 	PbOfflineCache._(this.pb, this.db, this.logger, [this.indexInstructions = const <String, List<(String name, bool unique, List<String>)>>{}, this._networkStateListener, this.dbPath = ""]) {
-		db.execute("""
+		db?.execute("""
 	CREATE TABLE IF NOT EXISTS _operation_queue (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		operation_type TEXT,
@@ -50,7 +56,7 @@ class PbOfflineCache {
 		collection_name TEXT,
 		id_to_modify TEXT
 	)""");
-		db.execute("""
+		db?.execute("""
 	CREATE TABLE IF NOT EXISTS _operation_queue_params (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		operation_id INTEGER,
@@ -64,13 +70,16 @@ class PbOfflineCache {
 		}
 	}
 
-	factory PbOfflineCache.withDb(PocketBase pb, Database db, {Logger? overrideLogger}) {
+	factory PbOfflineCache.withDb(PocketBase pb, CommonDatabase db, {Logger? overrideLogger}) {
 		return PbOfflineCache._(pb, db, overrideLogger ?? Logger());
 	}
 
 	Future<void> dropAllTables(String directoryToSave) async {
+		if (db == null) {
+			return;
+		}
 		try {
-			final ResultSet tables = db.select("SELECT name FROM sqlite_master WHERE type = 'table'");
+			final ResultSet tables = db!.select("SELECT name FROM sqlite_master WHERE type = 'table'");
 
 			for (final Row table in tables) {
 				final String tableName = table['name'] as String;
@@ -85,7 +94,7 @@ class PbOfflineCache {
 					continue;
 				}
 
-				db.execute('DROP TABLE IF EXISTS $tableName');
+				db!.execute('DROP TABLE IF EXISTS $tableName');
 				logger.i('Dropped table: $tableName');
 			}
 
@@ -94,7 +103,7 @@ class PbOfflineCache {
 			logger.w('Error during dropAllTables: $e');
 		} finally {
 			try {
-				db.execute('VACUUM;');
+				db!.execute('VACUUM;');
 				logger.i('Database vacuumed successfully');
 			} catch (e) {
 				logger.w('Error during vacuum: $e');
@@ -102,10 +111,10 @@ class PbOfflineCache {
 		}
 	}
 
-	String dbPath;
+	String? dbPath;
 	bool dbAccessible = true;
 	final PocketBase pb;
-	Database db;
+	CommonDatabase? db;
 	final Logger logger;
 	final Map<String, List<(String name, bool unique, List<String> columns)>> indexInstructions;
 	final Function(bool online)? _networkStateListener;
@@ -145,7 +154,12 @@ class PbOfflineCache {
 	}
 
 	Future<void> dequeueCachedOperations() async {
-		final ResultSet data = db.select("SELECT * FROM _operation_queue ORDER BY created ASC");
+
+		if (db == null) {
+			return;
+		}
+
+		final ResultSet data = db!.select("SELECT * FROM _operation_queue ORDER BY created ASC");
 
 		for (final Row operation in data) {
 			final String operationId = operation.values[0].toString();
@@ -153,20 +167,20 @@ class PbOfflineCache {
 			final String collectionName = operation.values[3].toString();
 			final String pbId = operation.values[4].toString();
 
-			final ResultSet data = db.select("SELECT * FROM _operation_queue_params WHERE operation_id = ?", <String>[ operationId ]);
+			final ResultSet data = db!.select("SELECT * FROM _operation_queue_params WHERE operation_id = ?", <String>[ operationId ]);
 			final Map<String, dynamic> params = <String, dynamic>{};
 			for (final Row operationParam in data) {
 				params[operationParam.values[2].toString()] = operationParam.values[3];
 			}
 
 			void cleanUp() {
-				db.execute("DELETE FROM _operation_queue WHERE id = ?", <String>[ operationId ]);
-				db.execute("DELETE FROM _operation_queue_params WHERE id = ?", <String>[ operationId ]);
+				db!.execute("DELETE FROM _operation_queue WHERE id = ?", <String>[ operationId ]);
+				db!.execute("DELETE FROM _operation_queue_params WHERE id = ?", <String>[ operationId ]);
 			}
 
 			// If we failed to update data (probably due to a key constraint) then we need to delete the local copy of the record as well or we'll be out of sync
 			void deleteLocalRecord() {
-				db.execute("DELETE FROM $collectionName WHERE id = ?", <String>[ pbId ]);
+				db!.execute("DELETE FROM $collectionName WHERE id = ?", <String>[ pbId ]);
 				cleanUp();
 			}
 
@@ -229,10 +243,14 @@ class PbOfflineCache {
 		{Map<String, dynamic>? values, String idToModify = ""}
 	) {
 
+		if (db == null) {
+			return;
+		}
+
 		// This is not guaranteed to be unique but if two commands are executed at the same time the order doesn't really matter
 		final int created = DateTime.now().toUtc().millisecondsSinceEpoch;
 
-		final ResultSet record = db.select("INSERT INTO _operation_queue (operation_type, created, collection_name, id_to_modify) VALUES ('$operationType', $created, '$collectionName', ?) RETURNING id", <Object>[ idToModify ]);
+		final ResultSet record = db!.select("INSERT INTO _operation_queue (operation_type, created, collection_name, id_to_modify) VALUES ('$operationType', $created, '$collectionName', ?) RETURNING id", <Object>[ idToModify ]);
 		final int id = record.first.values.first! as int;
 
 		if (values != null) {
@@ -257,7 +275,7 @@ class PbOfflineCache {
 					logger.e("Unknown type: ${entry.value.runtimeType}");
 				}
 
-				db.select("INSERT INTO _operation_queue_params (operation_id, param_key, param_value) VALUES (?, ?, ?)", <Object?>[id, entry.key, valueToWrite]);
+				db!.select("INSERT INTO _operation_queue_params (operation_id, param_key, param_value) VALUES (?, ?, ?)", <Object?>[id, entry.key, valueToWrite]);
 			}
 		}
 	}
@@ -276,14 +294,14 @@ extension NetworkErrorCheck on ClientException{
 	}
 }
 
-bool tableExists(Database db, String tableName) {
+bool tableExists(CommonDatabase db, String tableName) {
 	return db.select(
 		"SELECT name FROM sqlite_master WHERE type='table' AND name=?",
 		<String> [ tableName ],
 	).isNotEmpty;
 }
 
-ResultSet selectBuilder(Database db, String tableName, {
+ResultSet selectBuilder(CommonDatabase db, String tableName, {
 	String? columns,
 	(String, List<Object?>)? filter,
 	int? maxItems,

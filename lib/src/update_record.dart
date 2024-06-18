@@ -1,6 +1,6 @@
 
 import 'package:pocketbase/pocketbase.dart';
-import 'package:sqlite3/sqlite3.dart';
+import 'package:sqlite3/common.dart';
 
 import 'create_record.dart';
 import 'get_single_record.dart';
@@ -13,10 +13,10 @@ extension UpdateWrapper on PbOfflineCache {
 
 		convertToPbTypes(values);
 
-		if (source != QuerySource.server && (!dbAccessible || source == QuerySource.cache)) {
-			if (tableExists(db, collectionName)) {
+		if (db != null && source != QuerySource.server && (!dbAccessible || source == QuerySource.cache)) {
+			if (tableExists(db!, collectionName)) {
 				queueOperation("UPDATE", collectionName, values: values, idToModify: id);
-				applyLocalUpdateOperation(db, collectionName, id, values);
+				applyLocalUpdateOperation(db!, collectionName, id, values);
 				return getSingleRecord(collectionName, id, source: QuerySource.cache);
 			}
 
@@ -26,8 +26,8 @@ extension UpdateWrapper on PbOfflineCache {
 		try {
 			final RecordModel record = await pb.collection(collectionName).update(id, body: values);
 
-			if (tableExists(db, collectionName)) {
-				applyLocalUpdateOperation(db, collectionName, id, values);
+			if (db != null && tableExists(db!, collectionName)) {
+				applyLocalUpdateOperation(db!, collectionName, id, values);
 			}
 
 			final Map<String, dynamic> newValues = record.data;
@@ -53,7 +53,7 @@ extension UpdateWrapper on PbOfflineCache {
 	}
 }
 
-void applyLocalUpdateOperation(Database db, String collectionName, String id, Map<String, dynamic> values) {
+void applyLocalUpdateOperation(CommonDatabase db, String collectionName, String id, Map<String, dynamic> values) {
 	final StringBuffer command = StringBuffer("UPDATE $collectionName SET");
 
 	bool first = true;

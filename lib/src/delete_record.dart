@@ -9,9 +9,9 @@ extension DeleteWrapper on PbOfflineCache {
 
     if (source != QuerySource.server && (!dbAccessible || source == QuerySource.cache)) {
 
-      if (tableExists(db, collectionName)) {
+      if (db != null && tableExists(db!, collectionName)) {
         queueOperation("DELETE", collectionName, idToModify: id);
-        db.execute("DELETE FROM $collectionName WHERE id = ?", <Object?>[ id ]);
+        db!.execute("DELETE FROM $collectionName WHERE id = ?", <Object?>[ id ]);
       }
 
       return;
@@ -19,7 +19,7 @@ extension DeleteWrapper on PbOfflineCache {
 
     try {
       await pb.collection(collectionName).delete(id);
-      db.execute("DELETE FROM $collectionName WHERE id = ?", <Object?>[ id ]);
+      db?.execute("DELETE FROM $collectionName WHERE id = ?", <Object?>[ id ]);
     } catch (e) {
       if (e is! ClientException){
         logger.w("Unknown non-client exception when deleting record: $e");

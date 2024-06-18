@@ -1,27 +1,21 @@
 
-import 'dart:ffi';
 
 import 'package:http/src/client.dart';
 import 'package:http/src/multipart_file.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketbase_offline_cache/pocketbase_offline_cache.dart';
 import 'package:pocketbase_offline_cache/src/pocketbase_offline_cache_base.dart';
-import 'package:sqlite3/sqlite3.dart';
+import 'package:sqlite3/common.dart';
 import 'package:test/test.dart';
 
 (List<String>, List<List<Object?>>)? testResults;
 
-class DatabaseMock implements Database {
+class DatabaseMock implements CommonDatabase {
 	@override
 	int userVersion = 0;
 
 	@override
 	bool get autocommit => throw UnimplementedError();
-
-	@override
-	Stream<double> backup(Database toDatabase, {int nPage = 5}) {
-		throw UnimplementedError();
-	}
 
 	@override
 	DatabaseConfig get config => throw UnimplementedError();
@@ -53,18 +47,15 @@ class DatabaseMock implements Database {
 	}
 
 	@override
-	Pointer<void> get handle => throw UnimplementedError();
-
-	@override
 	int get lastInsertRowId => throw UnimplementedError();
 
 	@override
-	PreparedStatement prepare(String sql, {bool persistent = false, bool vtab = true, bool checkNoTail = false}) {
+	CommonPreparedStatement prepare(String sql, {bool persistent = false, bool vtab = true, bool checkNoTail = false}) {
 		throw UnimplementedError();
 	}
 
 	@override
-	List<PreparedStatement> prepareMultiple(String sql, {bool persistent = false, bool vtab = true}) {
+	List<CommonPreparedStatement> prepareMultiple(String sql, {bool persistent = false, bool vtab = true}) {
 		throw UnimplementedError();
 	}
 
@@ -299,28 +290,28 @@ void main() {
 
 	group("selectBuilder", () {
 		test("basic selectBuilder", () {
-			selectBuilder(pb.db, "collection");
+			selectBuilder(pb.db!, "collection");
 			expect(operations.toString(), "[[SELECT * FROM collection;, []]]");
 		});
 
 		test("count selectBuilder", () {
-			selectBuilder(pb.db, "collection", columns: "COUNT(*)");
+			selectBuilder(pb.db!, "collection", columns: "COUNT(*)");
 			expect(operations.toString(), "[[SELECT COUNT(*) FROM collection;, []]]");
 		});
 
 		test("single conditions selectBuilder", () {
-			selectBuilder(pb.db, "collection", filter: ("abc >= ?", <dynamic>[ DateTime.utc(2024) ]));
+			selectBuilder(pb.db!, "collection", filter: ("abc >= ?", <dynamic>[ DateTime.utc(2024) ]));
 			expect(operations.toString(), "[[SELECT * FROM collection WHERE abc >= ?;, [2024-01-01 00:00:00.000Z]]]");
 		});
 
 		test("multiple conditions selectBuilder", () {
-			selectBuilder(pb.db, "collection", columns: "COUNT(*)", filter: ("abc = ? && xyz = ?", <dynamic>[ 1, "2" ]));
+			selectBuilder(pb.db!, "collection", columns: "COUNT(*)", filter: ("abc = ? && xyz = ?", <dynamic>[ 1, "2" ]));
 			expect(operations.toString(), "[[SELECT COUNT(*) FROM collection WHERE abc = ? AND  xyz = ?;, [1, 2]]]");
 		});
 
 		test("single condition bool selectBuilder", () {
 			testResults = (<String>["_offline_bool_abc"], <List<Object?>>[<Object?>[true]]);
-			expect(selectBuilder(pb.db, "collection", filter: ("abc = ?", <dynamic>[ true ])).toString(), "[{_offline_bool_abc: true}]");
+			expect(selectBuilder(pb.db!, "collection", filter: ("abc = ?", <dynamic>[ true ])).toString(), "[{_offline_bool_abc: true}]");
 			expect(operations.toString(), "[[SELECT * FROM collection WHERE _offline_bool_abc = ?;, [true]]]");
 		});
 

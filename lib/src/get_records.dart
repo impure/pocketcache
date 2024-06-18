@@ -4,7 +4,7 @@ import 'dart:core';
 
 import 'package:logger/logger.dart';
 import 'package:pocketbase/pocketbase.dart';
-import 'package:sqlite3/sqlite3.dart';
+import 'package:sqlite3/common.dart';
 
 import 'pocketbase_offline_cache_base.dart';
 
@@ -17,8 +17,8 @@ extension ListWrapper on PbOfflineCache {
 		Map<String, dynamic>? startAfter,
 	}) async {
 		if (source != QuerySource.server && (!dbAccessible || source == QuerySource.cache)) {
-			if (tableExists(db, collectionName)) {
-				final ResultSet results = selectBuilder(db, collectionName, maxItems: maxItems, filter: where, startAfter: startAfter, sort: sort);
+			if (db != null && tableExists(db!, collectionName)) {
+				final ResultSet results = selectBuilder(db!, collectionName, maxItems: maxItems, filter: where, startAfter: startAfter, sort: sort);
 				final List<Map<String, dynamic>> data = <Map<String, dynamic>>[];
 				for (final Row row in results) {
 					final Map<String, dynamic> entryToInsert = <String, dynamic>{};
@@ -77,7 +77,11 @@ extension ListWrapper on PbOfflineCache {
 	}
 }
 
-void insertRecordsIntoLocalDb(Database db, String collectionName, List<RecordModel> records, Logger logger, {Map<String, List<(String name, bool unique, List<String> columns)>> indexInstructions = const <String, List<(String, bool, List<String>)>>{}, String? overrideDownloadTime}) {
+void insertRecordsIntoLocalDb(CommonDatabase? db, String collectionName, List<RecordModel> records, Logger logger, {Map<String, List<(String name, bool unique, List<String> columns)>> indexInstructions = const <String, List<(String, bool, List<String>)>>{}, String? overrideDownloadTime}) {
+
+	if (db == null) {
+		return;
+	}
 
 	if (!tableExists(db, collectionName)) {
 		final StringBuffer schema = StringBuffer("id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT");
