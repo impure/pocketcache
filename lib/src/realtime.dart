@@ -7,21 +7,25 @@ import 'package:synchronized/synchronized.dart';
 import 'get_single_record.dart';
 import 'pocketbase_offline_cache_base.dart';
 
+Map<(String table, String id), PbSubscriptionDetails> listeners = <(String table, String id), PbSubscriptionDetails>{};
+
 // The reason why we need this and not to cancel the subscription directly is because subscribeToId() is async meaning if we unsubscribed directly
 // it's possible to request a subscription, unsubscribe, and then get a subscription resulting in a leak.
 class PbSubscriptionDetails {
 
-	PbSubscriptionDetails({required this.pb, required this.collectionName, required this.id});
+	PbSubscriptionDetails({required this.pb, required this.collectionName, required this.id, required this.callback});
 
 	final PocketBase pb;
 	final String collectionName;
 	final String id;
+	final void Function(Map<String, dynamic>) callback;
 	bool allowSubscribe = true;
 	final Lock lock = Lock();
 
 	Future<void> unsubscribe() async {
 		try {
 			await lock.synchronized(() async {
+				listeners.remove((collectionName, id));
 				allowSubscribe = false;
 				await pb.collection(collectionName).unsubscribe(id);
 			});
@@ -35,11 +39,12 @@ class PbSubscriptionDetails {
 
 extension Realtime on PbOfflineCache {
 
-	PbSubscriptionDetails subscribeToId(String collection, String id, DateTime updateTime, Function(Map<String, dynamic>) callback) {
+	PbSubscriptionDetails subscribeToId(String collection, String id, DateTime updateTime, void Function(Map<String, dynamic>) callback) {
 
-		final PbSubscriptionDetails details = PbSubscriptionDetails(pb: pb, collectionName: collection, id: id);
+		final PbSubscriptionDetails details = PbSubscriptionDetails(pb: pb, collectionName: collection, id: id, callback: callback);
 
 		unawaited(_subscribeToId(details, collection, id, updateTime, callback));
+		listeners[(collection, id)] = details;
 
 		return details;
 	}

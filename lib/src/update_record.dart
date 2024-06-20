@@ -5,6 +5,7 @@ import 'package:sqlite3/common.dart';
 import 'create_record.dart';
 import 'get_single_record.dart';
 import 'pocketbase_offline_cache_base.dart';
+import 'realtime.dart';
 
 extension UpdateWrapper on PbOfflineCache {
 	Future<Map<String, dynamic>?> updateRecord(String collectionName, String id, Map<String, dynamic> values, {
@@ -17,7 +18,17 @@ extension UpdateWrapper on PbOfflineCache {
 			if (tableExists(db!, collectionName)) {
 				queueOperation("UPDATE", collectionName, values: values, idToModify: id);
 				applyLocalUpdateOperation(db!, collectionName, id, values);
-				return getSingleRecord(collectionName, id, source: QuerySource.cache);
+
+				final Map<String, dynamic>? record = await getSingleRecord(collectionName, id, source: QuerySource.cache);
+
+				if (record != null) {
+					final PbSubscriptionDetails? details = listeners[(collectionName, id)];
+					if (details != null) {
+						details.callback(record);
+					}
+				}
+
+				return record;
 			}
 
 			return null;
