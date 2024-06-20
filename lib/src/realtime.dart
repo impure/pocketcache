@@ -2,6 +2,7 @@
 import 'dart:async';
 
 import 'package:pocketbase/pocketbase.dart';
+import 'package:synchronized/synchronized.dart';
 
 import 'get_single_record.dart';
 import 'pocketbase_offline_cache_base.dart';
@@ -16,11 +17,14 @@ class PbSubscriptionDetails {
 	final String collectionName;
 	final String id;
 	bool allowSubscribe = true;
+	final Lock lock = Lock();
 
 	Future<void> unsubscribe() async {
-		allowSubscribe = false;
 		try {
-			return pb.collection(collectionName).unsubscribe(id);
+			await lock.synchronized(() async {
+				allowSubscribe = false;
+				await pb.collection(collectionName).unsubscribe(id);
+			});
 		} on ClientException catch (e) {
 			if (!e.isNetworkError()) {
 				rethrow;
@@ -53,10 +57,6 @@ extension Realtime on PbOfflineCache {
 			}
 		}
 
-		if (!details.allowSubscribe) {
-			return;
-		}
-
 		// We need the update time check or if we re-init the widget too often it may result in getting old data here
 		// I'm not exactly sure why this is, maybe it's a caching issue
 		if (data != null && (DateTime.tryParse(data["updated"] ?? "") ?? DateTime(2024)).isAfter(updateTime)) {
@@ -64,24 +64,22 @@ extension Realtime on PbOfflineCache {
 		}
 
 		try {
-			if (details.allowSubscribe) {
-				await pb.collection(collection).subscribe(id, (RecordSubscriptionEvent event) {
-					if (event.record != null) {
-						final Map<String, dynamic> data = event.record!.data;
+			await details.lock.synchronized(() async {
+				if (details.allowSubscribe) {
+					await pb.collection(collection).subscribe(id, (RecordSubscriptionEvent event) {
+						if (event.record != null) {
+							final Map<String, dynamic> data = event.record!.data;
 
-						data["updated"] = event.record!.updated;
+							data["updated"] = event.record!.updated;
 
-						callback(event.record!.data);
-					}
-				});
-			}
+							callback(event.record!.data);
+						}
+					});
+				}
+			});
 		} on ClientException catch (e) {
 			if (!e.isNetworkError()) {
 				rethrow;
-			}
-		} finally {
-			if (!details.allowSubscribe) {
-				unawaited(details.unsubscribe());
 			}
 		}
 	}
