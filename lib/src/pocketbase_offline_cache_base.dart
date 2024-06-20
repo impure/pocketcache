@@ -290,7 +290,8 @@ extension NetworkErrorCheck on ClientException{
 		return toString().contains("refused the network connection")
 				|| toString().contains("refused the connection")
 				|| toString().contains("Failed host lookup")
-				|| toString().contains("No address associated with hostname");
+				|| toString().contains("No address associated with hostname")
+				|| toString().contains("statusCode: 0, response: {}");
 	}
 }
 
