@@ -56,7 +56,7 @@ extension CreateWrapper on PbOfflineCache {
       if (e is! ClientException){
         logger.w("Unknown non-client exception when inserting record: $e");
       } else if (e.toString().contains("Failed to find all relation records")) {
-        logger.e("Failed to insert $values into $collectionName");
+        logger.e("Failed to insert $values into $collectionName ($e)");
         rethrow;
       } else if (!e.isNetworkError()) {
         logger.w("Unknown exception when inserting record: $e");
