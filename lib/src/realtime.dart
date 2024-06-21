@@ -39,17 +39,24 @@ class PbSubscriptionDetails {
 
 extension Realtime on PbOfflineCache {
 
-	PbSubscriptionDetails subscribeToId(String collection, String id, DateTime updateTime, void Function(Map<String, dynamic>) callback) {
+	PbSubscriptionDetails subscribeToId(String collection, String id, DateTime updateTime, void Function(Map<String, dynamic>) callback, {Duration debouncingDuration = const Duration(milliseconds: 100)}) {
 
 		final PbSubscriptionDetails details = PbSubscriptionDetails(pb: pb, collectionName: collection, id: id, callback: callback);
 
-		unawaited(_subscribeToId(details, collection, id, updateTime, callback));
+		unawaited(_subscribeToId(details, collection, id, updateTime, callback, debouncingDuration));
 		listeners[(collection, id)] = details;
 
 		return details;
 	}
 
-	Future<void> _subscribeToId(PbSubscriptionDetails details, String collection, String id, DateTime updateTime, Function(Map<String, dynamic>) callback) async {
+	Future<void> _subscribeToId(PbSubscriptionDetails details, String collection, String id, DateTime updateTime, Function(Map<String, dynamic>) callback, Duration debouncingDuration) async {
+
+		// Prevents too many temporary listeners from being registered all at once
+		await Future<void>.delayed(debouncingDuration);
+
+		if (!details.allowSubscribe) {
+			return;
+		}
 
 		final Map<String, dynamic>? data;
 		try {
