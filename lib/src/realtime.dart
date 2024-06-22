@@ -30,7 +30,7 @@ class PbSubscriptionDetails {
 		listeners.remove((collectionName, id));
 		allowSubscribe = false;
 		await Future<void>.delayed(const Duration(milliseconds: 500));
-		**/
+		*/
 
 		try {
 			await lock.synchronized(() async {

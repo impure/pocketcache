@@ -5,6 +5,7 @@ import 'dart:core';
 import 'package:logger/logger.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:sqlite3/common.dart';
+import 'package:sqlite3/sqlite3.dart';
 
 import 'pocketbase_offline_cache_base.dart';
 
@@ -47,6 +48,31 @@ extension ListWrapper on PbOfflineCache {
 				filter: makePbFilter(where, sort: sort, startAfter: startAfter),
 				sort: makeSortFilter(sort),
 			)).items;
+
+			if (db != null) {
+				final Row? lastSyncTime = db!.select(
+					"SELECT name FROM _last_sync_times WHERE AND table_name=?",
+					<String> [ collectionName ],
+				).firstOrNull;
+
+				if (lastSyncTime != null) {
+					DateTime? newLastSyncTime;
+
+					for (final RecordModel model in records) {
+						final DateTime? time = DateTime.tryParse(model.updated)?.toUtc();
+						if (time == null) {
+							logger.e("Unable to parse time ${model.updated}");
+						}
+						if (time != null && (newLastSyncTime == null || time.isAfter(newLastSyncTime))) {
+							newLastSyncTime = time;
+						}
+					}
+
+					if (newLastSyncTime != null) {
+						db!.execute("INSERT OR REPLACE INTO _last_sync_times(table_name, last_update) VALUES(?, ?)", <dynamic>[	collectionName,	newLastSyncTime.millisecondsSinceEpoch ]);
+					}
+				}
+			}
 
 			if (records.isNotEmpty) {
 				insertRecordsIntoLocalDb(db, collectionName, records, logger, indexInstructions: indexInstructions);

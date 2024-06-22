@@ -14,9 +14,11 @@ import 'count_records.dart';
 import 'get_records.dart';
 import 'make_db.dart' if (dart.library.io) 'make_db_io.dart' if (dart.library.html) 'make_db_web.dart';
 
-// PocketBase does not support getting more than 500 items at once
+/// PocketBase does not support getting more than 500 items at once so limit it to that amount. Maybe in the future we can increase it
 const int defaultMaxItems = 500;
 
+/// Get our results only from the server, only from the cache, or try server first and then the cache
+/// Failures from the cache only or any will return an empty response, failures from server only will throw an exception
 enum QuerySource {
 	server,
 	cache,
@@ -47,7 +49,7 @@ class PbOfflineCache {
 		);
 	}
 
-	PbOfflineCache._(this.pb, this.db, this.logger, [this.indexInstructions = const <String, List<(String name, bool unique, List<String>)>>{}, this._networkStateListener, this.dbPath = ""]) {
+	PbOfflineCache._(this.pb, this.db, this.logger, [this.indexInstructions = const <String, List<(String name, bool unique, List<String>)>>{}, this._networkStateListener, this.dbPath = "", this.resyncData]) {
 		db?.execute("""
 	CREATE TABLE IF NOT EXISTS _operation_queue (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -63,6 +65,11 @@ class PbOfflineCache {
 		param_key TEXT,
 		param_value TEXT,
 		FOREIGN KEY(operation_id) REFERENCES operations(id)
+	)""");
+		db?.execute("""
+	CREATE TABLE IF NOT EXISTS _last_sync_times (
+		table_name TEXT PRIMARY KEY,
+		last_update INTEGER,
 	)""");
 
 		if (!isTest()) {
@@ -118,6 +125,9 @@ class PbOfflineCache {
 	final Logger logger;
 	final Map<String, List<(String name, bool unique, List<String> columns)>> indexInstructions;
 	final Function(bool online)? _networkStateListener;
+
+	/// Not required, but recommended. This is called periodically to resync the data with the db
+	final (DateTime mostrecentUpdate, int numItemsFetched) Function(DateTime lastFetchTime)? resyncData;
 
 	String? get id => pb.authStore.model?.id;
 	bool get tokenValid => pb.authStore.isValid;

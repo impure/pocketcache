@@ -26,7 +26,7 @@ Note that this package reserves the following:
 
 - Column names starting in `_offline_bool_` and `_offline_json_`
 - The column name `_downloaded`
-- The tables `_offline_queue` and `_offline_queue_params`
+- The tables `_offline_queue`, `_offline_queue_params`, and `_last_sync_times`
 
 In addition it expects all of PocketBases data to have the `id`, `created`, and `updated` fields.
 
