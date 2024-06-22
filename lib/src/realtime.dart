@@ -28,9 +28,7 @@ class PbSubscriptionDetails {
 			await lock.synchronized(() async {
 				listeners.remove((collectionName, id));
 				allowSubscribe = false;
-				if (!kIsWeb) {
-					await pb.collection(collectionName).unsubscribe(id);
-				}
+				await pb.collection(collectionName).unsubscribe(id);
 			});
 		} on ClientException catch (e) {
 			if (!e.isNetworkError()) {
@@ -80,7 +78,7 @@ extension Realtime on PbOfflineCache {
 
 		try {
 			await details.lock.synchronized(() async {
-				if (details.allowSubscribe && !kIsWeb) {
+				if (details.allowSubscribe) {
 					await pb.collection(collection).subscribe(id, (RecordSubscriptionEvent event) {
 						if (event.record != null) {
 							final Map<String, dynamic> data = event.record!.data;
