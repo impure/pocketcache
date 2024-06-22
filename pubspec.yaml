@@ -9,6 +9,8 @@ environment:
 dependencies:
   logger: ^2.0.0
   http: ^1.0.0
+  flutter:
+    sdk: flutter
   path: ^1.0.0
   path_provider: ^2.0.0
   pocketbase: ^0.18.0

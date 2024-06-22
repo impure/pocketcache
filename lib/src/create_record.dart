@@ -22,7 +22,7 @@ extension CreateWrapper on PbOfflineCache {
         final String now = DateTime.now().toUtc().toString();
 
         queueOperation("INSERT", collectionName, idToModify: id, values: values);
-        insertRecordsIntoLocalDb(db!, collectionName, <RecordModel>[ RecordModel(
+        insertRecordsIntoLocalDb(db, collectionName, <RecordModel>[ RecordModel(
           id: id,
           created: now,
           updated: now,
@@ -42,7 +42,7 @@ extension CreateWrapper on PbOfflineCache {
     try {
       final RecordModel model = await pb.collection(collectionName).create(body: values);
       if (db != null) {
-        insertRecordsIntoLocalDb(db!, collectionName, <RecordModel>[ model ], logger, indexInstructions: indexInstructions);
+        insertRecordsIntoLocalDb(db, collectionName, <RecordModel>[ model ], logger, indexInstructions: indexInstructions);
       }
       final Map<String, dynamic> data = model.data;
 
