@@ -51,11 +51,11 @@ extension ListWrapper on PbOfflineCache {
 
 			if (db != null) {
 				final Row? lastSyncTime = db!.select(
-					"SELECT name FROM _last_sync_times WHERE AND table_name=?",
+					"SELECT last_update FROM _last_sync_times WHERE table_name=?",
 					<String> [ collectionName ],
 				).firstOrNull;
 
-				if (lastSyncTime != null) {
+				if (lastSyncTime == null) {
 					DateTime? newLastSyncTime;
 
 					for (final RecordModel model in records) {
@@ -69,7 +69,7 @@ extension ListWrapper on PbOfflineCache {
 					}
 
 					if (newLastSyncTime != null) {
-						db!.execute("INSERT OR REPLACE INTO _last_sync_times(table_name, last_update) VALUES(?, ?)", <dynamic>[	collectionName,	newLastSyncTime.millisecondsSinceEpoch ]);
+						db!.execute("INSERT OR REPLACE INTO _last_sync_times(table_name, last_update) VALUES(?, ?)", <dynamic>[	collectionName,	newLastSyncTime.toString() ]);
 					}
 				}
 			}

@@ -33,6 +33,7 @@ class PbOfflineCache {
 		Logger? overrideLogger,
 		Map<String, List<(String name, bool unique, List<String> columns)>>? indexInstructions,
 		Function(bool online)? networkStateListener,
+		FutureOr<(String, List<Object?>)?> Function(String tableName, String lastUpdatedTime)? generateWhereForResync,
 	}) {
 
 		assert(kIsWeb || directoryToSave != null, "Directory to save to should only be null if building to web.");
@@ -46,10 +47,11 @@ class PbOfflineCache {
 			indexInstructions ?? const <String, List<(String name, bool unique, List<String>)>>{},
 			networkStateListener,
 			path,
+			generateWhereForResync,
 		);
 	}
 
-	PbOfflineCache._(this.pb, this.db, this.logger, [this.indexInstructions = const <String, List<(String name, bool unique, List<String>)>>{}, this._networkStateListener, this.dbPath = "", this.resyncData]) {
+	PbOfflineCache._(this.pb, this.db, this.logger, [this.indexInstructions = const <String, List<(String name, bool unique, List<String>)>>{}, this._networkStateListener, this.dbPath = "", this.generateWhereForResync]) {
 		db?.execute("""
 	CREATE TABLE IF NOT EXISTS _operation_queue (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -69,7 +71,7 @@ class PbOfflineCache {
 		db?.execute("""
 	CREATE TABLE IF NOT EXISTS _last_sync_times (
 		table_name TEXT PRIMARY KEY,
-		last_update INTEGER,
+		last_update TEXT
 	)""");
 
 		if (!isTest()) {
@@ -127,7 +129,7 @@ class PbOfflineCache {
 	final Function(bool online)? _networkStateListener;
 
 	/// Not required, but recommended. This is called periodically to resync the data with the db
-	final (DateTime mostrecentUpdate, int numItemsFetched) Function(DateTime lastFetchTime)? resyncData;
+	final FutureOr<(String, List<Object?>)?> Function(String tableName, String lastUpdatedTime)? generateWhereForResync;
 
 	String? get id => pb.authStore.model?.id;
 	bool get tokenValid => pb.authStore.isValid;
@@ -148,6 +150,26 @@ class PbOfflineCache {
 						}
 					}
 					await dequeueCachedOperations();
+					try {
+						if (generateWhereForResync != null && db != null && tableExists(db!, "_last_sync_times")) {
+							final ResultSet syncTimes = db!.select("SELECT * FROM _last_sync_times");
+							for (final Row row in syncTimes) {
+								final (String, List<Object?>)? whereCondition = await generateWhereForResync!(row["table_name"], row["last_update"]);
+
+								if (whereCondition == null) {
+									continue;
+								}
+
+								final List<Map<String, dynamic>> items = await getRecords(row["table_name"], where: whereCondition, sort: ("updated", false), source: QuerySource.server);
+								if (items.isNotEmpty) {
+									logger.i("Updating ${items.length} items in table ${row["table_name"]}");
+									db!.execute("INSERT OR REPLACE INTO _last_sync_times(table_name, last_update) VALUES(?, ?)", <dynamic>[	row["table_name"], items.last["updated"] ]);
+								}
+							}
+						}
+					} catch (e, stack) {
+						logger.e("$e\n\n$stack");
+					}
 				}
 			} catch (_) {
 				if (dbAccessible) {
