@@ -1,6 +1,7 @@
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:synchronized/synchronized.dart';
 
@@ -27,7 +28,9 @@ class PbSubscriptionDetails {
 			await lock.synchronized(() async {
 				listeners.remove((collectionName, id));
 				allowSubscribe = false;
-				await pb.collection(collectionName).unsubscribe(id);
+				if (!kIsWeb) {
+					await pb.collection(collectionName).unsubscribe(id);
+				}
 			});
 		} on ClientException catch (e) {
 			if (!e.isNetworkError()) {
@@ -77,7 +80,7 @@ extension Realtime on PbOfflineCache {
 
 		try {
 			await details.lock.synchronized(() async {
-				if (details.allowSubscribe) {
+				if (details.allowSubscribe && !kIsWeb) {
 					await pb.collection(collection).subscribe(id, (RecordSubscriptionEvent event) {
 						if (event.record != null) {
 							final Map<String, dynamic> data = event.record!.data;
