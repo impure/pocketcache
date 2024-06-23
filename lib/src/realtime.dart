@@ -24,10 +24,11 @@ class PbSubscriptionDetails {
 
 	Future<void> unsubscribe() async {
 
-		/*
-		// Prevents the connection from being closed too abruptly. Doesn't seem to be necessary.
 		listeners.remove((collectionName, id));
 		allowSubscribe = false;
+		
+		/*
+		// Prevents the connection from being closed too abruptly. Doesn't seem to be necessary.
 		await Future<void>.delayed(const Duration(milliseconds: 500));
 		*/
 
