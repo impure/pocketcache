@@ -26,11 +26,9 @@ class PbSubscriptionDetails {
 
 		listeners.remove((collectionName, id));
 		allowSubscribe = false;
-		
-		/*
-		// Prevents the connection from being closed too abruptly. Doesn't seem to be necessary.
-		await Future<void>.delayed(const Duration(milliseconds: 500));
-		*/
+
+		// Prevents the connection from being closed too abruptly.
+		await Future<void>.delayed(const Duration(milliseconds: 100));
 
 		try {
 			await lock.synchronized(() async {
