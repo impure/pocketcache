@@ -13,7 +13,7 @@ Map<(String table, String id), PbSubscriptionDetails> listeners = <(String table
 // it's possible to request a subscription, unsubscribe, and then get a subscription resulting in a leak.
 class PbSubscriptionDetails {
 
-	PbSubscriptionDetails({required this.pb, required this.collectionName, required this.id, required this.callback});
+	PbSubscriptionDetails({required this.pb, required this.collectionName, required this.id, required this.callback, required this.connectedToServer});
 
 	final PocketBase pb;
 	final String collectionName;
@@ -21,6 +21,7 @@ class PbSubscriptionDetails {
 	final void Function(Map<String, dynamic>) callback;
 	bool allowSubscribe = true;
 	final Lock lock = Lock();
+	final bool connectedToServer;
 
 	Future<void> unsubscribe() async {
 
@@ -44,17 +45,22 @@ class PbSubscriptionDetails {
 
 extension Realtime on PbOfflineCache {
 
-	PbSubscriptionDetails subscribeToId(String collection, String id, DateTime updateTime, void Function(Map<String, dynamic>) callback, {Duration debouncingDuration = const Duration(milliseconds: 100)}) {
+	PbSubscriptionDetails subscribeToId(String collection, String id, DateTime updateTime, void Function(Map<String, dynamic>) callback, {
+		Duration debouncingDuration = const Duration(milliseconds: 100),
 
-		final PbSubscriptionDetails details = PbSubscriptionDetails(pb: pb, collectionName: collection, id: id, callback: callback);
+		// Due to stability concerns we may not want to actually want to create a socket connection and instead just listen to updates locally
+		bool connectToServer = true,
+	}) {
 
-		unawaited(_subscribeToId(details, collection, id, updateTime, callback, debouncingDuration));
+		final PbSubscriptionDetails details = PbSubscriptionDetails(pb: pb, collectionName: collection, id: id, callback: callback, connectedToServer: connectToServer);
+
+		unawaited(_subscribeToId(details, collection, id, updateTime, callback, debouncingDuration, connectToServer));
 		listeners[(collection, id)] = details;
 
 		return details;
 	}
 
-	Future<void> _subscribeToId(PbSubscriptionDetails details, String collection, String id, DateTime updateTime, Function(Map<String, dynamic>) callback, Duration debouncingDuration) async {
+	Future<void> _subscribeToId(PbSubscriptionDetails details, String collection, String id, DateTime updateTime, Function(Map<String, dynamic>) callback, Duration debouncingDuration, bool connectToServer) async {
 
 		// Prevents too many temporary listeners from being registered all at once
 		await Future<void>.delayed(debouncingDuration);
@@ -82,7 +88,7 @@ extension Realtime on PbOfflineCache {
 
 		try {
 			await details.lock.synchronized(() async {
-				if (details.allowSubscribe) {
+				if (details.allowSubscribe && connectToServer) {
 					await pb.collection(collection).subscribe(id, (RecordSubscriptionEvent event) {
 						if (event.record != null) {
 							final Map<String, dynamic> data = event.record!.data;
