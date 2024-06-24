@@ -47,6 +47,11 @@ extension UpdateWrapper on PbOfflineCache {
 			newValues["created"] = record.created;
 			newValues["updated"] = record.updated;
 
+			final PbSubscriptionDetails? details = listeners[(collectionName, id)];
+			if (details != null && !details.connectedToServer) {
+				details.callback(newValues);
+			}
+
 			return newValues;
 
 		} catch (e) {
