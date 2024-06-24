@@ -7,18 +7,34 @@ import 'package:synchronized/synchronized.dart';
 import 'get_single_record.dart';
 import 'pocketbase_offline_cache_base.dart';
 
-Map<(String table, String id), PbSubscriptionDetails> listeners = <(String table, String id), PbSubscriptionDetails>{};
+Map<(String table, String id), List<PbSubscriptionDetails>> listeners = <(String table, String id), List<PbSubscriptionDetails>>{};
 
 // The reason why we need this and not to cancel the subscription directly is because subscribeToId() is async meaning if we unsubscribed directly
 // it's possible to request a subscription, unsubscribe, and then get a subscription resulting in a leak.
 class PbSubscriptionDetails {
 
-	PbSubscriptionDetails({required this.pb, required this.collectionName, required this.id, required this.callback, required this.connectToServer, required this.lastKnownUpdateTime});
+	PbSubscriptionDetails({
+		required this.pb,
+		required this.collectionName,
+		required this.id,
+		required void Function(Map<String, dynamic>) updateData,
+		required this.connectToServer,
+		required this.lastKnownUpdateTime}) {
+
+		callback = (Map<String, dynamic> data) {
+
+			final DateTime? updateTime = DateTime.tryParse(data["updated"]);
+			if (updateTime != null && updateTime.isAfter(lastKnownUpdateTime)) {
+				updateData(data);
+				lastKnownUpdateTime = updateTime;
+			}
+		};
+	}
 
 	final PbOfflineCache pb;
 	final String collectionName;
 	final String id;
-	final void Function(Map<String, dynamic>) callback;
+	late void Function(Map<String, dynamic>) callback;
 	bool allowSubscribe = true;
 	final Lock lock = Lock();
 	final bool connectToServer;
@@ -37,10 +53,8 @@ class PbSubscriptionDetails {
 			}
 		}
 
-		final DateTime? updateTime = DateTime.tryParse(data?["updated"] ?? "");
-		if (data != null && updateTime != null && updateTime.isAfter(lastKnownUpdateTime)) {
+		if (data != null) {
 			callback(data);
-			lastKnownUpdateTime = updateTime;
 		}
 	}
 
@@ -53,11 +67,6 @@ class PbSubscriptionDetails {
 
 						data["updated"] = event.record!.updated;
 
-						final DateTime? updateTime = DateTime.tryParse(event.record!.updated);
-						if (updateTime != null) {
-							lastKnownUpdateTime = updateTime;
-						}
-
 						callback(event.record!.data);
 					}
 				});
@@ -67,8 +76,17 @@ class PbSubscriptionDetails {
 
 	Future<void> unsubscribe() async {
 
-		listeners.remove((collectionName, id));
 		allowSubscribe = false;
+
+		final List<PbSubscriptionDetails>? details = listeners[(collectionName, id)];
+
+		if (details == null) {
+			throw Exception("Subscription not found");
+		} else if (details.length == 1) {
+			listeners.remove((collectionName, id));
+		} else {
+			details.remove(this);
+		}
 
 		// Prevents the connection from being closed too abruptly.
 		await Future<void>.delayed(const Duration(milliseconds: 100));
@@ -94,10 +112,17 @@ extension Realtime on PbOfflineCache {
 		bool connectToServer = true,
 	}) {
 
-		final PbSubscriptionDetails details = PbSubscriptionDetails(pb: this, collectionName: collection, id: id, callback: callback, connectToServer: connectToServer, lastKnownUpdateTime: updateTime);
+		final PbSubscriptionDetails details = PbSubscriptionDetails(pb: this, collectionName: collection, id: id, updateData: callback, connectToServer: connectToServer, lastKnownUpdateTime: updateTime);
 
 		unawaited(_subscribeToId(details, collection, id, updateTime, callback, debouncingDuration, connectToServer));
-		listeners[(collection, id)] = details;
+
+		final List<PbSubscriptionDetails>? detailsList = listeners[(collection, id)];
+		if (detailsList == null) {
+			listeners[(collection, id)] = <PbSubscriptionDetails>[details];
+		} else {
+			detailsList.add(details);
+		}
+
 
 		return details;
 	}
@@ -114,7 +139,7 @@ extension Realtime on PbOfflineCache {
 		await details.manualUpdate();
 
 		try {
-			details.subscribe();
+			await details.subscribe();
 		} on ClientException catch (e) {
 			if (!e.isNetworkError()) {
 				rethrow;

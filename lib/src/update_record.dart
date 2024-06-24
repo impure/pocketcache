@@ -22,9 +22,11 @@ extension UpdateWrapper on PbOfflineCache {
 				final Map<String, dynamic>? record = await getSingleRecord(collectionName, id, source: QuerySource.cache);
 
 				if (record != null) {
-					final PbSubscriptionDetails? details = listeners[(collectionName, id)];
+					final List<PbSubscriptionDetails>? details = listeners[(collectionName, id)];
 					if (details != null) {
-						details.callback(record);
+						for (final PbSubscriptionDetails item in details) {
+							item.callback(record);
+						}
 					}
 				}
 
@@ -47,9 +49,13 @@ extension UpdateWrapper on PbOfflineCache {
 			newValues["created"] = record.created;
 			newValues["updated"] = record.updated;
 
-			final PbSubscriptionDetails? details = listeners[(collectionName, id)];
-			if (details != null && !details.connectToServer) {
-				details.callback(newValues);
+			final List<PbSubscriptionDetails>? details = listeners[(collectionName, id)];
+			if (details != null) {
+				for (final PbSubscriptionDetails item in details) {
+					if (!item.connectToServer) {
+						item.callback(newValues);
+					}
+				}
 			}
 
 			return newValues;
