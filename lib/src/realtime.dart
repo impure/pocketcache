@@ -7,7 +7,7 @@ import 'package:synchronized/synchronized.dart';
 import 'get_single_record.dart';
 import 'pocketbase_offline_cache_base.dart';
 
-Map<(String table, String id), List<PbSubscriptionDetails>> listeners = <(String table, String id), List<PbSubscriptionDetails>>{};
+Map<(String table, String id), List<PbSubscriptionDetails>> pbListeners = <(String table, String id), List<PbSubscriptionDetails>>{};
 
 // The reason why we need this and not to cancel the subscription directly is because subscribeToId() is async meaning if we unsubscribed directly
 // it's possible to request a subscription, unsubscribe, and then get a subscription resulting in a leak.
@@ -78,12 +78,12 @@ class PbSubscriptionDetails {
 
 		allowSubscribe = false;
 
-		final List<PbSubscriptionDetails>? details = listeners[(collectionName, id)];
+		final List<PbSubscriptionDetails>? details = pbListeners[(collectionName, id)];
 
 		if (details == null) {
 			throw Exception("Subscription not found");
 		} else if (details.length == 1) {
-			listeners.remove((collectionName, id));
+			pbListeners.remove((collectionName, id));
 		} else {
 			details.remove(this);
 		}
@@ -116,9 +116,9 @@ extension Realtime on PbOfflineCache {
 
 		unawaited(_subscribeToId(details, collection, id, updateTime, callback, debouncingDuration, connectToServer));
 
-		final List<PbSubscriptionDetails>? detailsList = listeners[(collection, id)];
+		final List<PbSubscriptionDetails>? detailsList = pbListeners[(collection, id)];
 		if (detailsList == null) {
-			listeners[(collection, id)] = <PbSubscriptionDetails>[details];
+			pbListeners[(collection, id)] = <PbSubscriptionDetails>[details];
 		} else {
 			detailsList.add(details);
 		}
