@@ -13,15 +13,57 @@ Map<(String table, String id), PbSubscriptionDetails> listeners = <(String table
 // it's possible to request a subscription, unsubscribe, and then get a subscription resulting in a leak.
 class PbSubscriptionDetails {
 
-	PbSubscriptionDetails({required this.pb, required this.collectionName, required this.id, required this.callback, required this.connectedToServer});
+	PbSubscriptionDetails({required this.pb, required this.collectionName, required this.id, required this.callback, required this.connectToServer, required this.lastKnownUpdateTime});
 
-	final PocketBase pb;
+	final PbOfflineCache pb;
 	final String collectionName;
 	final String id;
 	final void Function(Map<String, dynamic>) callback;
 	bool allowSubscribe = true;
 	final Lock lock = Lock();
-	final bool connectedToServer;
+	final bool connectToServer;
+	DateTime lastKnownUpdateTime;
+
+	/// Manually gets new data from the server. Useful for checking for updates that happened before we started listening or when the screen is off.
+	Future<void> manualUpdate() async {
+		final Map<String, dynamic>? data;
+		try {
+			data = await pb.getSingleRecord(collectionName, id, source: QuerySource.server);
+		} on ClientException catch (e) {
+			if (!e.isNetworkError()) {
+				rethrow;
+			} else {
+				return;
+			}
+		}
+
+		final DateTime? updateTime = DateTime.tryParse(data?["updated"] ?? "");
+		if (data != null && updateTime != null && updateTime.isAfter(lastKnownUpdateTime)) {
+			callback(data);
+			lastKnownUpdateTime = updateTime;
+		}
+	}
+
+	Future<void> subscribe() async {
+		await lock.synchronized(() async {
+			if (allowSubscribe && connectToServer) {
+				await pb.pb.collection(collectionName).subscribe(id, (RecordSubscriptionEvent event) {
+					if (event.record != null) {
+						final Map<String, dynamic> data = event.record!.data;
+
+						data["updated"] = event.record!.updated;
+
+						final DateTime? updateTime = DateTime.tryParse(event.record!.updated);
+						if (updateTime != null) {
+							lastKnownUpdateTime = updateTime;
+						}
+
+						callback(event.record!.data);
+					}
+				});
+			}
+		});
+	}
 
 	Future<void> unsubscribe() async {
 
@@ -33,7 +75,7 @@ class PbSubscriptionDetails {
 
 		try {
 			await lock.synchronized(() async {
-				await pb.collection(collectionName).unsubscribe(id);
+				await pb.pb.collection(collectionName).unsubscribe(id);
 			});
 		} on ClientException catch (e) {
 			if (!e.isNetworkError()) {
@@ -52,7 +94,7 @@ extension Realtime on PbOfflineCache {
 		bool connectToServer = true,
 	}) {
 
-		final PbSubscriptionDetails details = PbSubscriptionDetails(pb: pb, collectionName: collection, id: id, callback: callback, connectedToServer: connectToServer);
+		final PbSubscriptionDetails details = PbSubscriptionDetails(pb: this, collectionName: collection, id: id, callback: callback, connectToServer: connectToServer, lastKnownUpdateTime: updateTime);
 
 		unawaited(_subscribeToId(details, collection, id, updateTime, callback, debouncingDuration, connectToServer));
 		listeners[(collection, id)] = details;
@@ -69,37 +111,10 @@ extension Realtime on PbOfflineCache {
 			return;
 		}
 
-		final Map<String, dynamic>? data;
-		try {
-			data = await getSingleRecord(collection, id, source: QuerySource.server);
-		} on ClientException catch (e) {
-			if (!e.isNetworkError()) {
-				rethrow;
-			} else {
-				return;
-			}
-		}
-
-		// We need the update time check or if we re-init the widget too often it may result in getting old data here
-		// I'm not exactly sure why this is, maybe it's a caching issue
-		if (data != null && (DateTime.tryParse(data["updated"] ?? "") ?? DateTime(2024)).isAfter(updateTime)) {
-			callback(data);
-		}
+		await details.manualUpdate();
 
 		try {
-			await details.lock.synchronized(() async {
-				if (details.allowSubscribe && connectToServer) {
-					await pb.collection(collection).subscribe(id, (RecordSubscriptionEvent event) {
-						if (event.record != null) {
-							final Map<String, dynamic> data = event.record!.data;
-
-							data["updated"] = event.record!.updated;
-
-							callback(event.record!.data);
-						}
-					});
-				}
-			});
+			details.subscribe();
 		} on ClientException catch (e) {
 			if (!e.isNetworkError()) {
 				rethrow;
