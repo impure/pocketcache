@@ -5,7 +5,6 @@ import 'dart:core';
 import 'package:logger/logger.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:sqlite3/common.dart';
-import 'package:sqlite3/sqlite3.dart';
 
 import 'pocketbase_offline_cache_base.dart';
 
