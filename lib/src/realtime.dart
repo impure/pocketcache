@@ -25,7 +25,7 @@ class PbSubscriptionDetails {
 		callback = (Map<String, dynamic> data) {
 
 			final DateTime? updateTime = DateTime.tryParse(data["updated"]);
-			if (updateTime != null && updateTime.isAfter(lastKnownUpdateTime)) {
+			if (updateTime != null && (updateTime == lastKnownUpdateTime || updateTime.isAfter(lastKnownUpdateTime))) {
 				updateData(data);
 				lastKnownUpdateTime = updateTime;
 			}
