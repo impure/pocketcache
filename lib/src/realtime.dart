@@ -19,7 +19,8 @@ class PbSubscriptionDetails {
 		required this.id,
 		required void Function(Map<String, dynamic>) updateData,
 		required this.connectToServer,
-		required this.lastKnownUpdateTime}) {
+		required this.lastKnownUpdateTime,
+	}) {
 
 		callback = (Map<String, dynamic> data) {
 
@@ -29,6 +30,13 @@ class PbSubscriptionDetails {
 				lastKnownUpdateTime = updateTime;
 			}
 		};
+
+		final List<PbSubscriptionDetails>? detailsList = pbListeners[(collectionName, id)];
+		if (detailsList == null) {
+			pbListeners[(collectionName, id)] = <PbSubscriptionDetails>[this];
+		} else {
+			detailsList.add(this);
+		}
 	}
 
 	final PbOfflineCache pb;
@@ -81,7 +89,7 @@ class PbSubscriptionDetails {
 		final List<PbSubscriptionDetails>? details = pbListeners[(collectionName, id)];
 
 		if (details == null) {
-			throw Exception("Subscription not found");
+			pb.logger.e("Subscription not found");
 		} else if (details.length == 1) {
 			pbListeners.remove((collectionName, id));
 		} else {
@@ -115,14 +123,6 @@ extension Realtime on PbOfflineCache {
 		final PbSubscriptionDetails details = PbSubscriptionDetails(pb: this, collectionName: collection, id: id, updateData: callback, connectToServer: connectToServer, lastKnownUpdateTime: updateTime);
 
 		unawaited(_subscribeToId(details, collection, id, updateTime, callback, debouncingDuration, connectToServer));
-
-		final List<PbSubscriptionDetails>? detailsList = pbListeners[(collection, id)];
-		if (detailsList == null) {
-			pbListeners[(collection, id)] = <PbSubscriptionDetails>[details];
-		} else {
-			detailsList.add(details);
-		}
-
 
 		return details;
 	}
