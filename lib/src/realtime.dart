@@ -42,7 +42,7 @@ class PbSubscriptionDetails {
 	final PbOfflineCache pb;
 	final String collectionName;
 	final String id;
-	late void Function(Map<String, dynamic>) callback;
+	void Function(Map<String, dynamic>)? callback;
 	bool allowSubscribe = true;
 	final Lock lock = Lock();
 	final bool connectToServer;
@@ -61,8 +61,8 @@ class PbSubscriptionDetails {
 			}
 		}
 
-		if (data != null) {
-			callback(data);
+		if (data != null && callback != null) {
+			callback!(data);
 		}
 	}
 
@@ -75,7 +75,9 @@ class PbSubscriptionDetails {
 
 						data["updated"] = event.record!.updated;
 
-						callback(event.record!.data);
+						if (callback != null) {
+							callback!(event.record!.data);
+						}
 					}
 				});
 			}
@@ -95,6 +97,8 @@ class PbSubscriptionDetails {
 		} else {
 			details.remove(this);
 		}
+
+		callback = null;
 
 		// Prevents the connection from being closed too abruptly.
 		await Future<void>.delayed(const Duration(milliseconds: 100));

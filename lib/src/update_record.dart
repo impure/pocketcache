@@ -25,7 +25,9 @@ extension UpdateWrapper on PbOfflineCache {
 					final List<PbSubscriptionDetails>? details = pbListeners[(collectionName, id)];
 					if (details != null) {
 						for (final PbSubscriptionDetails item in details) {
-							item.callback(record);
+							if (item.callback != null) {
+								item.callback!(record);
+							}
 						}
 					}
 				}
@@ -52,8 +54,8 @@ extension UpdateWrapper on PbOfflineCache {
 			final List<PbSubscriptionDetails>? details = pbListeners[(collectionName, id)];
 			if (details != null) {
 				for (final PbSubscriptionDetails item in details) {
-					if (!item.connectToServer) {
-						item.callback(newValues);
+					if (!item.connectToServer && item.callback != null) {
+						item.callback!(newValues);
 					}
 				}
 			}
