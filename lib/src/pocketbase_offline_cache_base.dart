@@ -131,10 +131,14 @@ class PbOfflineCache {
 	/// Not required, but recommended. This is called periodically to resync the data with the db
 	final FutureOr<(String, List<Object?>)?> Function(String tableName, String lastUpdatedTime)? generateWhereForResync;
 
-	String? get id => pb.authStore.model?.id;
+	String? get id => isTest() ? "test" : pb.authStore.model?.id;
 	bool get tokenValid => pb.authStore.isValid;
 
 	Future<void> _continuouslyCheckDbAccessible() async {
+		if (isTest()) {
+			dbAccessible = false;
+			return;
+		}
 		while (true) {
 			try {
 				final http.Response response = await http.get(pb.buildUrl("/api/health"));

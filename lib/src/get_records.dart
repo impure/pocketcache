@@ -208,7 +208,7 @@ void insertRecordsIntoLocalDb(CommonDatabase? db, String collectionName, List<Re
 	try {
 		db.execute(command.toString(), parameters);
 	} on SqliteException catch (e) {
-		if (e.message.contains("has no column")) {
+		if (!isTest() && e.message.contains("has no column")) {
 			logger.i("Dropping table $collectionName");
 			db.execute("DROP TABLE $collectionName");
 		} else {
