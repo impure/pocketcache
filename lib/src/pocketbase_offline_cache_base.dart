@@ -33,6 +33,7 @@ class PbOfflineCache {
 		Logger? overrideLogger,
 		Map<String, List<(String name, bool unique, List<String> columns)>>? indexInstructions,
 		Function(bool online)? networkStateListener,
+		Function()? localCacheUpdatedListener,
 		FutureOr<(String, List<Object?>)?> Function(String tableName, String lastUpdatedTime)? generateWhereForResync,
 	}) {
 
@@ -48,10 +49,11 @@ class PbOfflineCache {
 			networkStateListener,
 			path,
 			generateWhereForResync,
+			localCacheUpdatedListener,
 		);
 	}
 
-	PbOfflineCache._(this.pb, this.db, this.logger, [this.indexInstructions = const <String, List<(String name, bool unique, List<String>)>>{}, this._networkStateListener, this.dbPath = "", this.generateWhereForResync]) {
+	PbOfflineCache._(this.pb, this.db, this.logger, [this.indexInstructions = const <String, List<(String name, bool unique, List<String>)>>{}, this._networkStateListener, this.dbPath = "", this.generateWhereForResync, this._localCacheUpdatedListener]) {
 		db?.execute("""
 	CREATE TABLE IF NOT EXISTS _operation_queue (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -127,6 +129,7 @@ class PbOfflineCache {
 	final Logger logger;
 	final Map<String, List<(String name, bool unique, List<String> columns)>> indexInstructions;
 	final Function(bool online)? _networkStateListener;
+	final Function()? _localCacheUpdatedListener;
 
 	/// Not required, but recommended. This is called periodically to resync the data with the db
 	final FutureOr<(String, List<Object?>)?> Function(String tableName, String lastUpdatedTime)? generateWhereForResync;
@@ -149,13 +152,13 @@ class PbOfflineCache {
 						dbAccessible = true;
 						logger.i("DB accessible again");
 						if (_networkStateListener != null) {
-							// ignore: unnecessary_non_null_assertion
-							_networkStateListener!(true);
+							_networkStateListener(true);
 						}
 					}
 					await dequeueCachedOperations();
 					try {
 						if (generateWhereForResync != null && db != null && tableExists(db!, "_last_sync_times")) {
+							bool gotNewItems = false;
 							final ResultSet syncTimes = db!.select("SELECT * FROM _last_sync_times");
 							for (final Row row in syncTimes) {
 								final (String, List<Object?>)? whereCondition = await generateWhereForResync!(row["table_name"], row["last_update"]);
@@ -166,9 +169,13 @@ class PbOfflineCache {
 
 								final List<Map<String, dynamic>> items = await getRecords(row["table_name"], where: whereCondition, sort: ("updated", false), source: QuerySource.server);
 								if (items.isNotEmpty) {
+									gotNewItems = true;
 									logger.i("Updating ${items.length} items in table ${row["table_name"]}");
 									db!.execute("INSERT OR REPLACE INTO _last_sync_times(table_name, last_update) VALUES(?, ?)", <dynamic>[	row["table_name"], items.last["updated"] ]);
 								}
+							}
+							if (gotNewItems && _localCacheUpdatedListener != null) {
+								_localCacheUpdatedListener();
 							}
 						}
 					} catch (e, stack) {
