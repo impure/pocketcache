@@ -152,7 +152,9 @@ class PbOfflineCache {
 						dbAccessible = true;
 						logger.i("DB accessible again");
 						if (_networkStateListener != null) {
-							_networkStateListener(true);
+							// Compiler complains if we don't have this null assertion
+							// ignore: unnecessary_non_null_assertion
+							_networkStateListener!(true);
 						}
 					}
 					await dequeueCachedOperations();
@@ -175,7 +177,9 @@ class PbOfflineCache {
 								}
 							}
 							if (gotNewItems && _localCacheUpdatedListener != null) {
-								_localCacheUpdatedListener();
+								// Compiler complains if we don't have this null assertion
+								// ignore: unnecessary_non_null_assertion
+								_localCacheUpdatedListener!();
 							}
 						}
 					} catch (e, stack) {
