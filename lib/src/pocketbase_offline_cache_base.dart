@@ -137,6 +137,20 @@ class PbOfflineCache {
 	String? get id => isTest() ? "test" : pb.authStore.model?.id;
 	bool get tokenValid => pb.authStore.isValid;
 
+	Future<void> tryRefreshAuth() async {
+		if (tokenValid && id != null) {
+			try {
+				await refreshAuth();
+			} on ClientException catch (e) {
+				if (e.toString().contains("The request requires valid record authorization token to be set")) {
+					pb.authStore.clear();
+				} else {
+					rethrow;
+				}
+			}
+		}
+	}
+
 	Future<void> _continuouslyCheckDbAccessible() async {
 		if (isTest()) {
 			dbAccessible = false;
