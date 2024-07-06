@@ -9,6 +9,7 @@ import 'package:logger/logger.dart';
 import 'package:path/path.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:sqlite3/common.dart';
+import 'package:state_groups/state_groups.dart';
 
 import 'count_records.dart';
 import 'get_records.dart';
@@ -32,8 +33,6 @@ class PbOfflineCache {
 	factory PbOfflineCache(PocketBase pb, String? directoryToSave, {
 		Logger? overrideLogger,
 		Map<String, List<(String name, bool unique, List<String> columns)>>? indexInstructions,
-		Function(bool online)? networkStateListener,
-		Function()? localCacheUpdatedListener,
 		FutureOr<(String, List<Object?>)?> Function(String tableName, String lastUpdatedTime)? generateWhereForResync,
 	}) {
 
@@ -46,14 +45,12 @@ class PbOfflineCache {
 			makeDb(path),
 			overrideLogger ?? Logger(),
 			indexInstructions ?? const <String, List<(String name, bool unique, List<String>)>>{},
-			networkStateListener,
 			path,
 			generateWhereForResync,
-			localCacheUpdatedListener,
 		);
 	}
 
-	PbOfflineCache._(this.pb, this.db, this.logger, [this.indexInstructions = const <String, List<(String name, bool unique, List<String>)>>{}, this._networkStateListener, this.dbPath = "", this.generateWhereForResync, this._localCacheUpdatedListener]) {
+	PbOfflineCache._(this.pb, this.db, this.logger, [this.indexInstructions = const <String, List<(String name, bool unique, List<String>)>>{}, this.dbPath = "", this.generateWhereForResync]) {
 		db?.execute("""
 	CREATE TABLE IF NOT EXISTS _operation_queue (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -128,8 +125,6 @@ class PbOfflineCache {
 	CommonDatabase? db;
 	final Logger logger;
 	final Map<String, List<(String name, bool unique, List<String> columns)>> indexInstructions;
-	final Function(bool online)? _networkStateListener;
-	final Function()? _localCacheUpdatedListener;
 
 	/// Not required, but recommended. This is called periodically to resync the data with the db
 	final FutureOr<(String, List<Object?>)?> Function(String tableName, String lastUpdatedTime)? generateWhereForResync;
@@ -165,11 +160,7 @@ class PbOfflineCache {
 					if (!dbAccessible) {
 						dbAccessible = true;
 						logger.i("DB accessible again");
-						if (_networkStateListener != null) {
-							// Compiler complains if we don't have this null assertion
-							// ignore: unnecessary_non_null_assertion
-							_networkStateListener!(true);
-						}
+						broadcastToListeners("pocketcache/network-state-changed", true);
 					}
 					await dequeueCachedOperations();
 					try {
@@ -185,15 +176,18 @@ class PbOfflineCache {
 
 								final List<Map<String, dynamic>> items = await getRecords(row["table_name"], where: whereCondition, sort: ("updated", false), source: QuerySource.server);
 								if (items.isNotEmpty) {
+
+									for (final Map<String, dynamic> item in items) {
+										broadcastToListeners("pocketcache/new-record-from-resync", (row["table_name"], item));
+									}
+
 									gotNewItems = true;
 									logger.i("Updating ${items.length} items in table ${row["table_name"]}");
 									db!.execute("INSERT OR REPLACE INTO _last_sync_times(table_name, last_update) VALUES(?, ?)", <dynamic>[	row["table_name"], items.last["updated"] ]);
 								}
 							}
-							if (gotNewItems && _localCacheUpdatedListener != null) {
-								// Compiler complains if we don't have this null assertion
-								// ignore: unnecessary_non_null_assertion
-								_localCacheUpdatedListener!();
+							if (gotNewItems) {
+								broadcastToListeners("pocketcache/local-cache-updated", null);
 							}
 						}
 					} catch (e, stack) {
@@ -204,10 +198,7 @@ class PbOfflineCache {
 				if (dbAccessible) {
 					dbAccessible = false;
 					logger.i("DB do longer accessible");
-					if (_networkStateListener != null) {
-						// ignore: unnecessary_non_null_assertion
-						_networkStateListener!(false);
-					}
+					broadcastToListeners("pocketcache/network-state-changed", false);
 				}
 			}
 			await Future<void>.delayed(const Duration(seconds: 10));

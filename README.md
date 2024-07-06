@@ -13,10 +13,13 @@ and the Flutter guide for
 
 An wrapper around PocketBase allowing for easy offline use. Designed for my RSS reader Stratum ([iOS](https://apps.apple.com/us/app/stratum-rss-feed-reader/id6445805598), [Android](https://play.google.com/store/apps/details?id=com.amorfatite.keystone)).
 
-## Features
+## State Groups
 
-- List files offline
-- Refresh Auth token without errors
+This package uses the broadcast feature of `state_groups` as an alternative to passing listeners around. These are the events currently used:
+
+- pocketcache/new-record-added ((String tableName, Map<String, dynamic> record))
+- pocketcache/local-cache-updated
+- pocketcache/network-state-changed (bool canConnect)
 
 ## Getting started
 

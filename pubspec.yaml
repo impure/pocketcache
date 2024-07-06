@@ -16,6 +16,7 @@ dependencies:
   pocketbase: ^0.18.0
   sqlite3: ^2.0.0
   sqlite3_flutter_libs: ^0.5.0
+  state_groups: ^0.5.0
   synchronized: ^3.0.0
 
 dev_dependencies:
