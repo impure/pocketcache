@@ -178,7 +178,7 @@ class PbOfflineCache {
 								if (items.isNotEmpty) {
 
 									for (final Map<String, dynamic> item in items) {
-										broadcastToListeners("pocketcache/new-record-from-resync", (row["table_name"], item));
+										broadcastToListeners("pocketcache/record-updated", (row["table_name"], item));
 									}
 
 									gotNewItems = true;
