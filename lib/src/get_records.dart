@@ -252,7 +252,7 @@ String? makePbFilter((String, List<Object?>)? params, { (String column, bool des
 		i++;
 
 		if (param is String) {
-			return "'$param'";
+			return "'${param.replaceAll("'", r"\'")}'";
 		} else if (param is DateTime) {
 			return "'${param.toUtc()}'";
 		} else if (param == null) {
