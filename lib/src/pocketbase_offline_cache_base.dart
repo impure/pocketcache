@@ -287,7 +287,7 @@ class PbOfflineCache {
 		try {
 			await pb.collection('users').authRefresh();
 		} on ClientException catch (e) {
-			if (!e.isNetworkError()) {
+			if (!e.isNetworkError() && !e.toString().contains("The request requires valid record authorization")) {
 				rethrow;
 			}
 		}
