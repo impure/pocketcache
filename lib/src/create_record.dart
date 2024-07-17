@@ -54,12 +54,12 @@ extension CreateWrapper on PbOfflineCache {
     } catch (e) {
 
       if (e is! ClientException){
-        logger.w("Unknown non-client exception when inserting record: $e");
+        logger.w("Unknown non-client exception when inserting record: $e", stackTrace: StackTrace.current);
       } else if (e.toString().contains("Failed to find all relation records")) {
-        logger.e("Failed to insert $values into $collectionName ($e)");
+        logger.e("Failed to insert $values into $collectionName ($e)", stackTrace: StackTrace.current);
         rethrow;
       } else if (!e.isNetworkError()) {
-        logger.w("Unknown exception when inserting record: $e");
+        logger.w("Unknown exception when inserting record: $e", stackTrace: StackTrace.current);
       }
 
       if (source == QuerySource.any) {
