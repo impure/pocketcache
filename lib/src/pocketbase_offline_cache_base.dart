@@ -132,7 +132,6 @@ class PbOfflineCache {
 	String? get id => isTest() ? "test" : pb.authStore.model?.id;
 	bool get tokenValid => pb.authStore.isValid;
 
-
 	Future<void> tryRefreshAuth(Function() onUnauthorizedError) async {
 		if (id != null) {
 			if (tokenValid) {
@@ -141,7 +140,7 @@ class PbOfflineCache {
 				} on ClientException catch (e) {
 					if (e.isNetworkError()) {} else if (e.toString().contains("The request requires valid record authorization token to be set")) {
 						pb.authStore.clear();
-						rethrow;
+						onUnauthorizedError();
 					} else {
 						rethrow;
 					}
