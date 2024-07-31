@@ -328,7 +328,7 @@ class PbOfflineCache {
 	}
 
 	QueryBuilder collection(String collectionName) {
-		return QueryBuilder._(this, collectionName, "", <dynamic>[] );
+		return QueryBuilder._(this, collectionName, "", <dynamic>[], null, <String>[]);
 	}
 }
 
@@ -473,13 +473,14 @@ ResultSet selectBuilder(CommonDatabase db, String tableName, {
 
 class QueryBuilder {
 
-	const QueryBuilder._(this.pb, this.collectionName, this.currentFilter, this.args, [this.orderRule]);
+	const QueryBuilder._(this.pb, this.collectionName, this.currentFilter, this.args, this.orderRule, this.expandFields);
 
 	final PbOfflineCache pb;
 	final String collectionName;
 	final String currentFilter;
 	final List<dynamic> args;
 	final (String, bool descending)? orderRule;
+	final List<String> expandFields;
 
 	@override
 	String toString() => "$collectionName $currentFilter $args $orderRule";
@@ -503,38 +504,42 @@ class QueryBuilder {
 
 		if (isNull == true) {
 			return QueryBuilder._(pb, collectionName,
-					"${currentFilter != "" ? "$currentFilter && " : ""}$column = ?", List<dynamic>.from(args)..add(null), orderRule);
+					"${currentFilter != "" ? "$currentFilter && " : ""}$column = ?", List<dynamic>.from(args)..add(null), orderRule, expandFields);
 		} else if (isNull == false) {
 			return QueryBuilder._(pb, collectionName,
-					"${currentFilter != "" ? "$currentFilter && " : ""}$column != ?", List<dynamic>.from(args)..add(null), orderRule);
+					"${currentFilter != "" ? "$currentFilter && " : ""}$column != ?", List<dynamic>.from(args)..add(null), orderRule, expandFields);
 		} else if (isEqualTo != null) {
 			return QueryBuilder._(pb, collectionName,
-					"${currentFilter != "" ? "$currentFilter && " : ""}$column = ?", List<dynamic>.from(args)..add(isEqualTo), orderRule);
+					"${currentFilter != "" ? "$currentFilter && " : ""}$column = ?", List<dynamic>.from(args)..add(isEqualTo), orderRule, expandFields);
 		} else if (isNotEqualTo != null) {
 			return QueryBuilder._(pb, collectionName,
-					"${currentFilter != "" ? "$currentFilter && " : ""}$column != ?", List<dynamic>.from(args)..add(isNotEqualTo), orderRule);
+					"${currentFilter != "" ? "$currentFilter && " : ""}$column != ?", List<dynamic>.from(args)..add(isNotEqualTo), orderRule, expandFields);
 		} else if (isGreaterThan != null) {
 			return QueryBuilder._(pb, collectionName,
-					"${currentFilter != "" ? "$currentFilter && " : ""}$column > ?", List<dynamic>.from(args)..add(isGreaterThan), orderRule);
+					"${currentFilter != "" ? "$currentFilter && " : ""}$column > ?", List<dynamic>.from(args)..add(isGreaterThan), orderRule, expandFields);
 		} else if (isLessThan != null) {
 			return QueryBuilder._(pb, collectionName,
-					"${currentFilter != "" ? "$currentFilter && " : ""}$column < ?", List<dynamic>.from(args)..add(isLessThan), orderRule);
+					"${currentFilter != "" ? "$currentFilter && " : ""}$column < ?", List<dynamic>.from(args)..add(isLessThan), orderRule, expandFields);
 		} else if (isLessThanOrEqualTo != null) {
 			return QueryBuilder._(pb, collectionName,
-					"${currentFilter != "" ? "$currentFilter && " : ""}$column <= ?", List<dynamic>.from(args)..add(isLessThanOrEqualTo), orderRule);
+					"${currentFilter != "" ? "$currentFilter && " : ""}$column <= ?", List<dynamic>.from(args)..add(isLessThanOrEqualTo), orderRule, expandFields);
 		} else {
 			return QueryBuilder._(pb, collectionName,
-					"${currentFilter != "" ? "$currentFilter && " : ""}$column >= ?", List<dynamic>.from(args)..add(isGreaterThanOrEqualTo), orderRule);
+					"${currentFilter != "" ? "$currentFilter && " : ""}$column >= ?", List<dynamic>.from(args)..add(isGreaterThanOrEqualTo), orderRule, expandFields);
 		}
+	}
+
+	QueryBuilder expand(String expandField) {
+		return QueryBuilder._(pb, collectionName, currentFilter, args, orderRule, List<String>.from(expandFields)..add(expandField));
 	}
 
 	QueryBuilder orderBy(String columnName, { bool descending = true }) {
 		assert(orderRule == null, "Multiple order by not supported");
-		return QueryBuilder._(pb, collectionName, currentFilter, args, (columnName, descending));
+		return QueryBuilder._(pb, collectionName, currentFilter, args, (columnName, descending), expandFields);
 	}
 
 	Future<List<Map<String, dynamic>>> get({ int maxItems = defaultMaxItems, QuerySource source = QuerySource.any, Map<String, dynamic>? startAfter }) {
-		return pb.getRecords(collectionName, where: (currentFilter, args), maxItems: maxItems, source: source, sort: orderRule, startAfter: startAfter);
+		return pb.getRecords(collectionName, where: (currentFilter, args), maxItems: maxItems, source: source, sort: orderRule, startAfter: startAfter, expand: expandFields);
 	}
 
 	Future<int?> getCount({ QuerySource source = QuerySource.any }) {

@@ -15,6 +15,7 @@ extension ListWrapper on PbOfflineCache {
 		QuerySource source = QuerySource.any,
 		(String column, bool descending)? sort,
 		Map<String, dynamic>? startAfter,
+		List<String> expand = const <String>[],
 	}) async {
 		if (source != QuerySource.server && (!dbAccessible || source == QuerySource.cache)) {
 			if (db != null && tableExists(db!, collectionName)) {
@@ -40,12 +41,14 @@ extension ListWrapper on PbOfflineCache {
 		}
 
 		try {
+
 			final List<RecordModel> records = (await pb.collection(collectionName).getList(
 				page: 1,
 				perPage: maxItems,
 				skipTotal: true,
 				filter: makePbFilter(where, sort: sort, startAfter: startAfter),
 				sort: makeSortFilter(sort),
+				expand: expand.join(",")
 			)).items;
 
 			if (db != null) {
