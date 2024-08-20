@@ -78,7 +78,7 @@ void main() {
 		operations.clear();
 	});
 
-	final PbOfflineCache pb = PbOfflineCache.withDb(PbWrapper(), DatabaseMock());
+	final PbOfflineCache pb = PbOfflineCache.withDb(PbWrapper(), DatabaseMock(), null);
 	final CommonDatabase db = DatabaseMock();
 	pb.dbAccessible = true;
 	final Logger testLogger = TestLogger();
