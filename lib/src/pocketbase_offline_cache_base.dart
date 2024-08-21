@@ -28,6 +28,12 @@ enum QuerySource {
 
 bool isTest() => kIsWeb ? false : Platform.environment.containsKey('FLUTTER_TEST');
 
+enum AuthRefreshResult {
+	success,
+	network_error,
+	failure,
+}
+
 class PbOfflineCache {
 
 	factory PbOfflineCache(PocketBase pb, String? directoryToSave, {
@@ -152,22 +158,30 @@ class PbOfflineCache {
 	String? get id => isTest() ? "test" : pb.authStore.model?.id;
 	bool get tokenValid => pb.authStore.isValid;
 
-	Future<void> tryRefreshAuth(Function() onUnauthorizedError) async {
+	// Returns true on success, false on error
+	Future<AuthRefreshResult> tryRefreshAuth(Function() onUnauthorizedError) async {
 		if (id != null) {
 			if (tokenValid) {
 				try {
 					await pb.collection('users').authRefresh();
+					return AuthRefreshResult.success;
 				} on ClientException catch (e) {
-					if (e.isNetworkError()) {} else if (e.toString().contains("The request requires valid record authorization token to be set")) {
+					if (e.isNetworkError()) {
+						return AuthRefreshResult.network_error;
+					} else if (e.toString().contains("The request requires valid record authorization token to be set")) {
 						pb.authStore.clear();
 						onUnauthorizedError();
+						return AuthRefreshResult.failure;
 					} else {
 						rethrow;
 					}
 				}
 			} else {
 				onUnauthorizedError();
+				return AuthRefreshResult.failure;
 			}
+		} else {
+			return AuthRefreshResult.failure;
 		}
 	}
 
