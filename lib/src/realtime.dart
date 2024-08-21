@@ -122,16 +122,19 @@ extension Realtime on PbOfflineCache {
 
 		// Due to stability concerns we may not want to actually want to create a socket connection and instead just listen to updates locally
 		bool connectToServer = true,
+
+		// Item could have been modified between getting the record and subscribing so catch changes by refreshing immediately
+		bool refreshImmediately = true,
 	}) {
 
 		final PbSubscriptionDetails details = PbSubscriptionDetails(pb: this, collectionName: collection, id: id, updateData: callback, connectToServer: connectToServer, lastKnownUpdateTime: updateTime);
 
-		unawaited(_subscribeToId(details, collection, id, updateTime, callback, debouncingDuration, connectToServer));
+		unawaited(_subscribeToId(details, collection, id, updateTime, callback, debouncingDuration, connectToServer, refreshImmediately));
 
 		return details;
 	}
 
-	Future<void> _subscribeToId(PbSubscriptionDetails details, String collection, String id, DateTime updateTime, Function(Map<String, dynamic>) callback, Duration debouncingDuration, bool connectToServer) async {
+	Future<void> _subscribeToId(PbSubscriptionDetails details, String collection, String id, DateTime updateTime, Function(Map<String, dynamic>) callback, Duration debouncingDuration, bool connectToServer, bool refreshImmediately) async {
 
 		// Prevents too many temporary listeners from being registered all at once
 		await Future<void>.delayed(debouncingDuration);
@@ -140,7 +143,9 @@ extension Realtime on PbOfflineCache {
 			return;
 		}
 
-		await details.manualUpdate();
+		if (refreshImmediately) {
+			await details.manualUpdate();
+		}
 
 		try {
 			await details.subscribe();
