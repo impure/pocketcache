@@ -40,7 +40,6 @@ class PbOfflineCache {
 		Logger? overrideLogger,
 		Map<String, List<(String name, bool unique, List<String> columns)>>? indexInstructions,
 		FutureOr<(String, List<Object?>)?> Function(String tableName, String lastUpdatedTime)? generateWhereForResync,
-		int? maxOfflineDays,
 	}) {
 
 		assert(kIsWeb || directoryToSave != null, "Directory to save to should only be null if building to web.");
@@ -51,14 +50,13 @@ class PbOfflineCache {
 			pb,
 			makeDb(path),
 			overrideLogger ?? Logger(),
-			maxOfflineDays,
 			indexInstructions ?? const <String, List<(String name, bool unique, List<String>)>>{},
 			path,
 			generateWhereForResync,
 		);
 	}
 
-	PbOfflineCache._(this.pb, this.db, this.logger, int? maxOfflineDays, [this.indexInstructions = const <String, List<(String name, bool unique, List<String>)>>{}, this.dbPath = "", this.generateWhereForResync]) {
+	PbOfflineCache._(this.pb, this.db, this.logger, [this.indexInstructions = const <String, List<(String name, bool unique, List<String>)>>{}, this.dbPath = "", this.generateWhereForResync]) {
 		db?.execute("""
 	CREATE TABLE IF NOT EXISTS _operation_queue (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -81,31 +79,13 @@ class PbOfflineCache {
 		last_update TEXT
 	)""");
 
-		if (db != null && maxOfflineDays != null) {
-
-			final ResultSet data = db!.select(
-				"SELECT name FROM sqlite_master WHERE type='table'",
-			);
-
-			for (final Row row in data) {
-				if (row["name"] != "_last_sync_times" && row["name"] != "sqlite_sequence" && row["name"] != "_operation_queue_params" && row["name"] != "_operation_queue") {
-					try {
-						db?.execute("DELETE FROM ${row["name"]} WHERE _downloaded < ?", <Object>[DateTime.now().subtract(Duration(days: maxOfflineDays)).toString()]);
-					} catch (e) {
-					}
-				}
-			}
-
-		}
-
-
 		if (!isTest()) {
 			unawaited(_continuouslyCheckDbAccessible());
 		}
 	}
 
-	factory PbOfflineCache.withDb(PocketBase pb, CommonDatabase db, int? maxOfflineDays, {Logger? overrideLogger}) {
-		return PbOfflineCache._(pb, db, overrideLogger ?? Logger(), maxOfflineDays);
+	factory PbOfflineCache.withDb(PocketBase pb, CommonDatabase db, {Logger? overrideLogger}) {
+		return PbOfflineCache._(pb, db, overrideLogger ?? Logger());
 	}
 
 	Future<void> dropAllTables(String directoryToSave) async {
@@ -157,6 +137,25 @@ class PbOfflineCache {
 
 	String? get id => isTest() ? "test" : pb.authStore.model?.id;
 	bool get tokenValid => pb.authStore.isValid;
+
+	void clearOldRecords(int maxOfflineDays) {
+		print(maxOfflineDays);
+		if (db != null) {
+			final ResultSet data = db!.select(
+				"SELECT name FROM sqlite_master WHERE type='table'",
+			);
+
+			for (final Row row in data) {
+				if (row["name"] != "_last_sync_times" && row["name"] != "sqlite_sequence" && row["name"] != "_operation_queue_params" && row["name"] != "_operation_queue") {
+					try {
+						db?.execute("DELETE FROM ${row["name"]} WHERE _downloaded < ?", <Object>[DateTime.now().subtract(Duration(days: maxOfflineDays)).toString()]);
+					} catch (e) {
+					}
+				}
+			}
+
+		}
+	}
 
 	// Returns true on success, false on error
 	Future<AuthRefreshResult> tryRefreshAuth(Function() onUnauthorizedError) async {

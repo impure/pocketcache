@@ -285,7 +285,7 @@ void main() {
 		testResults = null;
 	});
 
-	final PbOfflineCache pb = PbOfflineCache.withDb(PbWrapper(), DatabaseMock(), null);
+	final PbOfflineCache pb = PbOfflineCache.withDb(PbWrapper(), DatabaseMock());
 	pb.dbAccessible = true;
 
 	group("selectBuilder", () {
