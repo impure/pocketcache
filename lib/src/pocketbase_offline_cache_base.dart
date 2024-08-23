@@ -148,7 +148,7 @@ class PbOfflineCache {
 			for (final Row row in data) {
 				if (row["name"] != "_last_sync_times" && row["name"] != "sqlite_sequence" && row["name"] != "_operation_queue_params" && row["name"] != "_operation_queue") {
 					try {
-						db?.execute("DELETE FROM ${row["name"]} WHERE _downloaded < ?", <Object>[DateTime.now().subtract(Duration(days: maxOfflineDays)).toString()]);
+						db?.execute("DELETE FROM ${row["name"]} WHERE _downloaded < ?", <Object>[DateTime.now().toUtc().subtract(Duration(days: maxOfflineDays)).toString()]);
 					} catch (e) {
 					}
 				}
