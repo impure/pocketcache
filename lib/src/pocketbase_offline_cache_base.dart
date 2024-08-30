@@ -139,7 +139,6 @@ class PbOfflineCache {
 	bool get tokenValid => pb.authStore.isValid;
 
 	void clearOldRecords(int maxOfflineDays) {
-		print(maxOfflineDays);
 		if (db != null) {
 			final ResultSet data = db!.select(
 				"SELECT name FROM sqlite_master WHERE type='table'",
