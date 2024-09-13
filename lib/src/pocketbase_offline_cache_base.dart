@@ -116,6 +116,15 @@ class PbOfflineCache {
 		} catch (e) {
 			logger.w('Error during dropAllTables: $e');
 		} finally {
+
+			// Have to recreate this table or it will cause issues
+			db?.execute("""
+				CREATE TABLE IF NOT EXISTS _last_sync_times (
+					table_name TEXT PRIMARY KEY,
+					last_update TEXT
+				)
+			""");
+
 			try {
 				db!.execute('VACUUM;');
 				logger.i('Database vacuumed successfully');
