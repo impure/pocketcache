@@ -570,8 +570,8 @@ class QueryBuilder {
 		}
 	}
 
-	QueryBuilder expand(String expandField) {
-		return QueryBuilder._(pb, collectionName, currentFilter, args, orderRule, List<String>.from(expandFields)..add(expandField));
+	QueryBuilder expand(List<String> expandFields) {
+		return QueryBuilder._(pb, collectionName, currentFilter, args, orderRule, List<String>.from(expandFields)..addAll(expandFields));
 	}
 
 	QueryBuilder orderBy(String columnName, { bool descending = true }) {

@@ -84,9 +84,19 @@ extension ListWrapper on PbOfflineCache {
 
 			for (final RecordModel record in records) {
 				final Map<String, dynamic> entry = record.data;
-				entry["id"] = record.id;
-				entry["created"] = record.created;
-				entry["updated"] = record.updated;
+				addMetadataToMap(entry, record);
+
+				if (record.expand.isNotEmpty) {
+					final Map<String, Map<String, dynamic>> expansions = <String, Map<String, dynamic>>{};
+					for (final MapEntry<String, List<RecordModel>> item in record.expand.entries) {
+						final Map<String, dynamic>? expandMap = item.value.firstOrNull?.data;
+						if (expandMap != null) {
+							expansions[item.key] = expandMap;
+							addMetadataToMap(expandMap, item.value.first);
+						}
+					}
+					entry["expand"] = expansions;
+				}
 				data.add(entry);
 			}
 
@@ -103,6 +113,12 @@ extension ListWrapper on PbOfflineCache {
 			}
 		}
 	}
+}
+
+void addMetadataToMap(Map<String, dynamic> map, RecordModel record) {
+	map["id"] = record.id;
+	map["created"] = record.created;
+	map["updated"] = record.updated;
 }
 
 void insertRecordsIntoLocalDb(CommonDatabase? db, String collectionName, List<RecordModel> records, Logger logger, {Map<String, List<(String name, bool unique, List<String> columns)>> indexInstructions = const <String, List<(String, bool, List<String>)>>{}, String? overrideDownloadTime}) {
