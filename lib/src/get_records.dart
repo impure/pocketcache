@@ -88,11 +88,18 @@ extension ListWrapper on PbOfflineCache {
 
 				if (record.expand.isNotEmpty) {
 					final Map<String, Map<String, dynamic>> expansions = <String, Map<String, dynamic>>{};
+
 					for (final MapEntry<String, List<RecordModel>> item in record.expand.entries) {
-						final Map<String, dynamic>? expandMap = item.value.firstOrNull?.data;
-						if (expandMap != null) {
-							expansions[item.key] = expandMap;
-							addMetadataToMap(expandMap, item.value.first);
+
+						if (item.value.length != 1) {
+							logger.w("Only 1 expansion record per table is supported");
+						}
+						insertRecordsIntoLocalDb(db, item.key, item.value, logger);
+
+						final RecordModel? expansionRecord = item.value.firstOrNull;
+						if (expansionRecord != null) {
+							expansions[item.key] = expansionRecord.data;
+							addMetadataToMap(expansionRecord.data, expansionRecord);
 						}
 					}
 					entry["expand"] = expansions;
