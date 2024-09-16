@@ -17,7 +17,7 @@ An wrapper around PocketBase allowing for easy offline use. Designed for my RSS 
 
 This package uses the broadcast feature of `state_groups` as an alternative to passing listeners around. These are the events currently used:
 
-- pocketcache/pre-local-update ((String tableName, Map<String, dynamic> record))
+- pocketcache/pre-local-update ((String tableName, RecordModel record))
 - pocketcache/record-updated-resync ((String tableName, Map<String, dynamic> record))
 - pocketcache/local-cache-updated
 - pocketcache/network-state-changed (bool canConnect)
