@@ -178,7 +178,7 @@ void insertRecordsIntoLocalDb(CommonDatabase? db, String collectionName, List<Re
 	}
 
 	for (final RecordModel record in records) {
-		broadcastToListeners("pocketcache/local-updated", (collectionName, record.data));
+		broadcastToListeners("pocketcache/pre-local-update", (collectionName, record.data));
 	}
 
 	final StringBuffer command = StringBuffer("INSERT OR REPLACE INTO $collectionName(id, created, updated, _downloaded");
