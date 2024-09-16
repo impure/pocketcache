@@ -5,6 +5,7 @@ import 'dart:core';
 import 'package:logger/logger.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:sqlite3/common.dart';
+import 'package:state_groups/state_groups.dart';
 
 import 'pocketbase_offline_cache_base.dart';
 
@@ -174,6 +175,10 @@ void insertRecordsIntoLocalDb(CommonDatabase? db, String collectionName, List<Re
 			}
 		}
 
+	}
+
+	for (final RecordModel record in records) {
+		broadcastToListeners("pocketcache/local-updated", (collectionName, record.data));
 	}
 
 	final StringBuffer command = StringBuffer("INSERT OR REPLACE INTO $collectionName(id, created, updated, _downloaded");

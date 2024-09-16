@@ -1,14 +1,14 @@
-<!-- 
+<!--
 This README describes the package. If you publish this package to pub.dev,
 this README's contents appear on the landing page for your package.
 
 For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/guides/libraries/writing-package-pages). 
+[writing package pages](https://dart.dev/guides/libraries/writing-package-pages).
 
 For general information about developing packages, see the Dart guide for
 [creating packages](https://dart.dev/guides/libraries/create-library-packages)
 and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/developing-packages). 
+[developing packages and plugins](https://flutter.dev/developing-packages).
 -->
 
 An wrapper around PocketBase allowing for easy offline use. Designed for my RSS reader Stratum ([iOS](https://apps.apple.com/us/app/stratum-rss-feed-reader/id6445805598), [Android](https://play.google.com/store/apps/details?id=com.amorfatite.keystone)).
@@ -17,7 +17,8 @@ An wrapper around PocketBase allowing for easy offline use. Designed for my RSS 
 
 This package uses the broadcast feature of `state_groups` as an alternative to passing listeners around. These are the events currently used:
 
-- pocketcache/record-updated ((String tableName, Map<String, dynamic> record))
+- pocketcache/local-updated ((String tableName, Map<String, dynamic> record))
+- pocketcache/record-updated-resync ((String tableName, Map<String, dynamic> record))
 - pocketcache/local-cache-updated
 - pocketcache/network-state-changed (bool canConnect)
 
