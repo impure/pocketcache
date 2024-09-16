@@ -131,8 +131,12 @@ void addMetadataToMap(Map<String, dynamic> map, RecordModel record) {
 
 void insertRecordsIntoLocalDb(CommonDatabase? db, String collectionName, List<RecordModel> records, Logger logger, {Map<String, List<(String name, bool unique, List<String> columns)>> indexInstructions = const <String, List<(String, bool, List<String>)>>{}, String? overrideDownloadTime}) {
 
-	if (db == null) {
+	if (db == null || records.isEmpty) {
 		return;
+	}
+
+	if (!isTest()) {
+		assert(collectionName == records.first.collectionName, "Collection name mismatch");
 	}
 
 	if (!tableExists(db, collectionName)) {
