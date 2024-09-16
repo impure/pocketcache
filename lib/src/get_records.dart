@@ -94,10 +94,10 @@ extension ListWrapper on PbOfflineCache {
 						if (item.value.length != 1) {
 							logger.w("Only 1 expansion record per table is supported");
 						}
-						insertRecordsIntoLocalDb(db, item.key, item.value, logger);
-
 						final RecordModel? expansionRecord = item.value.firstOrNull;
+
 						if (expansionRecord != null) {
+							insertRecordsIntoLocalDb(db, expansionRecord.collectionName, item.value, logger);
 							expansions[item.key] = expansionRecord.data;
 							addMetadataToMap(expansionRecord.data, expansionRecord);
 						}
