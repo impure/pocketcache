@@ -162,6 +162,7 @@ void insertRecordsIntoLocalDb(CommonDatabase? db, String collectionName, List<Re
 		}
 
 		db.execute("CREATE TABLE $collectionName ($schema)");
+		db.execute("CREATE INDEX ON $collectionName (_downloaded)");
 
 		// TODO: needs more work to set up indexes for JSON, relations, and bools. Fix that.
 		final List<(String name, bool unique, List<String> columns)>? indexesToCreate = indexInstructions[collectionName];
