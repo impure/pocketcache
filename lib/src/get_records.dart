@@ -121,136 +121,122 @@ extension ListWrapper on PbOfflineCache {
 			}
 		}
 	}
+
+	void insertRecordsIntoLocalDb(CommonDatabase? db, String collectionName, List<RecordModel> records, Logger logger, {Map<String, List<(String name, bool unique, List<String> columns)>> indexInstructions = const <String, List<(String, bool, List<String>)>>{}, String? overrideDownloadTime}) {
+
+		if (db == null || records.isEmpty) {
+			return;
+		}
+
+		if (!isTest()) {
+			assert(collectionName == records.first.collectionName, "Collection name mismatch");
+		}
+
+		if (!tableExists(db, collectionName)) {
+			final StringBuffer schema = StringBuffer("id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT");
+			final Set<String> tableKeys = <String>{"id", "created", "updated", "_downloaded"};
+
+			for (final MapEntry<String, dynamic> data in records.first.data.entries) {
+				if (data.value is String) {
+					tableKeys.add(data.key);
+					schema.write(",${data.key} TEXT DEFAULT ''");
+				} else if (data.value is bool) {
+					tableKeys.add("_offline_bool_${data.key}");
+					schema.write(",_offline_bool_${data.key} INTEGER DEFAULT 0");
+				} else if (data.value is double || data.value is int) {
+					tableKeys.add(data.key);
+					schema.write(",${data.key} REAL DEFAULT 0.0");
+				} else if (data.value is List<dynamic> || data.value is Map<dynamic, dynamic>) {
+					tableKeys.add("_offline_json_${data.key}");
+					schema.write(",_offline_json_${data.key} TEXT DEFAULT '[]'");
+				} else {
+					logger.e("Unknown type ${data.value.runtimeType}", stackTrace: StackTrace.current);
+				}
+			}
+
+			db.execute("CREATE TABLE $collectionName ($schema)");
+			db.execute("CREATE INDEX idx_downloaded ON $collectionName (_downloaded)");
+
+			createAllIndexesForTable(collectionName, tableKeys: tableKeys);
+
+		}
+
+		for (final RecordModel record in records) {
+			broadcastToListeners("pocketcache/pre-local-update", (collectionName, record));
+		}
+
+		final StringBuffer command = StringBuffer("INSERT OR REPLACE INTO $collectionName(id, created, updated, _downloaded");
+
+		final List<String> keys = <String>[];
+
+		for (final String key in records.first.data.keys) {
+			keys.add(key);
+			if (records.first.data[key] is bool) {
+				command.write(", _offline_bool_$key");
+			} else if (records.first.data[key] is List<dynamic> || records.first.data[key] is Map<dynamic, dynamic>) {
+				command.write(", _offline_json_$key");
+			} else {
+				command.write(", $key");
+			}
+		}
+
+		command.write(") VALUES");
+
+		bool first = true;
+		final List<dynamic> parameters = <dynamic>[];
+		final String now = overrideDownloadTime ?? DateTime.now().toUtc().toString();
+
+		for (final RecordModel record in records) {
+			if (!first) {
+				command.write(",");
+			} else {
+				first = false;
+			}
+
+			command.write("(?, ?, ?, ?");
+
+			parameters.add(record.id);
+			parameters.add(record.created);
+			parameters.add(record.updated);
+			parameters.add(now);
+
+			for (final String key in keys) {
+				command.write(", ?");
+				if (record.data[key] == null) {
+					if (key.startsWith("_offline_bool_")) {
+						parameters.add("false");
+					} else {
+						parameters.add("");
+					}
+				} else if (record.data[key] is List<dynamic> || record.data[key] is Map<dynamic, dynamic>) {
+					parameters.add(jsonEncode(record.data[key]));
+				} else{
+					parameters.add(record.data[key]);
+				}
+			}
+
+			command.write(")");
+		}
+
+		command.write(";");
+
+		try {
+			db.execute(command.toString(), parameters);
+		} on SqliteException catch (e) {
+			if (!isTest() && e.message.contains("has no column")) {
+				logger.i("Dropping table $collectionName");
+				db.execute("DROP TABLE $collectionName");
+			} else {
+				rethrow;
+			}
+		}
+	}
 }
 
 void addMetadataToMap(Map<String, dynamic> map, RecordModel record) {
 	map["id"] = record.id;
 	map["created"] = record.created;
 	map["updated"] = record.updated;
-}
-
-void insertRecordsIntoLocalDb(CommonDatabase? db, String collectionName, List<RecordModel> records, Logger logger, {Map<String, List<(String name, bool unique, List<String> columns)>> indexInstructions = const <String, List<(String, bool, List<String>)>>{}, String? overrideDownloadTime}) {
-
-	if (db == null || records.isEmpty) {
-		return;
-	}
-
-	if (!isTest()) {
-		assert(collectionName == records.first.collectionName, "Collection name mismatch");
-	}
-
-	if (!tableExists(db, collectionName)) {
-		final StringBuffer schema = StringBuffer("id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT");
-		final Set<String> tableKeys = <String>{"id", "created", "updated", "_downloaded"};
-
-		for (final MapEntry<String, dynamic> data in records.first.data.entries) {
-			if (data.value is String) {
-				tableKeys.add(data.key);
-				schema.write(",${data.key} TEXT DEFAULT ''");
-			} else if (data.value is bool) {
-				tableKeys.add("_offline_bool_${data.key}");
-				schema.write(",_offline_bool_${data.key} INTEGER DEFAULT 0");
-			} else if (data.value is double || data.value is int) {
-				tableKeys.add(data.key);
-				schema.write(",${data.key} REAL DEFAULT 0.0");
-			} else if (data.value is List<dynamic> || data.value is Map<dynamic, dynamic>) {
-				tableKeys.add("_offline_json_${data.key}");
-				schema.write(",_offline_json_${data.key} TEXT DEFAULT '[]'");
-			} else {
-				logger.e("Unknown type ${data.value.runtimeType}", stackTrace: StackTrace.current);
-			}
-		}
-
-		db.execute("CREATE TABLE $collectionName ($schema)");
-		db.execute("CREATE INDEX ON $collectionName (_downloaded)");
-
-		// TODO: needs more work to set up indexes for JSON, relations, and bools. Fix that.
-		final List<(String name, bool unique, List<String> columns)>? indexesToCreate = indexInstructions[collectionName];
-		if (indexesToCreate != null) {
-			for (final (String name, bool unique, List<String> columns) entry in indexesToCreate) {
-				if (!tableKeys.containsAll(entry.$3)) {
-					logger.e("Unable to create index ${entry.$1} on $collectionName($tableKeys), could not find all columns: ${entry.$3}");
-				} else {
-
-					String columnNames = entry.$3.toString();
-					columnNames = columnNames.substring(1, columnNames.length - 1);
-
-					db.execute("CREATE${entry.$2 ? " UNIQUE" : ""} INDEX ${entry.$1} ON $collectionName($columnNames)");
-				}
-			}
-		}
-
-	}
-
-	for (final RecordModel record in records) {
-		broadcastToListeners("pocketcache/pre-local-update", (collectionName, record));
-	}
-
-	final StringBuffer command = StringBuffer("INSERT OR REPLACE INTO $collectionName(id, created, updated, _downloaded");
-
-	final List<String> keys = <String>[];
-
-	for (final String key in records.first.data.keys) {
-		keys.add(key);
-		if (records.first.data[key] is bool) {
-			command.write(", _offline_bool_$key");
-		} else if (records.first.data[key] is List<dynamic> || records.first.data[key] is Map<dynamic, dynamic>) {
-			command.write(", _offline_json_$key");
-		} else {
-			command.write(", $key");
-		}
-	}
-
-	command.write(") VALUES");
-
-	bool first = true;
-	final List<dynamic> parameters = <dynamic>[];
-	final String now = overrideDownloadTime ?? DateTime.now().toUtc().toString();
-
-	for (final RecordModel record in records) {
-		if (!first) {
-			command.write(",");
-		} else {
-			first = false;
-		}
-
-		command.write("(?, ?, ?, ?");
-
-		parameters.add(record.id);
-		parameters.add(record.created);
-		parameters.add(record.updated);
-		parameters.add(now);
-
-		for (final String key in keys) {
-			command.write(", ?");
-			if (record.data[key] == null) {
-				if (key.startsWith("_offline_bool_")) {
-					parameters.add("false");
-				} else {
-					parameters.add("");
-				}
-			} else if (record.data[key] is List<dynamic> || record.data[key] is Map<dynamic, dynamic>) {
-				parameters.add(jsonEncode(record.data[key]));
-			} else{
-				parameters.add(record.data[key]);
-			}
-		}
-
-		command.write(")");
-	}
-
-	command.write(";");
-
-	try {
-		db.execute(command.toString(), parameters);
-	} on SqliteException catch (e) {
-		if (!isTest() && e.message.contains("has no column")) {
-			logger.i("Dropping table $collectionName");
-			db.execute("DROP TABLE $collectionName");
-		} else {
-			rethrow;
-		}
-	}
 }
 
 String? makePbFilter((String, List<Object?>)? params, { (String column, bool descending)? sort, Map<String, dynamic>? startAfter }) {
