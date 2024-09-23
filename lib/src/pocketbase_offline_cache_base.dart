@@ -135,7 +135,7 @@ class PbOfflineCache {
 			}
 
 			try {
-				db!.execute("CREATE INDEX IF NOT EXISTS idx_downloaded ON $tableName (_downloaded)");
+				db!.execute("CREATE INDEX IF NOT EXISTS _idx_downloaded ON $tableName (_downloaded)");
 			} catch (e) {
 				logger.w('Unable to create index: $e');
 			}

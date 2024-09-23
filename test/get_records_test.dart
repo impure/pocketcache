@@ -4,6 +4,7 @@ import 'package:pocketbase/pocketbase.dart';
 import 'package:pocketbase_offline_cache/pocketbase_offline_cache.dart';
 import 'package:pocketbase_offline_cache/src/get_records.dart';
 import 'package:sqlite3/common.dart';
+import 'package:sqlite3/sqlite3.dart';
 import 'package:test/test.dart';
 
 import 'pocketbase_offline_cache_test.dart';
@@ -131,7 +132,7 @@ void main() {
 			expect(operations.toString(),
 					"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
 					"[CREATE TABLE test (id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT), []], "
-					"[CREATE INDEX idx_downloaded ON test (_downloaded), []], "
+					"[CREATE INDEX _idx_downloaded ON test (_downloaded), []], "
 					"[INSERT OR REPLACE INTO test(id, created, updated, _downloaded) VALUES(?, ?, ?, ?);, [abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, 2024-03-01 00:00:00.000]]]"
 			);
 		});
@@ -146,7 +147,7 @@ void main() {
 			expect(operations.toString(),
 				"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
 				"[CREATE TABLE test (id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT,1 REAL DEFAULT 0.0), []], "
-				"[CREATE INDEX idx_downloaded ON test (_downloaded), []], "
+				"[CREATE INDEX _idx_downloaded ON test (_downloaded), []], "
 				"[INSERT OR REPLACE INTO test(id, created, updated, _downloaded, 1) VALUES(?, ?, ?, ?, ?);, [abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, 2024-03-01 00:00:00.000, 2]]]"
 			);
 		});
@@ -161,7 +162,7 @@ void main() {
 			expect(operations.toString(),
 				"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
 				"[CREATE TABLE test (id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT,_offline_bool_1 INTEGER DEFAULT 0,2 TEXT DEFAULT ''), []], "
-				"[CREATE INDEX idx_downloaded ON test (_downloaded), []], "
+				"[CREATE INDEX _idx_downloaded ON test (_downloaded), []], "
 				"[INSERT OR REPLACE INTO test(id, created, updated, _downloaded, _offline_bool_1, 2) VALUES(?, ?, ?, ?, ?, ?);, [abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, 2024-03-01 00:00:00.000, true, 2022-01-01 00:00:00.000]]]"
 			);
 		});
@@ -176,7 +177,7 @@ void main() {
 			expect(operations.toString(),
 				"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
 				"[CREATE TABLE test (id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT,1 REAL DEFAULT 0.0,2 TEXT DEFAULT ''), []], "
-				"[CREATE INDEX idx_downloaded ON test (_downloaded), []], "
+				"[CREATE INDEX _idx_downloaded ON test (_downloaded), []], "
 				"e: Unable to create index index1 on test({id, created, updated, _downloaded, 1, 2}), could not find all columns: [3], "
 				"[INSERT OR REPLACE INTO test(id, created, updated, _downloaded, 1, 2) VALUES(?, ?, ?, ?, ?, ?);, [abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, 2024-03-01 00:00:00.000, 1, 2022-01-01 00:00:00.000]]]"
 			);
@@ -192,7 +193,7 @@ void main() {
 			expect(operations.toString(),
 				"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
 				"[CREATE TABLE test (id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT,_offline_json_1 TEXT DEFAULT '[]',2 TEXT DEFAULT ''), []], "
-				"[CREATE INDEX idx_downloaded ON test (_downloaded), []], "
+				"[CREATE INDEX _idx_downloaded ON test (_downloaded), []], "
 				"[INSERT OR REPLACE INTO test(id, created, updated, _downloaded, _offline_json_1, 2) VALUES(?, ?, ?, ?, ?, ?);, [abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, 2024-03-01 00:00:00.000, [\"1\",\"2\"], 2022-01-01 00:00:00.000]]]"
 			);
 		});
@@ -209,7 +210,7 @@ void main() {
 			expect(operations.toString(),
 				"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
 				"[CREATE TABLE test (id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT,1 REAL DEFAULT 0.0,2 TEXT DEFAULT ''), []], "
-				"[CREATE INDEX idx_downloaded ON test (_downloaded), []], "
+				"[CREATE INDEX _idx_downloaded ON test (_downloaded), []], "
 				"[CREATE INDEX IF NOT EXISTS index1 ON test(1, 2), []], "
 				"[INSERT OR REPLACE INTO test(id, created, updated, _downloaded, 1, 2) VALUES(?, ?, ?, ?, ?, ?);, [abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, 2024-03-01 00:00:00.000, 1, 2022-01-01 00:00:00.000]]]"
 			);
@@ -228,11 +229,41 @@ void main() {
 			expect(operations.toString(),
 				"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
 				"[CREATE TABLE test (id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT,1 REAL DEFAULT 0.0,2 TEXT DEFAULT ''), []], "
-				"[CREATE INDEX idx_downloaded ON test (_downloaded), []], "
+				"[CREATE INDEX _idx_downloaded ON test (_downloaded), []], "
 				"[CREATE UNIQUE INDEX IF NOT EXISTS index1 ON test(1, 2), []], "
 				"[CREATE INDEX IF NOT EXISTS index2 ON test(2), []], "
 				"[INSERT OR REPLACE INTO test(id, created, updated, _downloaded, 1, 2) VALUES(?, ?, ?, ?, ?, ?);, [abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, 2024-03-01 00:00:00.000, 1, 2022-01-01 00:00:00.000]]]"
 			);
 		});
+
+		test("multiple indexes at the same time 2 (and one unique)", () {
+
+			// On Windows in terminal requires SQLite files in the path, in Android Studio SQLite should be in the root of the project
+			final PbOfflineCache testPb = PbOfflineCache.withDb(PocketBase(""), sqlite3.openInMemory());
+
+			testPb.insertRecordsIntoLocalDb(null, "test", <RecordModel>[ RecordModel(
+				id: "abc",
+				data: <String, dynamic> { "one" : 1, "two" : DateTime(2022).toString() },
+				created: DateTime(2024, 1).toString(),
+				updated: DateTime(2024, 2).toString(),
+			) ], testLogger, indexInstructions: <String, List<(String, bool, List<String>)>>{"test" : <(String, bool, List<String>)>[
+				("index1", true, <String>["one", "two"]),
+				("index2", false, <String>["two"]),
+			]}, overrideDownloadTime: DateTime(2024, 3).toString());
+			final Set<String> names = getRowNames(testPb.db!.select("PRAGMA index_list('test');"));
+			expect(names.contains("_idx_downloaded"), true);
+			expect(names.contains("index1"), true);
+			expect(names.contains("index2"), true);
+		});
 	});
+}
+
+Set<String> getRowNames(ResultSet result) {
+	final Set<String> names = <String>{};
+
+	for (final Row row in result) {
+		names.add(row["name"]);
+	}
+
+	return names;
 }

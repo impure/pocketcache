@@ -122,7 +122,9 @@ extension ListWrapper on PbOfflineCache {
 		}
 	}
 
-	void insertRecordsIntoLocalDb(CommonDatabase? db, String collectionName, List<RecordModel> records, Logger logger, {Map<String, List<(String name, bool unique, List<String> columns)>> indexInstructions = const <String, List<(String, bool, List<String>)>>{}, String? overrideDownloadTime}) {
+	void insertRecordsIntoLocalDb(CommonDatabase? overrideDb, String collectionName, List<RecordModel> records, Logger logger, {Map<String, List<(String name, bool unique, List<String> columns)>> indexInstructions = const <String, List<(String, bool, List<String>)>>{}, String? overrideDownloadTime}) {
+
+		overrideDb ??= db;
 
 		if (db == null || records.isEmpty) {
 			return;
@@ -132,7 +134,7 @@ extension ListWrapper on PbOfflineCache {
 			assert(collectionName == records.first.collectionName, "Collection name mismatch");
 		}
 
-		if (!tableExists(db, collectionName)) {
+		if (!tableExists(overrideDb!, collectionName)) {
 			final StringBuffer schema = StringBuffer("id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT");
 			final Set<String> tableKeys = <String>{"id", "created", "updated", "_downloaded"};
 
@@ -154,8 +156,8 @@ extension ListWrapper on PbOfflineCache {
 				}
 			}
 
-			db.execute("CREATE TABLE $collectionName ($schema)");
-			db.execute("CREATE INDEX idx_downloaded ON $collectionName (_downloaded)");
+			overrideDb.execute("CREATE TABLE $collectionName ($schema)");
+			overrideDb.execute("CREATE INDEX _idx_downloaded ON $collectionName (_downloaded)");
 
 			createAllIndexesForTable(collectionName, indexInstructions, overrideLogger: logger, tableKeys: tableKeys);
 
@@ -221,11 +223,11 @@ extension ListWrapper on PbOfflineCache {
 		command.write(";");
 
 		try {
-			db.execute(command.toString(), parameters);
+			db!.execute(command.toString(), parameters);
 		} on SqliteException catch (e) {
 			if (!isTest() && e.message.contains("has no column")) {
 				logger.i("Dropping table $collectionName");
-				db.execute("DROP TABLE $collectionName");
+				db!.execute("DROP TABLE $collectionName");
 			} else {
 				rethrow;
 			}
