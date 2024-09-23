@@ -78,7 +78,7 @@ extension ListWrapper on PbOfflineCache {
 			}
 
 			if (records.isNotEmpty) {
-				insertRecordsIntoLocalDb(db, collectionName, records, logger, indexInstructions: indexInstructions);
+				insertRecordsIntoLocalDb(collectionName, records, logger, indexInstructions: indexInstructions);
 			}
 
 			final List<Map<String, dynamic>> data = <Map<String, dynamic>>[];
@@ -98,7 +98,7 @@ extension ListWrapper on PbOfflineCache {
 						final RecordModel? expansionRecord = item.value.firstOrNull;
 
 						if (expansionRecord != null) {
-							insertRecordsIntoLocalDb(db, expansionRecord.collectionName, item.value, logger);
+							insertRecordsIntoLocalDb(expansionRecord.collectionName, item.value, logger);
 							expansions[item.key] = expansionRecord.data;
 							addMetadataToMap(expansionRecord.data, expansionRecord);
 						}
@@ -122,9 +122,7 @@ extension ListWrapper on PbOfflineCache {
 		}
 	}
 
-	void insertRecordsIntoLocalDb(CommonDatabase? overrideDb, String collectionName, List<RecordModel> records, Logger logger, {Map<String, List<(String name, bool unique, List<String> columns)>> indexInstructions = const <String, List<(String, bool, List<String>)>>{}, String? overrideDownloadTime}) {
-
-		overrideDb ??= db;
+	void insertRecordsIntoLocalDb(String collectionName, List<RecordModel> records, Logger logger, {Map<String, List<(String name, bool unique, List<String> columns)>> indexInstructions = const <String, List<(String, bool, List<String>)>>{}, String? overrideDownloadTime}) {
 
 		if (db == null || records.isEmpty) {
 			return;
@@ -134,7 +132,7 @@ extension ListWrapper on PbOfflineCache {
 			assert(collectionName == records.first.collectionName, "Collection name mismatch");
 		}
 
-		if (!tableExists(overrideDb!, collectionName)) {
+		if (!tableExists(db!, collectionName)) {
 			final StringBuffer schema = StringBuffer("id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT");
 			final Set<String> tableKeys = <String>{"id", "created", "updated", "_downloaded"};
 
@@ -156,8 +154,8 @@ extension ListWrapper on PbOfflineCache {
 				}
 			}
 
-			overrideDb.execute("CREATE TABLE $collectionName ($schema)");
-			overrideDb.execute("CREATE INDEX _idx_downloaded ON $collectionName (_downloaded)");
+			db!.execute("CREATE TABLE $collectionName ($schema)");
+			db!.execute("CREATE INDEX _idx_downloaded ON $collectionName (_downloaded)");
 
 			createAllIndexesForTable(collectionName, indexInstructions, overrideLogger: logger, tableKeys: tableKeys);
 
