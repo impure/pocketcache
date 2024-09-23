@@ -90,7 +90,7 @@ class PbOfflineCache {
 		return PbOfflineCache._(pb, db, overrideLogger ?? Logger());
 	}
 
-	void createAllIndexesForTable(String tableName, {Set<String>? tableKeys}) {
+	void createAllIndexesForTable(String tableName, Map<String, List<(String, bool, List<String>)>> indexInstructions, {Logger? overrideLogger, Set<String>? tableKeys}) {
 		if (db == null) {
 			return;
 		}
@@ -99,7 +99,7 @@ class PbOfflineCache {
 		if (indexesToCreate != null) {
 			for (final (String name, bool unique, List<String> columns) entry in indexesToCreate) {
 				if (tableKeys != null && !tableKeys.containsAll(entry.$3)) {
-					logger.e("Unable to create index ${entry.$1} on $tableName($tableKeys), could not find all columns: ${entry.$3}");
+					(overrideLogger ?? logger).e("Unable to create index ${entry.$1} on $tableName($tableKeys), could not find all columns: ${entry.$3}");
 				} else {
 
 					String columnNames = entry.$3.toString();
@@ -141,7 +141,7 @@ class PbOfflineCache {
 			}
 
 			try {
-				createAllIndexesForTable(tableName);
+				createAllIndexesForTable(tableName, indexInstructions);
 			} catch (e) {
 				logger.w('Unable to create index: $e');
 			}

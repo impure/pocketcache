@@ -320,12 +320,12 @@ void main() {
 	group("QueryBuilder", () {
 		test("Empty", () async {
 			expect((await pb.collection("test").get()).toString(), "[]");
-			expect(operations.toString(), "[getList 1 500 true ]");
+			expect(operations.toString(), "[getList 1 500 true , [SELECT last_update FROM _last_sync_times WHERE table_name=?, [test]]]");
 		});
-		
+
 		test("Single condition", () async {
 			expect((await pb.collection("test").where("abc", isEqualTo: "xyz").get()).toString(), "[]");
-			expect(operations.toString(), "[getList 1 500 true abc = 'xyz']");
+			expect(operations.toString(), "[getList 1 500 true abc = 'xyz', [SELECT last_update FROM _last_sync_times WHERE table_name=?, [test]]]");
 		});
 
 		test("Multiple conditions", () async {
@@ -334,7 +334,7 @@ void main() {
 				.where("1", isGreaterThan: 3)
 				.where("2", isLessThan: 6)
 				.where("abc", isGreaterThanOrEqualTo: 44).get()).toString(), "[]");
-			expect(operations.toString(), "[getList 1 500 true abc != 'xyz' && 1 > 3 && 2 < 6 && abc >= 44]");
+			expect(operations.toString(), "[getList 1 500 true abc != 'xyz' && 1 > 3 && 2 < 6 && abc >= 44, [SELECT last_update FROM _last_sync_times WHERE table_name=?, [test]]]");
 		});
 	});
 }
