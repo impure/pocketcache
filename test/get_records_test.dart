@@ -254,6 +254,49 @@ void main() {
 			expect(names.contains("index1"), true);
 			expect(names.contains("index2"), true);
 		});
+
+		test("reinit indexes", () {
+
+			// On Windows in terminal requires SQLite files in the path, in Android Studio SQLite should be in the root of the project
+			final CommonDatabase db = sqlite3.openInMemory();
+			PbOfflineCache testPb = PbOfflineCache.withDb(PocketBase(""), db);
+
+			testPb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
+				id: "abc",
+				data: <String, dynamic> { "one" : 1, "two" : DateTime(2022).toString() },
+				created: DateTime(2024, 1).toString(),
+				updated: DateTime(2024, 2).toString(),
+			) ], testLogger, indexInstructions: <String, List<(String, bool, List<String>)>>{"test" : <(String, bool, List<String>)>[
+				("index1", true, <String>["one", "two"]),
+			]}, overrideDownloadTime: DateTime(2024, 3).toString());
+
+			Set<String> names = getRowNames(testPb.db!.select("PRAGMA index_list('test');"));
+			expect(names.contains("_idx_downloaded"), true);
+			expect(names.contains("index1"), true);
+			expect(names.contains("index2"), false);
+
+			// On Windows in terminal requires SQLite files in the path, in Android Studio SQLite should be in the root of the project
+			testPb = PbOfflineCache.withDb(PocketBase(""), db, indexInstructions: <String, List<(String, bool, List<String>)>>{"test" : <(String, bool, List<String>)>[
+				("index1", true, <String>["one", "two"]),
+				("index2", false, <String>["two"]),
+			]});
+
+			testPb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
+				id: "abc",
+				data: <String, dynamic> { "one" : 1, "two" : DateTime(2022).toString() },
+				created: DateTime(2024, 1).toString(),
+				updated: DateTime(2024, 2).toString(),
+			) ], testLogger, indexInstructions: <String, List<(String, bool, List<String>)>>{"test" : <(String, bool, List<String>)>[
+				("index1", true, <String>["one", "two"]),
+				("index2", false, <String>["two"]),
+			]}, overrideDownloadTime: DateTime(2024, 3).toString());
+			testPb.reinitIndexes();
+
+			names = getRowNames(testPb.db!.select("PRAGMA index_list('test');"));
+			expect(names.contains("_idx_downloaded"), true);
+			expect(names.contains("index1"), true);
+			expect(names.contains("index2"), true);
+		});
 	});
 }
 

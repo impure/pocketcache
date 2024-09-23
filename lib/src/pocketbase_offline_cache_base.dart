@@ -86,8 +86,8 @@ class PbOfflineCache {
 		}
 	}
 
-	factory PbOfflineCache.withDb(PocketBase pb, CommonDatabase db, {Logger? overrideLogger}) {
-		return PbOfflineCache._(pb, db, overrideLogger ?? Logger());
+	factory PbOfflineCache.withDb(PocketBase pb, CommonDatabase db, {Logger? overrideLogger, Map<String, List<(String name, bool unique, List<String> columns)>> indexInstructions = const <String, List<(String name, bool unique, List<String>)>>{}}) {
+		return PbOfflineCache._(pb, db, overrideLogger ?? Logger(), indexInstructions);
 	}
 
 	void createAllIndexesForTable(String tableName, Map<String, List<(String, bool, List<String>)>> indexInstructions, {Logger? overrideLogger, Set<String>? tableKeys}) {
