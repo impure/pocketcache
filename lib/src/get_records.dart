@@ -155,7 +155,7 @@ extension ListWrapper on PbOfflineCache {
 			}
 
 			db!.execute("CREATE TABLE $collectionName ($schema)");
-			db!.execute("CREATE INDEX _idx_downloaded ON $collectionName (_downloaded)");
+			db!.execute("CREATE INDEX IF NOT EXISTS _idx_downloaded ON $collectionName (_downloaded)");
 
 			createAllIndexesForTable(collectionName, indexInstructions, overrideLogger: logger, tableKeys: tableKeys);
 
