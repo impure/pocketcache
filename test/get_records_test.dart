@@ -131,7 +131,7 @@ void main() {
 			expect(operations.toString(),
 					"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
 					"[CREATE TABLE test (id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT), []], "
-					"[CREATE INDEX _idx_downloaded ON test (_downloaded), []], "
+					"[CREATE INDEX IF NOT EXISTS _idx_downloaded ON test (_downloaded), []], "
 					"[INSERT OR REPLACE INTO test(id, created, updated, _downloaded) VALUES(?, ?, ?, ?);, [abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, 2024-03-01 00:00:00.000]]]"
 			);
 		});
@@ -146,7 +146,7 @@ void main() {
 			expect(operations.toString(),
 				"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
 				"[CREATE TABLE test (id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT,1 REAL DEFAULT 0.0), []], "
-				"[CREATE INDEX _idx_downloaded ON test (_downloaded), []], "
+				"[CREATE INDEX IF NOT EXISTS _idx_downloaded ON test (_downloaded), []], "
 				"[INSERT OR REPLACE INTO test(id, created, updated, _downloaded, 1) VALUES(?, ?, ?, ?, ?);, [abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, 2024-03-01 00:00:00.000, 2]]]"
 			);
 		});
@@ -161,7 +161,7 @@ void main() {
 			expect(operations.toString(),
 				"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
 				"[CREATE TABLE test (id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT,_offline_bool_1 INTEGER DEFAULT 0,2 TEXT DEFAULT ''), []], "
-				"[CREATE INDEX _idx_downloaded ON test (_downloaded), []], "
+				"[CREATE INDEX IF NOT EXISTS _idx_downloaded ON test (_downloaded), []], "
 				"[INSERT OR REPLACE INTO test(id, created, updated, _downloaded, _offline_bool_1, 2) VALUES(?, ?, ?, ?, ?, ?);, [abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, 2024-03-01 00:00:00.000, true, 2022-01-01 00:00:00.000]]]"
 			);
 		});
@@ -176,7 +176,7 @@ void main() {
 			expect(operations.toString(),
 				"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
 				"[CREATE TABLE test (id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT,1 REAL DEFAULT 0.0,2 TEXT DEFAULT ''), []], "
-				"[CREATE INDEX _idx_downloaded ON test (_downloaded), []], "
+				"[CREATE INDEX IF NOT EXISTS _idx_downloaded ON test (_downloaded), []], "
 				"e: Unable to create index index1 on test({id, created, updated, _downloaded, 1, 2}), could not find all columns: [3], "
 				"[INSERT OR REPLACE INTO test(id, created, updated, _downloaded, 1, 2) VALUES(?, ?, ?, ?, ?, ?);, [abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, 2024-03-01 00:00:00.000, 1, 2022-01-01 00:00:00.000]]]"
 			);
@@ -192,7 +192,7 @@ void main() {
 			expect(operations.toString(),
 				"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
 				"[CREATE TABLE test (id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT,_offline_json_1 TEXT DEFAULT '[]',2 TEXT DEFAULT ''), []], "
-				"[CREATE INDEX _idx_downloaded ON test (_downloaded), []], "
+				"[CREATE INDEX IF NOT EXISTS _idx_downloaded ON test (_downloaded), []], "
 				"[INSERT OR REPLACE INTO test(id, created, updated, _downloaded, _offline_json_1, 2) VALUES(?, ?, ?, ?, ?, ?);, [abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, 2024-03-01 00:00:00.000, [\"1\",\"2\"], 2022-01-01 00:00:00.000]]]"
 			);
 		});
@@ -209,7 +209,7 @@ void main() {
 			expect(operations.toString(),
 				"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
 				"[CREATE TABLE test (id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT,1 REAL DEFAULT 0.0,2 TEXT DEFAULT ''), []], "
-				"[CREATE INDEX _idx_downloaded ON test (_downloaded), []], "
+				"[CREATE INDEX IF NOT EXISTS _idx_downloaded ON test (_downloaded), []], "
 				"[CREATE INDEX IF NOT EXISTS index1 ON test(1, 2), []], "
 				"[INSERT OR REPLACE INTO test(id, created, updated, _downloaded, 1, 2) VALUES(?, ?, ?, ?, ?, ?);, [abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, 2024-03-01 00:00:00.000, 1, 2022-01-01 00:00:00.000]]]"
 			);
@@ -228,7 +228,7 @@ void main() {
 			expect(operations.toString(),
 				"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
 				"[CREATE TABLE test (id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT,1 REAL DEFAULT 0.0,2 TEXT DEFAULT ''), []], "
-				"[CREATE INDEX _idx_downloaded ON test (_downloaded), []], "
+				"[CREATE INDEX IF NOT EXISTS _idx_downloaded ON test (_downloaded), []], "
 				"[CREATE UNIQUE INDEX IF NOT EXISTS index1 ON test(1, 2), []], "
 				"[CREATE INDEX IF NOT EXISTS index2 ON test(2), []], "
 				"[INSERT OR REPLACE INTO test(id, created, updated, _downloaded, 1, 2) VALUES(?, ?, ?, ?, ?, ?);, [abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, 2024-03-01 00:00:00.000, 1, 2022-01-01 00:00:00.000]]]"
