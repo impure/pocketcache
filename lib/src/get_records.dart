@@ -129,7 +129,7 @@ extension ListWrapper on PbOfflineCache {
 		}
 
 		if (!isTest()) {
-			assert(collectionName == records.first.collectionName, "Collection name mismatch");
+			assert(collectionName == records.first.collectionName, "Collection name mismatch given: $collectionName, record's collection: ${records.first.collectionName}");
 		}
 
 		if (!tableExists(db!, collectionName)) {
