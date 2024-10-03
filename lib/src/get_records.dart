@@ -128,7 +128,7 @@ extension ListWrapper on PbOfflineCache {
 			return;
 		}
 
-		if (!isTest()) {
+		if (!isTest() && records.first.collectionName != "") {
 			assert(collectionName == records.first.collectionName, "Collection name mismatch given: $collectionName, record's collection: ${records.first.collectionName}");
 		}
 
