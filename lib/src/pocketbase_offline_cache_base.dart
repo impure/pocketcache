@@ -42,8 +42,6 @@ class PbOfflineCache {
 		FutureOr<(String, List<Object?>)?> Function(String tableName, String lastUpdatedTime)? generateWhereForResync,
 	}) {
 
-		assert(kIsWeb || directoryToSave != null, "Directory to save to should only be null if building to web.");
-
 		final String? path = directoryToSave == null ? null : join(directoryToSave, "offline_cache");
 
 		return PbOfflineCache._(
