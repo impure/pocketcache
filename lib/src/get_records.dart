@@ -222,7 +222,7 @@ extension ListWrapper on PbOfflineCache {
 		command.write(";");
 
 		try {
-			await executeDbCommand(dbPath, command.toString(), parameters);
+			await dbIsolate.execute(command.toString(), parameters);
 		} on SqliteException catch (e) {
 			if (!isTest() && e.message.contains("has no column")) {
 				logger.i("Dropping table $collectionName");

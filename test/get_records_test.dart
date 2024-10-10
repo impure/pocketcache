@@ -122,8 +122,8 @@ void main() {
 
 	group("insertRecordsIntoLocalDb", () {
 
-		test("insert empty", () {
-			pb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
+		test("insert empty", () async {
+			await pb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
 				id: "abc",
 				created: DateTime(2024, 1).toString(),
 				updated: DateTime(2024, 2).toString(),
@@ -136,8 +136,8 @@ void main() {
 			);
 		});
 
-		test("insert one item", () {
-			pb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
+		test("insert one item", () async {
+			await pb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
 				id: "abc",
 				data: <String, dynamic> { "1" : 2 },
 				created: DateTime(2024, 1).toString(),

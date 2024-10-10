@@ -2,7 +2,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -13,6 +12,7 @@ import 'package:sqlite3/common.dart';
 import 'package:state_groups/state_groups.dart';
 
 import 'count_records.dart';
+import 'db_isolate.dart';
 import 'get_records.dart';
 import 'make_db.dart' if (dart.library.io) 'make_db_io.dart' if (dart.library.html) 'make_db_web.dart';
 
@@ -48,6 +48,7 @@ class PbOfflineCache {
 		return PbOfflineCache._(
 			pb,
 			makeDb(path),
+			DbIsolate(path),
 			overrideLogger ?? Logger(),
 			indexInstructions ?? const <String, List<(String name, bool unique, List<String>)>>{},
 			path,
@@ -55,7 +56,7 @@ class PbOfflineCache {
 		);
 	}
 
-	PbOfflineCache._(this.pb, this.db, this.logger, [this.indexInstructions = const <String, List<(String name, bool unique, List<String>)>>{}, this.dbPath, this.generateWhereForResync]) {
+	PbOfflineCache._(this.pb, this.db, this.dbIsolate, this.logger, [this.indexInstructions = const <String, List<(String name, bool unique, List<String>)>>{}, this.dbPath, this.generateWhereForResync]) {
 		db?.execute("""
 	CREATE TABLE IF NOT EXISTS _operation_queue (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -86,7 +87,7 @@ class PbOfflineCache {
 	}
 
 	factory PbOfflineCache.withDb(PocketBase pb, CommonDatabase db, {Logger? overrideLogger, Map<String, List<(String name, bool unique, List<String> columns)>> indexInstructions = const <String, List<(String name, bool unique, List<String>)>>{}}) {
-		return PbOfflineCache._(pb, db, overrideLogger ?? Logger(), indexInstructions);
+		return PbOfflineCache._(pb, db, DbIsolate.test(), overrideLogger ?? Logger(), indexInstructions);
 	}
 
 	void createAllIndexesForTable(String tableName, Map<String, List<(String, bool, List<String>)>> indexInstructions, {Logger? overrideLogger, Set<String>? tableKeys}) {
@@ -194,6 +195,7 @@ class PbOfflineCache {
 	}
 
 	String? dbPath;
+	final DbIsolate dbIsolate;
 	bool dbAccessible = true;
 	final PocketBase pb;
 	CommonDatabase? db;
@@ -308,22 +310,6 @@ class PbOfflineCache {
 			}
 			await Future<void>.delayed(const Duration(seconds: 10));
 		}
-	}
-
-	Future<void> executeDbCommand(String? path, String command, [List<dynamic> parameters = const <dynamic>[]]) async {
-		if (isTest()) {
-			db?.execute(command, parameters);
-			return;
-		}
-		if (path == null) {
-			return;
-		}
-		await Isolate.run(() {
-			final CommonDatabase? db = makeDb(path);
-			if (db != null) {
-				db.execute(command, parameters);
-			}
-		});
 	}
 
 	Future<void> dequeueCachedOperations() async {
