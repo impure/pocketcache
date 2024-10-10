@@ -1,6 +1,5 @@
 
 import 'package:pocketbase/pocketbase.dart';
-import 'package:sqlite3/common.dart';
 
 import 'get_records.dart';
 import 'pocketbase_offline_cache_base.dart';
@@ -13,8 +12,8 @@ extension CountWrapper on PbOfflineCache {
 
 		if ((source != QuerySource.server) && !dbAccessible || source == QuerySource.cache) {
 
-			if (db != null && tableExists(db!, collectionName)) {
-				final ResultSet results = selectBuilder(db!, collectionName, columns: "COUNT(*)", filter: where);
+			if (await tableExists(dbIsolate, collectionName)) {
+				final List<Map<String, dynamic>> results = await selectBuilder(dbIsolate, collectionName, columns: "COUNT(*)", filter: where);
 				return results.first.values.first! as int;
 			}
 

@@ -1,8 +1,10 @@
 
+import 'dart:async';
+
 import 'package:pocketbase/pocketbase.dart';
-import 'package:sqlite3/common.dart';
 
 import 'create_record.dart';
+import 'db_isolate.dart';
 import 'get_single_record.dart';
 import 'pocketbase_offline_cache_base.dart';
 import 'realtime.dart';
@@ -14,10 +16,10 @@ extension UpdateWrapper on PbOfflineCache {
 
 		convertToPbTypes(values);
 
-		if (db != null && source != QuerySource.server && (!dbAccessible || source == QuerySource.cache)) {
-			if (tableExists(db!, collectionName)) {
-				queueOperation("UPDATE", collectionName, values: values, idToModify: id);
-				applyLocalUpdateOperation(db!, collectionName, id, values);
+		if (await dbIsolate.makePort != null && source != QuerySource.server && (!dbAccessible || source == QuerySource.cache)) {
+			if (await tableExists(dbIsolate, collectionName)) {
+				unawaited(queueOperation("UPDATE", collectionName, values: values, idToModify: id));
+				applyLocalUpdateOperation(dbIsolate, collectionName, id, values);
 
 				final Map<String, dynamic>? record = await getSingleRecord(collectionName, id, source: QuerySource.cache);
 
@@ -41,8 +43,8 @@ extension UpdateWrapper on PbOfflineCache {
 		try {
 			final RecordModel record = await pb.collection(collectionName).update(id, body: values);
 
-			if (db != null && tableExists(db!, collectionName)) {
-				applyLocalUpdateOperation(db!, collectionName, id, values);
+			if (await tableExists(dbIsolate, collectionName)) {
+				applyLocalUpdateOperation(dbIsolate, collectionName, id, values);
 			}
 
 			final Map<String, dynamic> newValues = record.data;
@@ -77,7 +79,7 @@ extension UpdateWrapper on PbOfflineCache {
 	}
 }
 
-void applyLocalUpdateOperation(CommonDatabase db, String collectionName, String id, Map<String, dynamic> values) {
+void applyLocalUpdateOperation(DbIsolate db, String collectionName, String id, Map<String, dynamic> values) {
 	final StringBuffer command = StringBuffer("UPDATE $collectionName SET");
 
 	bool first = true;
@@ -104,5 +106,5 @@ void applyLocalUpdateOperation(CommonDatabase db, String collectionName, String 
 	parameters.add(id);
 	command.write(" WHERE id = ?;");
 
-	db.execute(command.toString(), parameters);
+	unawaited(db.execute(command.toString(), parameters));
 }

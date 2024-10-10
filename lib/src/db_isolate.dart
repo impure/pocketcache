@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:isolate';
 import 'package:flutter/material.dart';
 import 'package:sqlite3/common.dart';
+import 'package:sqlite3/common.dart' as sql;
 
 import 'make_db.dart' if (dart.library.io) 'make_db_io.dart' if (dart.library.html) 'make_db_web.dart';
 
@@ -13,15 +14,16 @@ class DbIsolate {
 		return DbIsolate._(_generateIsolate(path));
 	}
 
-	factory DbIsolate.test() {
-		return DbIsolate._(Future<SendPort?>.value(null));
+	factory DbIsolate.test(CommonDatabase? db) {
+		return DbIsolate._(Future<SendPort?>.value(null), db);
 	}
 
-	DbIsolate._(this.makePort);
+	DbIsolate._(this.makePort, [this.db]);
 
+	CommonDatabase? db;
 	Future<SendPort?> makePort;
 
-	Future<void> execute(String command, List<dynamic> parameters) async {
+	Future<void> execute(String command, [List<dynamic> parameters = const <dynamic>[], StackTrace? debugStack]) async {
 
 		final SendPort? port = await makePort;
 
@@ -30,7 +32,7 @@ class DbIsolate {
 
 		// A null port indicates we could not open the database for whatever reason
 		if (port != null) {
-			port.send((command, parameters, responsePort.sendPort));
+			port.send((command, parameters, responsePort.sendPort, true));
 		} else {
 			debugPrint("Failed to send to db");
 		}
@@ -41,12 +43,49 @@ class DbIsolate {
 			} else if (result is String) {
 				debugPrint("DB Isolate: $result");
 			} else if (result is Exception) {
+				completer.complete();
+				if (debugStack != null) {
+					debugPrint(debugStack.toString());
+				}
 				throw result;
 			} else {
 				debugPrint("Unknown result: $result");
 			}
 
       completer.complete();
+      responsePort.close();
+    });
+
+    return completer.future;
+	}
+
+	Future<List<Map<String, dynamic>>> select(String command, [List<dynamic> parameters = const <dynamic>[]]) async {
+
+		final SendPort? port = await makePort;
+
+		final Completer<List<Map<String, dynamic>>> completer = Completer<List<Map<String, dynamic>>>();
+    final ReceivePort responsePort = ReceivePort();
+
+		// A null port indicates we could not open the database for whatever reason
+		if (port != null) {
+			port.send((command, parameters, responsePort.sendPort, false));
+		} else {
+			debugPrint("Failed to send to db");
+		}
+
+    responsePort.listen((dynamic result) {
+
+			if (result == null || result is List<Map<String, dynamic>>) {
+			} else if (result is String) {
+				debugPrint("DB Isolate: $result");
+			} else if (result is Exception) {
+				completer.complete(<Map<String, dynamic>>[]);
+				throw result;
+			} else {
+				debugPrint("Unknown result: $result");
+			}
+
+      completer.complete(result);
       responsePort.close();
     });
 
@@ -73,12 +112,53 @@ Future<void> _isolateEntry((SendPort, String? path) data) async {
 	  data.$1.send(receivePort.sendPort);
 	}
 
+	db.execute("""
+	CREATE TABLE IF NOT EXISTS _operation_queue (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		operation_type TEXT,
+		created INTEGER,
+		collection_name TEXT,
+		id_to_modify TEXT
+	)""");
+	db.execute("""
+	CREATE TABLE IF NOT EXISTS _operation_queue_params (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		operation_id INTEGER,
+		param_key TEXT,
+		param_value TEXT,
+		FOREIGN KEY(operation_id) REFERENCES operations(id)
+	)""");
+	db.execute("""
+	CREATE TABLE IF NOT EXISTS _last_sync_times (
+		table_name TEXT PRIMARY KEY,
+		last_update TEXT
+	)""");
+
   await for (final dynamic message in receivePort) {
-    try {
-      db.execute(message.$1, message.$2);
-      message.$3.send(null);
-    } catch (e) {
-      message.$3.send(e);
-    }
+		if (message.$4) {
+			try {
+				db.execute(message.$1, message.$2);
+				message.$3.send(null);
+			} catch (e) {
+				message.$3.send(e);
+			}
+		} else {
+			try {
+				final ResultSet set = db.select(message.$1, message.$2);
+				final List<Map<String, dynamic>> data = <Map<String, dynamic>>[];
+				for (final sql.Row row in set) {
+					final Map<String, dynamic> rowData = <String, dynamic>{};
+
+					for (final MapEntry<String, dynamic> cell in row.entries) {
+						rowData[cell.key] = cell.value;
+					}
+
+					data.add(rowData);
+				}
+				message.$3.send(data);
+			} catch (e) {
+				message.$3.send(e);
+			}
+		}
   }
 }

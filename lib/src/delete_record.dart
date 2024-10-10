@@ -1,4 +1,6 @@
 
+import 'dart:async';
+
 import 'package:pocketbase/pocketbase.dart';
 import 'pocketbase_offline_cache_base.dart';
 
@@ -9,9 +11,9 @@ extension DeleteWrapper on PbOfflineCache {
 
     if (source != QuerySource.server && (!dbAccessible || source == QuerySource.cache)) {
 
-      if (db != null && tableExists(db!, collectionName)) {
-        queueOperation("DELETE", collectionName, idToModify: id);
-        db!.execute("DELETE FROM $collectionName WHERE id = ?", <Object?>[ id ]);
+      if (await tableExists(dbIsolate, collectionName)) {
+        unawaited(queueOperation("DELETE", collectionName, idToModify: id));
+        unawaited(dbIsolate.execute("DELETE FROM $collectionName WHERE id = ?", <Object?>[ id ]));
       }
 
       return;
@@ -19,7 +21,7 @@ extension DeleteWrapper on PbOfflineCache {
 
     try {
       await pb.collection(collectionName).delete(id);
-      db?.execute("DELETE FROM $collectionName WHERE id = ?", <Object?>[ id ]);
+      unawaited(dbIsolate.execute("DELETE FROM $collectionName WHERE id = ?", <Object?>[ id ]));
     } catch (e) {
       if (e is! ClientException){
         logger.w("Unknown non-client exception when deleting record: $e");

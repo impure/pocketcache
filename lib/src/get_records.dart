@@ -20,10 +20,9 @@ extension ListWrapper on PbOfflineCache {
 		List<String> expand = const <String>[],
 	}) async {
 		if (source != QuerySource.server && (!dbAccessible || source == QuerySource.cache)) {
-			if (db != null && tableExists(db!, collectionName)) {
-				final ResultSet results = selectBuilder(db!, collectionName, maxItems: maxItems, filter: where, startAfter: startAfter, sort: sort);
-				final List<Map<String, dynamic>> data = <Map<String, dynamic>>[];
-				for (final Row row in results) {
+			if (await tableExists(dbIsolate, collectionName)) {
+				final List<Map<String, dynamic>> results = await selectBuilder(dbIsolate, collectionName, maxItems: maxItems, filter: where, startAfter: startAfter, sort: sort);
+				for (final Map<String, dynamic> row in results) {
 					final Map<String, dynamic> entryToInsert = <String, dynamic>{};
 					for (final MapEntry<String, dynamic> data in row.entries) {
 						if (data.key.startsWith("_offline_bool_")) {
@@ -34,9 +33,8 @@ extension ListWrapper on PbOfflineCache {
 							entryToInsert[data.key] = data.value;
 						}
 					}
-					data.add(entryToInsert);
 				}
-				return data;
+				return results;
 			}
 
 			return <Map<String, dynamic>>[];
@@ -53,11 +51,11 @@ extension ListWrapper on PbOfflineCache {
 				expand: expand.join(",")
 			)).items;
 
-			if (db != null) {
-				final Row? lastSyncTime = db!.select(
+			if (await dbIsolate.makePort != null) {
+				final Map<String, dynamic>? lastSyncTime = (await dbIsolate.select(
 					"SELECT last_update FROM _last_sync_times WHERE table_name=?",
 					<String> [ collectionName ],
-				).firstOrNull;
+				)).firstOrNull;
 
 				if (lastSyncTime == null) {
 					DateTime? newLastSyncTime;
@@ -73,13 +71,13 @@ extension ListWrapper on PbOfflineCache {
 					}
 
 					if (newLastSyncTime != null) {
-						db!.execute("INSERT OR REPLACE INTO _last_sync_times(table_name, last_update) VALUES(?, ?)", <dynamic>[	collectionName,	newLastSyncTime.toString() ]);
+						unawaited(dbIsolate.execute("INSERT OR REPLACE INTO _last_sync_times(table_name, last_update) VALUES(?, ?)", <dynamic>[	collectionName,	newLastSyncTime.toString() ]));
 					}
 				}
 			}
 
 			if (records.isNotEmpty) {
-				unawaited(insertRecordsIntoLocalDb(collectionName, records, logger, indexInstructions: indexInstructions));
+				unawaited(insertRecordsIntoLocalDb(collectionName, records, logger, indexInstructions: indexInstructions, stackTrace: StackTrace.current));
 			}
 
 			final List<Map<String, dynamic>> data = <Map<String, dynamic>>[];
@@ -99,7 +97,7 @@ extension ListWrapper on PbOfflineCache {
 						final RecordModel? expansionRecord = item.value.firstOrNull;
 
 						if (expansionRecord != null) {
-							unawaited(insertRecordsIntoLocalDb(expansionRecord.collectionName, item.value, logger));
+							unawaited(insertRecordsIntoLocalDb(expansionRecord.collectionName, item.value, logger, stackTrace: StackTrace.current));
 							expansions[item.key] = expansionRecord.data;
 							addMetadataToMap(expansionRecord.data, expansionRecord);
 						}
@@ -123,9 +121,9 @@ extension ListWrapper on PbOfflineCache {
 		}
 	}
 
-	Future<void> insertRecordsIntoLocalDb(String collectionName, List<RecordModel> records, Logger logger, {Map<String, List<(String name, bool unique, List<String> columns)>> indexInstructions = const <String, List<(String, bool, List<String>)>>{}, String? overrideDownloadTime}) async {
+	Future<void> insertRecordsIntoLocalDb(String collectionName, List<RecordModel> records, Logger logger, {Map<String, List<(String name, bool unique, List<String> columns)>> indexInstructions = const <String, List<(String, bool, List<String>)>>{}, String? overrideDownloadTime, StackTrace? stackTrace}) async {
 
-		if (db == null || records.isEmpty) {
+		if (await dbIsolate.makePort == null || records.isEmpty) {
 			return;
 		}
 
@@ -133,7 +131,7 @@ extension ListWrapper on PbOfflineCache {
 			assert(collectionName == records.first.collectionName, "Collection name mismatch given: $collectionName, record's collection: ${records.first.collectionName}");
 		}
 
-		if (!tableExists(db!, collectionName)) {
+		if (!(await tableExists(dbIsolate, collectionName))) {
 			final StringBuffer schema = StringBuffer("id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT");
 			final Set<String> tableKeys = <String>{"id", "created", "updated", "_downloaded"};
 
@@ -155,11 +153,10 @@ extension ListWrapper on PbOfflineCache {
 				}
 			}
 
-			db!.execute("CREATE TABLE $collectionName ($schema)");
-			db!.execute("CREATE INDEX IF NOT EXISTS _idx_downloaded ON $collectionName (_downloaded)");
+			await dbIsolate.execute("CREATE TABLE $collectionName ($schema)");
+			await dbIsolate.execute("CREATE INDEX IF NOT EXISTS _idx_downloaded ON $collectionName (_downloaded)");
 
-			createAllIndexesForTable(collectionName, indexInstructions, overrideLogger: logger, tableKeys: tableKeys);
-
+			unawaited(createAllIndexesForTable(collectionName, indexInstructions, overrideLogger: logger, tableKeys: tableKeys));
 		}
 
 		for (final RecordModel record in records) {
@@ -222,11 +219,11 @@ extension ListWrapper on PbOfflineCache {
 		command.write(";");
 
 		try {
-			await dbIsolate.execute(command.toString(), parameters);
+			await dbIsolate.execute(command.toString(), parameters, stackTrace);
 		} on SqliteException catch (e) {
 			if (!isTest() && e.message.contains("has no column")) {
 				logger.i("Dropping table $collectionName");
-				db!.execute("DROP TABLE $collectionName");
+				await dbIsolate.execute("DROP TABLE $collectionName");
 			} else {
 				rethrow;
 			}
