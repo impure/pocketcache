@@ -1,4 +1,5 @@
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:core';
 
@@ -78,7 +79,7 @@ extension ListWrapper on PbOfflineCache {
 			}
 
 			if (records.isNotEmpty) {
-				insertRecordsIntoLocalDb(collectionName, records, logger, indexInstructions: indexInstructions);
+				unawaited(insertRecordsIntoLocalDb(collectionName, records, logger, indexInstructions: indexInstructions));
 			}
 
 			final List<Map<String, dynamic>> data = <Map<String, dynamic>>[];
@@ -98,7 +99,7 @@ extension ListWrapper on PbOfflineCache {
 						final RecordModel? expansionRecord = item.value.firstOrNull;
 
 						if (expansionRecord != null) {
-							insertRecordsIntoLocalDb(expansionRecord.collectionName, item.value, logger);
+							unawaited(insertRecordsIntoLocalDb(expansionRecord.collectionName, item.value, logger));
 							expansions[item.key] = expansionRecord.data;
 							addMetadataToMap(expansionRecord.data, expansionRecord);
 						}
@@ -122,7 +123,7 @@ extension ListWrapper on PbOfflineCache {
 		}
 	}
 
-	void insertRecordsIntoLocalDb(String collectionName, List<RecordModel> records, Logger logger, {Map<String, List<(String name, bool unique, List<String> columns)>> indexInstructions = const <String, List<(String, bool, List<String>)>>{}, String? overrideDownloadTime}) {
+	Future<void> insertRecordsIntoLocalDb(String collectionName, List<RecordModel> records, Logger logger, {Map<String, List<(String name, bool unique, List<String> columns)>> indexInstructions = const <String, List<(String, bool, List<String>)>>{}, String? overrideDownloadTime}) async {
 
 		if (db == null || records.isEmpty) {
 			return;
@@ -221,7 +222,7 @@ extension ListWrapper on PbOfflineCache {
 		command.write(";");
 
 		try {
-			db!.execute(command.toString(), parameters);
+			await executeDbCommand(dbPath, command.toString(), parameters);
 		} on SqliteException catch (e) {
 			if (!isTest() && e.message.contains("has no column")) {
 				logger.i("Dropping table $collectionName");

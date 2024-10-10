@@ -1,5 +1,6 @@
 
 
+import 'dart:async';
 import 'dart:math';
 
 import 'package:pocketbase/pocketbase.dart';
@@ -22,12 +23,12 @@ extension CreateWrapper on PbOfflineCache {
         final String now = DateTime.now().toUtc().toString();
 
         queueOperation("INSERT", collectionName, idToModify: id, values: values);
-        insertRecordsIntoLocalDb(collectionName, <RecordModel>[ RecordModel(
+        unawaited(insertRecordsIntoLocalDb(collectionName, <RecordModel>[ RecordModel(
           id: id,
           created: now,
           updated: now,
           data: values,
-        ) ], logger, indexInstructions: indexInstructions);
+        ) ], logger, indexInstructions: indexInstructions));
 
         values["id"] = id;
         values["created"] = now;
@@ -42,7 +43,7 @@ extension CreateWrapper on PbOfflineCache {
     try {
       final RecordModel model = await pb.collection(collectionName).create(body: values);
       if (db != null) {
-        insertRecordsIntoLocalDb(collectionName, <RecordModel>[ model ], logger, indexInstructions: indexInstructions);
+        unawaited(insertRecordsIntoLocalDb(collectionName, <RecordModel>[ model ], logger, indexInstructions: indexInstructions));
       }
       final Map<String, dynamic> data = model.data;
 

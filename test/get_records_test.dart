@@ -151,8 +151,8 @@ void main() {
 			);
 		});
 
-		test("insert two items", () {
-			pb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
+		test("insert two items", () async {
+			await pb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
 				id: "abc",
 				data: <String, dynamic> { "1" : true, "2" : DateTime(2022).toString() },
 				created: DateTime(2024, 1).toString(),
@@ -166,8 +166,8 @@ void main() {
 			);
 		});
 
-		test("single index failled", () {
-			pb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
+		test("single index failled", () async {
+			await pb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
 				id: "abc",
 				data: <String, dynamic> { "1" : 1, "2" : DateTime(2022).toString() },
 				created: DateTime(2024, 1).toString(),
@@ -182,8 +182,8 @@ void main() {
 			);
 		});
 
-		test("irrelevant index", () {
-			pb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
+		test("irrelevant index", () async {
+			await pb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
 				id: "abc",
 				data: <String, dynamic> { "1" : <String>["1", "2"], "2" : DateTime(2022).toString() },
 				created: DateTime(2024, 1).toString(),
@@ -197,8 +197,8 @@ void main() {
 			);
 		});
 
-		test("double index success", () {
-			pb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
+		test("double index success", () async {
+			await pb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
 				id: "abc",
 				data: <String, dynamic> { "1" : 1, "2" : DateTime(2022).toString() },
 				created: DateTime(2024, 1).toString(),
@@ -215,8 +215,8 @@ void main() {
 			);
 		});
 
-		test("multiple indexes at the same time (and one unique)", () {
-			pb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
+		test("multiple indexes at the same time (and one unique)", () async {
+			await pb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
 				id: "abc",
 				data: <String, dynamic> { "1" : 1, "2" : DateTime(2022).toString() },
 				created: DateTime(2024, 1).toString(),
@@ -235,12 +235,12 @@ void main() {
 			);
 		});
 
-		test("multiple indexes at the same time 2 (and one unique)", () {
+		test("multiple indexes at the same time 2 (and one unique)", () async {
 
 			// On Windows in terminal requires SQLite files in the path, in Android Studio SQLite should be in the root of the project
 			final PbOfflineCache testPb = PbOfflineCache.withDb(PocketBase(""), sqlite3.openInMemory());
 
-			testPb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
+			await testPb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
 				id: "abc",
 				data: <String, dynamic> { "one" : 1, "two" : DateTime(2022).toString() },
 				created: DateTime(2024, 1).toString(),
@@ -255,13 +255,13 @@ void main() {
 			expect(names.contains("index2"), true);
 		});
 
-		test("reinit indexes", () {
+		test("reinit indexes", () async {
 
 			// On Windows in terminal requires SQLite files in the path, in Android Studio SQLite should be in the root of the project
 			final CommonDatabase db = sqlite3.openInMemory();
 			PbOfflineCache testPb = PbOfflineCache.withDb(PocketBase(""), db);
 
-			testPb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
+			await testPb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
 				id: "abc",
 				data: <String, dynamic> { "one" : 1, "two" : DateTime(2022).toString() },
 				created: DateTime(2024, 1).toString(),
@@ -281,7 +281,7 @@ void main() {
 				("index2", false, <String>["two"]),
 			]});
 
-			testPb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
+			await testPb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
 				id: "abc",
 				data: <String, dynamic> { "one" : 1, "two" : DateTime(2022).toString() },
 				created: DateTime(2024, 1).toString(),

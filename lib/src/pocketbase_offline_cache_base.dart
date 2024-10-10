@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -54,7 +55,7 @@ class PbOfflineCache {
 		);
 	}
 
-	PbOfflineCache._(this.pb, this.db, this.logger, [this.indexInstructions = const <String, List<(String name, bool unique, List<String>)>>{}, this.dbPath = "", this.generateWhereForResync]) {
+	PbOfflineCache._(this.pb, this.db, this.logger, [this.indexInstructions = const <String, List<(String name, bool unique, List<String>)>>{}, this.dbPath, this.generateWhereForResync]) {
 		db?.execute("""
 	CREATE TABLE IF NOT EXISTS _operation_queue (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -307,6 +308,22 @@ class PbOfflineCache {
 			}
 			await Future<void>.delayed(const Duration(seconds: 10));
 		}
+	}
+
+	Future<void> executeDbCommand(String? path, String command, [List<dynamic> parameters = const <dynamic>[]]) async {
+		if (isTest()) {
+			db?.execute(command, parameters);
+			return;
+		}
+		if (path == null) {
+			return;
+		}
+		await Isolate.run(() {
+			final CommonDatabase? db = makeDb(path);
+			if (db != null) {
+				db.execute(command, parameters);
+			}
+		});
 	}
 
 	Future<void> dequeueCachedOperations() async {
