@@ -43,11 +43,10 @@ class DbIsolate {
 			} else if (result is String) {
 				debugPrint("DB Isolate: $result");
 			} else if (result is Exception) {
-				completer.complete();
 				if (debugStack != null) {
 					debugPrint(debugStack.toString());
 				}
-				throw result;
+				completer.completeError(result);
 			} else {
 				debugPrint("Unknown result: $result");
 			}
