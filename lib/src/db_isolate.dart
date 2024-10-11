@@ -23,6 +23,15 @@ class DbIsolate {
 	CommonDatabase? testDb;
 	Future<SendPort?> makePort;
 
+	// Mostly only for tests
+	Future<bool> enabled() async {
+		if (testDb != null) {
+			return true;
+		} else {
+			return await makePort != null;
+		}
+	}
+
 	Future<void> execute(String command, [List<dynamic> parameters = const <dynamic>[], StackTrace? debugStack]) async {
 
 		if (testDb != null) {

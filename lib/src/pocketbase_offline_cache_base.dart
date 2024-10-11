@@ -184,7 +184,7 @@ class PbOfflineCache {
 	bool get tokenValid => pb.authStore.isValid;
 
 	Future<void> clearOldRecords(int maxOfflineDays) async {
-		if (await dbIsolate.makePort != null) {
+		if (await dbIsolate.enabled()) {
 			final List<Map<String, dynamic>> data = await dbIsolate.select(
 				"SELECT name FROM sqlite_master WHERE type='table'",
 			);

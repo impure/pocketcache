@@ -16,7 +16,7 @@ extension UpdateWrapper on PbOfflineCache {
 
 		convertToPbTypes(values);
 
-		if (await dbIsolate.makePort != null && source != QuerySource.server && (!dbAccessible || source == QuerySource.cache)) {
+		if (await dbIsolate.enabled() && source != QuerySource.server && (!dbAccessible || source == QuerySource.cache)) {
 			if (await tableExists(dbIsolate, collectionName)) {
 				unawaited(queueOperation("UPDATE", collectionName, values: values, idToModify: id));
 				applyLocalUpdateOperation(dbIsolate, collectionName, id, values);

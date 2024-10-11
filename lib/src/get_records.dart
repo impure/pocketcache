@@ -54,7 +54,7 @@ extension ListWrapper on PbOfflineCache {
 				expand: expand.join(",")
 			)).items;
 
-			if (await dbIsolate.makePort != null) {
+			if (await dbIsolate.enabled()) {
 				final Map<String, dynamic>? lastSyncTime = (await dbIsolate.select(
 					"SELECT last_update FROM _last_sync_times WHERE table_name=?",
 					<String> [ collectionName ],
