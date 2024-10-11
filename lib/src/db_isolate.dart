@@ -18,12 +18,17 @@ class DbIsolate {
 		return DbIsolate._(Future<SendPort?>.value(null), db);
 	}
 
-	DbIsolate._(this.makePort, [this.db]);
+	DbIsolate._(this.makePort, [this.testDb]);
 
-	CommonDatabase? db;
+	CommonDatabase? testDb;
 	Future<SendPort?> makePort;
 
 	Future<void> execute(String command, [List<dynamic> parameters = const <dynamic>[], StackTrace? debugStack]) async {
+
+		if (testDb != null) {
+			testDb!.execute(command, parameters);
+			return;
+		}
 
 		final SendPort? port = await makePort;
 
@@ -61,6 +66,10 @@ class DbIsolate {
 	}
 
 	Future<List<Map<String, dynamic>>> select(String command, [List<dynamic> parameters = const <dynamic>[]]) async {
+
+		if (testDb != null) {
+			return testDb!.select(command, parameters);
+		}
 
 		final SendPort? port = await makePort;
     final ReceivePort responsePort = ReceivePort();
