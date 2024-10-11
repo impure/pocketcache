@@ -126,7 +126,7 @@ extension ListWrapper on PbOfflineCache {
 
 	Future<void> insertRecordsIntoLocalDb(String collectionName, List<RecordModel> records, Logger logger, {Map<String, List<(String name, bool unique, List<String> columns)>> indexInstructions = const <String, List<(String, bool, List<String>)>>{}, String? overrideDownloadTime, StackTrace? stackTrace}) async {
 
-		if (await dbIsolate.makePort == null || records.isEmpty) {
+		if (!(await dbIsolate.enabled()) || records.isEmpty) {
 			return;
 		}
 
