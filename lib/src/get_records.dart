@@ -83,7 +83,7 @@ extension ListWrapper on PbOfflineCache {
 			final List<Map<String, dynamic>> data = <Map<String, dynamic>>[];
 
 			for (final RecordModel record in records) {
-				final Map<String, dynamic> entry = record.data;
+				final Map<String, dynamic> entry = Map<String, dynamic>.from(record.data);
 				addMetadataToMap(entry, record);
 
 				if (record.expand.isNotEmpty) {
