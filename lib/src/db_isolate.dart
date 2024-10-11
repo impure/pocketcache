@@ -41,7 +41,7 @@ class DbIsolate {
 
 		final SendPort? port = await makePort;
 
-    final ReceivePort responsePort = ReceivePort();
+		final ReceivePort responsePort = ReceivePort();
 
 		// A null port indicates we could not open the database for whatever reason
 		if (port != null) {
@@ -53,7 +53,7 @@ class DbIsolate {
 
 		final Completer<void> completer = Completer<void>();
 
-    responsePort.listen((dynamic result) {
+		responsePort.listen((dynamic result) {
 
 			if (result == null) {
 			} else if (result is String) {
@@ -67,11 +67,11 @@ class DbIsolate {
 				debugPrint("Unknown result: $result");
 			}
 
-      completer.complete();
-      responsePort.close();
-    });
+			completer.complete();
+			responsePort.close();
+		});
 
-    return completer.future;
+		return completer.future;
 	}
 
 	Future<List<Map<String, dynamic>>> select(String command, [List<dynamic> parameters = const <dynamic>[]]) async {
@@ -81,7 +81,7 @@ class DbIsolate {
 		}
 
 		final SendPort? port = await makePort;
-    final ReceivePort responsePort = ReceivePort();
+		final ReceivePort responsePort = ReceivePort();
 
 		// A null port indicates we could not open the database for whatever reason
 		if (port != null) {
@@ -93,7 +93,7 @@ class DbIsolate {
 
 		final Completer<List<Map<String, dynamic>>> completer = Completer<List<Map<String, dynamic>>>();
 
-    responsePort.listen((dynamic result) {
+		responsePort.listen((dynamic result) {
 
 			if (result == null || result is List<Map<String, dynamic>>) {
 			} else if (result is String) {
@@ -105,31 +105,31 @@ class DbIsolate {
 				debugPrint("Unknown result: $result");
 			}
 
-      completer.complete(result);
-      responsePort.close();
-    });
+			completer.complete(result);
+			responsePort.close();
+		});
 
-    return completer.future;
+		return completer.future;
 	}
 
 }
 
 Future<SendPort?> _generateIsolate(String? path) async {
-  final ReceivePort receivePort = ReceivePort();
-  await Isolate.spawn(_isolateEntry, (receivePort.sendPort, path));
-  return await receivePort.first as SendPort?;
+	final ReceivePort receivePort = ReceivePort();
+	await Isolate.spawn(_isolateEntry, (receivePort.sendPort, path));
+	return await receivePort.first as SendPort?;
 }
 
 Future<void> _isolateEntry((SendPort, String? path) data) async {
-  final ReceivePort receivePort = ReceivePort();
+	final ReceivePort receivePort = ReceivePort();
 
-  final CommonDatabase? db = makeDb(data.$2);
+	final CommonDatabase? db = makeDb(data.$2);
 
 	if (db == null) {
 		data.$1.send("no db");
 		return;
 	} else {
-	  data.$1.send(receivePort.sendPort);
+		data.$1.send(receivePort.sendPort);
 	}
 
 	db.execute("""
@@ -154,7 +154,7 @@ Future<void> _isolateEntry((SendPort, String? path) data) async {
 		last_update TEXT
 	)""");
 
-  await for (final dynamic message in receivePort) {
+	await for (final dynamic message in receivePort) {
 		if (message.$4) {
 			try {
 				db.execute(message.$1, message.$2);
@@ -180,5 +180,5 @@ Future<void> _isolateEntry((SendPort, String? path) data) async {
 				message.$3.send(e);
 			}
 		}
-  }
+	}
 }
