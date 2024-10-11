@@ -27,7 +27,6 @@ class DbIsolate {
 
 		final SendPort? port = await makePort;
 
-		final Completer<void> completer = Completer<void>();
     final ReceivePort responsePort = ReceivePort();
 
 		// A null port indicates we could not open the database for whatever reason
@@ -35,7 +34,10 @@ class DbIsolate {
 			port.send((command, parameters, responsePort.sendPort, true));
 		} else {
 			debugPrint("Failed to send to db");
+			return;
 		}
+
+		final Completer<void> completer = Completer<void>();
 
     responsePort.listen((dynamic result) {
 
@@ -61,8 +63,6 @@ class DbIsolate {
 	Future<List<Map<String, dynamic>>> select(String command, [List<dynamic> parameters = const <dynamic>[]]) async {
 
 		final SendPort? port = await makePort;
-
-		final Completer<List<Map<String, dynamic>>> completer = Completer<List<Map<String, dynamic>>>();
     final ReceivePort responsePort = ReceivePort();
 
 		// A null port indicates we could not open the database for whatever reason
@@ -70,7 +70,10 @@ class DbIsolate {
 			port.send((command, parameters, responsePort.sendPort, false));
 		} else {
 			debugPrint("Failed to send to db");
+			return <Map<String, dynamic>>[];
 		}
+
+		final Completer<List<Map<String, dynamic>>> completer = Completer<List<Map<String, dynamic>>>();
 
     responsePort.listen((dynamic result) {
 

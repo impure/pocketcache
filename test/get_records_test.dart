@@ -249,7 +249,7 @@ void main() {
 				("index1", true, <String>["one", "two"]),
 				("index2", false, <String>["two"]),
 			]}, overrideDownloadTime: DateTime(2024, 3).toString());
-			final Set<String> names = getRowNames(testPb.db!.select("PRAGMA index_list('test');"));
+			final Set<String> names = getRowNames(await testPb.dbIsolate.select("PRAGMA index_list('test');"));
 			expect(names.contains("_idx_downloaded"), true);
 			expect(names.contains("index1"), true);
 			expect(names.contains("index2"), true);
@@ -270,7 +270,7 @@ void main() {
 				("index1", true, <String>["one", "two"]),
 			]}, overrideDownloadTime: DateTime(2024, 3).toString());
 
-			Set<String> names = getRowNames(testPb.db!.select("PRAGMA index_list('test');"));
+			Set<String> names = getRowNames(await testPb.dbIsolate.select("PRAGMA index_list('test');"));
 			expect(names.contains("_idx_downloaded"), true);
 			expect(names.contains("index1"), true);
 			expect(names.contains("index2"), false);
@@ -290,9 +290,9 @@ void main() {
 				("index1", true, <String>["one", "two"]),
 				("index2", false, <String>["two"]),
 			]}, overrideDownloadTime: DateTime(2024, 3).toString());
-			testPb.reinitIndexes();
+			await testPb.reinitIndexes();
 
-			names = getRowNames(testPb.db!.select("PRAGMA index_list('test');"));
+			names = getRowNames(await testPb.dbIsolate.select("PRAGMA index_list('test');"));
 			expect(names.contains("_idx_downloaded"), true);
 			expect(names.contains("index1"), true);
 			expect(names.contains("index2"), true);
@@ -300,10 +300,10 @@ void main() {
 	});
 }
 
-Set<String> getRowNames(ResultSet result) {
+Set<String> getRowNames(List<Map<String, dynamic>> result) {
 	final Set<String> names = <String>{};
 
-	for (final Row row in result) {
+	for (final Map<String, dynamic> row in result) {
 		names.add(row["name"]);
 	}
 
