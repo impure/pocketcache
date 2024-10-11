@@ -22,6 +22,8 @@ extension ListWrapper on PbOfflineCache {
 		if (source != QuerySource.server && (!dbAccessible || source == QuerySource.cache)) {
 			if (await tableExists(dbIsolate, collectionName)) {
 				final List<Map<String, dynamic>> results = await selectBuilder(dbIsolate, collectionName, maxItems: maxItems, filter: where, startAfter: startAfter, sort: sort);
+
+				final List<Map<String, dynamic>> dataToReturn = <Map<String, dynamic>>[];
 				for (final Map<String, dynamic> row in results) {
 					final Map<String, dynamic> entryToInsert = <String, dynamic>{};
 					for (final MapEntry<String, dynamic> data in row.entries) {
@@ -33,8 +35,9 @@ extension ListWrapper on PbOfflineCache {
 							entryToInsert[data.key] = data.value;
 						}
 					}
+					dataToReturn.add(entryToInsert);
 				}
-				return results;
+				return dataToReturn;
 			}
 
 			return <Map<String, dynamic>>[];
