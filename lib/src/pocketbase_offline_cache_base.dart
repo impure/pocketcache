@@ -305,7 +305,7 @@ class PbOfflineCache {
 			final List<Map<String, dynamic>> data = await dbIsolate.select("SELECT * FROM _operation_queue_params WHERE operation_id = ?", <String>[ operationId ]);
 			final Map<String, dynamic> params = <String, dynamic>{};
 			for (final Map<String, dynamic> operationParam in data) {
-				params[operationParam["param_key"].toString()] = operationParam["collection_name"];
+				params[operationParam["param_key"].toString()] = operationParam["param_value"];
 			}
 
 			Future<void> cleanUp() async {
