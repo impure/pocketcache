@@ -166,7 +166,7 @@ void main() {
 			);
 		});
 
-		test("single index failled", () async {
+		test("single index failed", () async {
 			await pb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
 				id: "abc",
 				data: <String, dynamic> { "1" : 1, "2" : DateTime(2022).toString() },
