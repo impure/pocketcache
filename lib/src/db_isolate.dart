@@ -64,7 +64,7 @@ class DbIsolate {
 				}
 				completer.completeError(result);
 				responsePort.close();
-				return;
+				throw result;
 			} else {
 				debugPrint("Unknown result: $result");
 			}
