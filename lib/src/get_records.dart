@@ -134,39 +134,42 @@ extension ListWrapper on PbOfflineCache {
 			assert(collectionName == records.first.collectionName, "Collection name mismatch given: $collectionName, record's collection: ${records.first.collectionName}");
 		}
 
-		if (!(await tableExists(dbIsolate, collectionName))) {
-			final StringBuffer schema = StringBuffer("id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT");
-			final Set<String> tableKeys = <String>{"id", "created", "updated", "_downloaded"};
+		await tableExistsLock.synchronized(() async {
 
-			for (final MapEntry<String, dynamic> data in records.first.data.entries) {
+			if (!(await tableExists(dbIsolate, collectionName))) {
+				final StringBuffer schema = StringBuffer("id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT");
+				final Set<String> tableKeys = <String>{"id", "created", "updated", "_downloaded"};
 
-				// avoid repeating hard coded keys as primary key, do not add it again
-				if (tableKeys.contains(data.key)) {
-					continue;
+				for (final MapEntry<String, dynamic> data in records.first.data.entries) {
+
+					// avoid repeating hard coded keys as primary key, do not add it again
+					if (tableKeys.contains(data.key)) {
+						continue;
+					}
+
+					if (data.value is String) {
+						tableKeys.add(data.key);
+						schema.write(",${data.key} TEXT DEFAULT ''");
+					} else if (data.value is bool) {
+						tableKeys.add("_offline_bool_${data.key}");
+						schema.write(",_offline_bool_${data.key} INTEGER DEFAULT 0");
+					} else if (data.value is double || data.value is int) {
+						tableKeys.add(data.key);
+						schema.write(",${data.key} REAL DEFAULT 0.0");
+					} else if (data.value is List<dynamic> || data.value is Map<dynamic, dynamic>) {
+						tableKeys.add("_offline_json_${data.key}");
+						schema.write(",_offline_json_${data.key} TEXT DEFAULT '[]'");
+					} else {
+						logger.e("Unknown type ${data.value.runtimeType}", stackTrace: StackTrace.current);
+					}
 				}
 
-				if (data.value is String) {
-					tableKeys.add(data.key);
-					schema.write(",${data.key} TEXT DEFAULT ''");
-				} else if (data.value is bool) {
-					tableKeys.add("_offline_bool_${data.key}");
-					schema.write(",_offline_bool_${data.key} INTEGER DEFAULT 0");
-				} else if (data.value is double || data.value is int) {
-					tableKeys.add(data.key);
-					schema.write(",${data.key} REAL DEFAULT 0.0");
-				} else if (data.value is List<dynamic> || data.value is Map<dynamic, dynamic>) {
-					tableKeys.add("_offline_json_${data.key}");
-					schema.write(",_offline_json_${data.key} TEXT DEFAULT '[]'");
-				} else {
-					logger.e("Unknown type ${data.value.runtimeType}", stackTrace: StackTrace.current);
-				}
+				await dbIsolate.execute("CREATE TABLE $collectionName ($schema)");
+				await dbIsolate.execute("CREATE INDEX IF NOT EXISTS _idx_downloaded ON $collectionName (_downloaded)");
+
+				unawaited(createAllIndexesForTable(collectionName, indexInstructions, overrideLogger: logger, tableKeys: tableKeys));
 			}
-
-			await dbIsolate.execute("CREATE TABLE $collectionName ($schema)");
-			await dbIsolate.execute("CREATE INDEX IF NOT EXISTS _idx_downloaded ON $collectionName (_downloaded)");
-
-			unawaited(createAllIndexesForTable(collectionName, indexInstructions, overrideLogger: logger, tableKeys: tableKeys));
-		}
+		});
 
 		for (final RecordModel record in records) {
 			broadcastToListeners("pocketcache/pre-local-update", (collectionName, record));

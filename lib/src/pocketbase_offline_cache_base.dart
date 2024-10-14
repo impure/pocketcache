@@ -10,6 +10,7 @@ import 'package:path/path.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:sqlite3/common.dart';
 import 'package:state_groups/state_groups.dart';
+import 'package:synchronized/synchronized.dart';
 
 import 'count_records.dart';
 import 'db_isolate.dart';
@@ -170,6 +171,7 @@ class PbOfflineCache {
 		}
 	}
 
+	Lock tableExistsLock = Lock();
 	String? dbPath;
 	final DbIsolate dbIsolate;
 	bool dbAccessible = true;
