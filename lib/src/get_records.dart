@@ -135,10 +135,16 @@ extension ListWrapper on PbOfflineCache {
 		}
 
 		if (!(await tableExists(dbIsolate, collectionName))) {
-			final StringBuffer schema = StringBuffer("id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT");
+			final StringBuffer schema = StringBuffer("id TEXT PRIMARY KEY, _downloaded TEXT");
 			final Set<String> tableKeys = <String>{"id", "created", "updated", "_downloaded"};
 
 			for (final MapEntry<String, dynamic> data in records.first.data.entries) {
+
+				// id is hard coded as primary key, do not add it again
+				if (data.key == "id") {
+					continue;
+				}
+
 				if (data.value is String) {
 					tableKeys.add(data.key);
 					schema.write(",${data.key} TEXT DEFAULT ''");
