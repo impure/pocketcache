@@ -63,6 +63,8 @@ class DbIsolate {
 					debugPrint(debugStack.toString());
 				}
 				completer.completeError(result);
+				responsePort.close();
+				return;
 			} else {
 				debugPrint("Unknown result: $result");
 			}
@@ -100,6 +102,7 @@ class DbIsolate {
 				debugPrint("DB Isolate: $result");
 			} else if (result is Exception) {
 				completer.complete(<Map<String, dynamic>>[]);
+				responsePort.close();
 				throw result;
 			} else {
 				debugPrint("Unknown result: $result");
