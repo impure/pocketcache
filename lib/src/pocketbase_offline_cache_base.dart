@@ -258,7 +258,7 @@ class PbOfflineCache {
 									continue;
 								}
 
-								final List<Map<String, dynamic>> items = await getRecords(row["table_name"], where: whereCondition, sort: ("updated", false), source: QuerySource.server, maxItems: 10);
+								final List<Map<String, dynamic>> items = await getRecords(row["table_name"], where: whereCondition, sort: ("updated", false), source: QuerySource.server, maxItems: 50);
 								if (items.isNotEmpty) {
 
 									for (final Map<String, dynamic> item in items) {
