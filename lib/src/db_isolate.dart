@@ -1,6 +1,7 @@
 
 import 'dart:async';
 import 'dart:isolate';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:sqlite3/common.dart';
 import 'package:sqlite3/common.dart' as sql;
@@ -118,6 +119,12 @@ class DbIsolate {
 }
 
 Future<SendPort?> _generateIsolate(String? path) async {
+
+	// Isolates not supported on web
+	if (kIsWeb) {
+		return null;
+	}
+
 	final ReceivePort receivePort = ReceivePort();
 	await Isolate.spawn(_isolateEntry, (receivePort.sendPort, path));
 	return await receivePort.first as SendPort?;
