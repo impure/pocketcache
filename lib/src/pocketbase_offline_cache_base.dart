@@ -33,6 +33,7 @@ enum AuthRefreshResult {
 	success,
 	network_error,
 	failure,
+	other_error,
 }
 
 class PbOfflineCache {
@@ -218,7 +219,8 @@ class PbOfflineCache {
 						onUnauthorizedError();
 						return AuthRefreshResult.failure;
 					} else {
-						rethrow;
+						logger.e("$e ${StackTrace.current}");
+						return AuthRefreshResult.other_error;
 					}
 				}
 			} else {
