@@ -10,7 +10,7 @@ extension CountWrapper on PbOfflineCache {
 		QuerySource source = QuerySource.any,
 	}) async {
 
-		if ((source != QuerySource.server) && !dbAccessible || source == QuerySource.cache) {
+		if ((source != QuerySource.server) && !remoteAccessible || source == QuerySource.cache) {
 
 			if (await tableExists(dbIsolate, collectionName)) {
 				final List<Map<String, dynamic>> results = await selectBuilder(dbIsolate, collectionName, columns: "COUNT(*)", filter: where);

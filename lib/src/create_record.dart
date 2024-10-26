@@ -15,7 +15,7 @@ extension CreateWrapper on PbOfflineCache {
 
 		convertToPbTypes(values);
 
-		if (source != QuerySource.server && (!dbAccessible || source == QuerySource.cache)) {
+		if (source != QuerySource.server && (!remoteAccessible || source == QuerySource.cache)) {
 
 			// If table does not exist yet we are unsure of the required schema so can't add anything
 			if (await tableExists(dbIsolate, collectionName)) {

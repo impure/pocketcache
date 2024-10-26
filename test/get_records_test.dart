@@ -80,7 +80,7 @@ void main() {
 	});
 
 	final PbOfflineCache pb = PbOfflineCache.withDb(PbWrapper(), DatabaseMock());
-	pb.dbAccessible = true;
+	pb.remoteAccessible = true;
 	final Logger testLogger = TestLogger();
 
 	group("listRecords", () {

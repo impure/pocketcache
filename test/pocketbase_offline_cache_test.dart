@@ -286,7 +286,7 @@ void main() {
 	});
 
 	final PbOfflineCache pb = PbOfflineCache.withDb(PbWrapper(), DatabaseMock());
-	pb.dbAccessible = true;
+	pb.remoteAccessible = true;
 
 	group("selectBuilder", () {
 		test("basic selectBuilder", () async {

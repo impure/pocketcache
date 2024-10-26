@@ -175,7 +175,7 @@ class PbOfflineCache {
 	Lock tableExistsLock = Lock();
 	String? dbPath;
 	final DbIsolate dbIsolate;
-	bool dbAccessible = true;
+	bool remoteAccessible = true;
 	final PocketBase pb;
 	final Logger logger;
 	final Map<String, List<(String name, bool unique, List<String> columns)>> indexInstructions;
@@ -234,17 +234,17 @@ class PbOfflineCache {
 
 	Future<void> _continuouslyCheckDbAccessible() async {
 		if (isTest()) {
-			dbAccessible = false;
+			remoteAccessible = false;
 			return;
 		}
 		while (true) {
 			try {
 				final http.Response response = await http.get(pb.buildUrl("/api/health"));
 				if (response.statusCode != 200) {
-					dbAccessible = false;
+					remoteAccessible = false;
 				} else {
-					if (!dbAccessible) {
-						dbAccessible = true;
+					if (!remoteAccessible) {
+						remoteAccessible = true;
 						logger.i("DB accessible again");
 						broadcastToListeners("pocketcache/network-state-changed", true);
 					}
@@ -281,8 +281,8 @@ class PbOfflineCache {
 					}
 				}
 			} catch (_) {
-				if (dbAccessible) {
-					dbAccessible = false;
+				if (remoteAccessible) {
+					remoteAccessible = false;
 					logger.i("DB do longer accessible");
 					broadcastToListeners("pocketcache/network-state-changed", false);
 				}
