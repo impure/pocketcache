@@ -239,7 +239,7 @@ class PbOfflineCache {
 		}
 		while (true) {
 			try {
-				final http.Response response = await http.get(pb.buildUrl("/api/health"));
+				final http.Response response = await http.get(pb.buildUrl("/api/health")).timeout(const Duration(seconds: 10));
 				if (response.statusCode != 200) {
 					remoteAccessible = false;
 				} else {
