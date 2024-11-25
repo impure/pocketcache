@@ -44,7 +44,6 @@ extension ListWrapper on PbOfflineCache {
 		}
 
 		try {
-
 			final List<RecordModel> records = (await pb.collection(collectionName).getList(
 				page: 1,
 				perPage: maxItems,

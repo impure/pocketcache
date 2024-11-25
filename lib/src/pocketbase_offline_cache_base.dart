@@ -214,7 +214,7 @@ class PbOfflineCache {
 				} on ClientException catch (e) {
 					if (e.isNetworkError()) {
 						return AuthRefreshResult.network_error;
-					} else if (e.toString().contains("The request requires valid record authorization")) {
+					} else if (e.statusCode == 401 || e.toString().contains("The request requires valid record authorization")) {
 						pb.authStore.clear();
 						onUnauthorizedError();
 						return AuthRefreshResult.failure;
