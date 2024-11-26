@@ -86,7 +86,6 @@ extension ListWrapper on PbOfflineCache {
 
 			for (final RecordModel record in records) {
 				final Map<String, dynamic> entry = Map<String, dynamic>.from(record.data);
-				addMetadataToMap(entry, record);
 
 				if (record.expand.isNotEmpty) {
 					final Map<String, Map<String, dynamic>> expansions = <String, Map<String, dynamic>>{};
@@ -101,7 +100,6 @@ extension ListWrapper on PbOfflineCache {
 						if (expansionRecord != null) {
 							unawaited(insertRecordsIntoLocalDb(expansionRecord.collectionName, item.value, logger, stackTrace: StackTrace.current));
 							expansions[item.key] = expansionRecord.data;
-							addMetadataToMap(expansionRecord.data, expansionRecord);
 						}
 					}
 					entry["expand"] = expansions;
@@ -174,7 +172,7 @@ extension ListWrapper on PbOfflineCache {
 			broadcastToListeners("pocketcache/pre-local-update", (collectionName, record));
 		}
 
-		final StringBuffer command = StringBuffer("INSERT OR REPLACE INTO $collectionName(id, created, updated, _downloaded");
+		final StringBuffer command = StringBuffer("INSERT OR REPLACE INTO $collectionName(_downloaded");
 
 		final List<String> keys = <String>[];
 
@@ -202,11 +200,8 @@ extension ListWrapper on PbOfflineCache {
 				first = false;
 			}
 
-			command.write("(?, ?, ?, ?");
+			command.write("(?");
 
-			parameters.add(record.id);
-			parameters.add(record.created);
-			parameters.add(record.updated);
 			parameters.add(now);
 
 			for (final String key in keys) {
@@ -240,12 +235,6 @@ extension ListWrapper on PbOfflineCache {
 			}
 		}
 	}
-}
-
-void addMetadataToMap(Map<String, dynamic> map, RecordModel record) {
-	map["id"] = record.id;
-	map["created"] = record.created;
-	map["updated"] = record.updated;
 }
 
 String? makePbFilter((String, List<Object?>)? params, { (String column, bool descending)? sort, Map<String, dynamic>? startAfter }) {

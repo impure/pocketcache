@@ -134,7 +134,7 @@ void main() {
 					"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
 					"[CREATE TABLE test (id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT), []], "
 					"[CREATE INDEX IF NOT EXISTS _idx_downloaded ON test (_downloaded), []], "
-					"[INSERT OR REPLACE INTO test(id, created, updated, _downloaded) VALUES(?, ?, ?, ?);, [abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, 2024-03-01 00:00:00.000]]]"
+					"[INSERT OR REPLACE INTO test(_downloaded, id, created, updated) VALUES(?, ?, ?, ?);, [2024-03-01 00:00:00.000, abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000]]]"
 			);
 		});
 
@@ -151,7 +151,7 @@ void main() {
 				"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
 				"[CREATE TABLE test (id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT,1 REAL DEFAULT 0.0), []], "
 				"[CREATE INDEX IF NOT EXISTS _idx_downloaded ON test (_downloaded), []], "
-				"[INSERT OR REPLACE INTO test(id, created, updated, _downloaded, 1) VALUES(?, ?, ?, ?, ?);, [abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, 2024-03-01 00:00:00.000, 2]]]"
+				"[INSERT OR REPLACE INTO test(_downloaded, id, created, updated, 1) VALUES(?, ?, ?, ?, ?);, [2024-03-01 00:00:00.000, abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, 2]]]"
 			);
 		});
 
@@ -169,7 +169,7 @@ void main() {
 				"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
 				"[CREATE TABLE test (id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT,_offline_bool_1 INTEGER DEFAULT 0,2 TEXT DEFAULT ''), []], "
 				"[CREATE INDEX IF NOT EXISTS _idx_downloaded ON test (_downloaded), []], "
-				"[INSERT OR REPLACE INTO test(id, created, updated, _downloaded, _offline_bool_1, 2) VALUES(?, ?, ?, ?, ?, ?);, [abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, 2024-03-01 00:00:00.000, true, 2022-01-01 00:00:00.000]]]"
+				"[INSERT OR REPLACE INTO test(_downloaded, id, created, updated, _offline_bool_1, 2) VALUES(?, ?, ?, ?, ?, ?);, [2024-03-01 00:00:00.000, abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, true, 2022-01-01 00:00:00.000]]]"
 			);
 		});
 
@@ -206,7 +206,7 @@ void main() {
 				"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
 				"[CREATE TABLE test (id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT,_offline_json_1 TEXT DEFAULT '[]',2 TEXT DEFAULT ''), []], "
 				"[CREATE INDEX IF NOT EXISTS _idx_downloaded ON test (_downloaded), []], "
-				"[INSERT OR REPLACE INTO test(id, created, updated, _downloaded, _offline_json_1, 2) VALUES(?, ?, ?, ?, ?, ?);, [abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, 2024-03-01 00:00:00.000, [\"1\",\"2\"], 2022-01-01 00:00:00.000]]]"
+				"[INSERT OR REPLACE INTO test(_downloaded, _offline_json_1, 2, id, created, updated) VALUES(?, ?, ?, ?, ?, ?);, [2024-03-01 00:00:00.000, [\"1\",\"2\"], 2022-01-01 00:00:00.000, abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000]]]"
 			);
 		});
 
