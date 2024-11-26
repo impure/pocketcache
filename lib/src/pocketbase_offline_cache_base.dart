@@ -239,47 +239,7 @@ class PbOfflineCache {
 		}
 		while (true) {
 			try {
-				final http.Response response = await http.get(pb.buildURL("/api/health")).timeout(const Duration(seconds: 10));
-				if (response.statusCode != 200) {
-					remoteAccessible = false;
-				} else {
-					if (!remoteAccessible) {
-						remoteAccessible = true;
-						logger.i("DB accessible again");
-						broadcastToListeners("pocketcache/network-state-changed", true);
-					}
-					await dequeueCachedOperations();
-					try {
-						if (generateWhereForResync != null && await tableExists(dbIsolate, "_last_sync_times")) {
-							bool gotNewItems = false;
-							final List<Map<String, dynamic>> syncTimes = await dbIsolate.select("SELECT * FROM _last_sync_times");
-							for (final Map<String, dynamic> row in syncTimes) {
-								final (String, List<Object?>)? whereCondition = await generateWhereForResync!(row["table_name"], row["last_update"]);
-
-								if (whereCondition == null) {
-									continue;
-								}
-
-								final List<Map<String, dynamic>> items = await getRecords(row["table_name"], where: whereCondition, sort: ("updated", false), source: QuerySource.server, maxItems: 50);
-								if (items.isNotEmpty) {
-
-									for (final Map<String, dynamic> item in items) {
-										broadcastToListeners("pocketcache/record-updated-resync", (row["table_name"], item));
-									}
-
-									gotNewItems = true;
-									logger.i("Updating ${items.length} items in table ${row["table_name"]}");
-									unawaited(dbIsolate.execute("INSERT OR REPLACE INTO _last_sync_times(table_name, last_update) VALUES(?, ?)", <dynamic>[	row["table_name"], items.last["updated"] ]));
-								}
-							}
-							if (gotNewItems) {
-								broadcastToListeners("pocketcache/local-cache-updated", null);
-							}
-						}
-					} catch (e, stack) {
-						logger.e("$e\n\n$stack");
-					}
-				}
+				await checkConnection();
 			} catch (_) {
 				if (remoteAccessible) {
 					remoteAccessible = false;
@@ -288,6 +248,50 @@ class PbOfflineCache {
 				}
 			}
 			await Future<void>.delayed(const Duration(seconds: 10));
+		}
+	}
+
+	Future<void> checkConnection() async {
+		final http.Response response = await http.get(pb.buildURL("/api/health")).timeout(const Duration(seconds: 10));
+		if (response.statusCode != 200) {
+			remoteAccessible = false;
+		} else {
+			if (!remoteAccessible) {
+				remoteAccessible = true;
+				logger.i("DB accessible again");
+				broadcastToListeners("pocketcache/network-state-changed", true);
+			}
+			await dequeueCachedOperations();
+			try {
+				if (generateWhereForResync != null && await tableExists(dbIsolate, "_last_sync_times")) {
+					bool gotNewItems = false;
+					final List<Map<String, dynamic>> syncTimes = await dbIsolate.select("SELECT * FROM _last_sync_times");
+					for (final Map<String, dynamic> row in syncTimes) {
+						final (String, List<Object?>)? whereCondition = await generateWhereForResync!(row["table_name"], row["last_update"]);
+
+						if (whereCondition == null) {
+							continue;
+						}
+
+						final List<Map<String, dynamic>> items = await getRecords(row["table_name"], where: whereCondition, sort: ("updated", false), source: QuerySource.server, maxItems: 50);
+						if (items.isNotEmpty) {
+
+							for (final Map<String, dynamic> item in items) {
+								broadcastToListeners("pocketcache/record-updated-resync", (row["table_name"], item));
+							}
+
+							gotNewItems = true;
+							logger.i("Updating ${items.length} items in table ${row["table_name"]}");
+							unawaited(dbIsolate.execute("INSERT OR REPLACE INTO _last_sync_times(table_name, last_update) VALUES(?, ?)", <dynamic>[	row["table_name"], items.last["updated"] ]));
+						}
+					}
+					if (gotNewItems) {
+						broadcastToListeners("pocketcache/local-cache-updated", null);
+					}
+				}
+			} catch (e, stack) {
+				logger.e("$e\n\n$stack");
+			}
 		}
 	}
 
