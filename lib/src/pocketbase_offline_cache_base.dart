@@ -69,7 +69,7 @@ class PbOfflineCache {
 	}
 
 	Future<void> createAllIndexesForTable(String tableName, Map<String, List<(String, bool, List<String>)>> indexInstructions, {Logger? overrideLogger, Set<String>? tableKeys}) async {
-		if (await dbIsolate.makePort == null) {
+		if (await dbIsolate.makePort == null && !isTest()) {
 			return;
 		}
 		// TODO: needs more work to set up indexes for JSON, relations, and bools. Fix that.
@@ -90,7 +90,7 @@ class PbOfflineCache {
 	}
 
 	Future<void> reinitIndexes() async {
-		if (await dbIsolate.makePort == null) {
+		if (await dbIsolate.makePort == null && !isTest()) {
 			return;
 		}
 		final List<Map<String, dynamic>> tables = await dbIsolate.select("SELECT name FROM sqlite_master WHERE type = 'table'");

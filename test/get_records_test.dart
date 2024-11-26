@@ -187,8 +187,8 @@ void main() {
 				"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
 				"[CREATE TABLE test (id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT,1 REAL DEFAULT 0.0,2 TEXT DEFAULT ''), []], "
 				"[CREATE INDEX IF NOT EXISTS _idx_downloaded ON test (_downloaded), []], "
-				"e: Unable to create index index1 on test({id, created, updated, _downloaded, 1, 2}), could not find all columns: [3], "
-				"[INSERT OR REPLACE INTO test(id, created, updated, _downloaded, 1, 2) VALUES(?, ?, ?, ?, ?, ?);, [abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, 2024-03-01 00:00:00.000, 1, 2022-01-01 00:00:00.000]]]"
+				"[INSERT OR REPLACE INTO test(_downloaded, 1, 2, id, created, updated) VALUES(?, ?, ?, ?, ?, ?);, [2024-03-01 00:00:00.000, 1, 2022-01-01 00:00:00.000, abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000]], "
+				"e: Unable to create index index1 on test({id, created, updated, _downloaded, 1, 2}), could not find all columns: [3]]"
 			);
 		});
 
@@ -226,8 +226,8 @@ void main() {
 				"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
 				"[CREATE TABLE test (id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT,1 REAL DEFAULT 0.0,2 TEXT DEFAULT ''), []], "
 				"[CREATE INDEX IF NOT EXISTS _idx_downloaded ON test (_downloaded), []], "
-				"[CREATE INDEX IF NOT EXISTS index1 ON test(1, 2), []], "
-				"[INSERT OR REPLACE INTO test(id, created, updated, _downloaded, 1, 2) VALUES(?, ?, ?, ?, ?, ?);, [abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, 2024-03-01 00:00:00.000, 1, 2022-01-01 00:00:00.000]]]"
+				"[INSERT OR REPLACE INTO test(_downloaded, 1, 2, id, created, updated) VALUES(?, ?, ?, ?, ?, ?);, [2024-03-01 00:00:00.000, 1, 2022-01-01 00:00:00.000, abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000]], "
+				"[CREATE INDEX IF NOT EXISTS index1 ON test(1, 2), []]]"
 			);
 		});
 
@@ -248,9 +248,9 @@ void main() {
 				"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
 				"[CREATE TABLE test (id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT,1 REAL DEFAULT 0.0,2 TEXT DEFAULT ''), []], "
 				"[CREATE INDEX IF NOT EXISTS _idx_downloaded ON test (_downloaded), []], "
+				"[INSERT OR REPLACE INTO test(_downloaded, 1, 2, id, created, updated) VALUES(?, ?, ?, ?, ?, ?);, [2024-03-01 00:00:00.000, 1, 2022-01-01 00:00:00.000, abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000]], "
 				"[CREATE UNIQUE INDEX IF NOT EXISTS index1 ON test(1, 2), []], "
-				"[CREATE INDEX IF NOT EXISTS index2 ON test(2), []], "
-				"[INSERT OR REPLACE INTO test(id, created, updated, _downloaded, 1, 2) VALUES(?, ?, ?, ?, ?, ?);, [abc, 2024-01-01 00:00:00.000, 2024-02-01 00:00:00.000, 2024-03-01 00:00:00.000, 1, 2022-01-01 00:00:00.000]]]"
+				"[CREATE INDEX IF NOT EXISTS index2 ON test(2), []]]"
 			);
 		});
 
