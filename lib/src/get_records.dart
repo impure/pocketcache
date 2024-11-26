@@ -102,6 +102,7 @@ extension ListWrapper on PbOfflineCache {
 							expansions[item.key] = expansionRecord.data;
 						}
 					}
+
 					entry["expand"] = expansions;
 				}
 				data.add(entry);
@@ -131,13 +132,23 @@ extension ListWrapper on PbOfflineCache {
 			assert(collectionName == records.first.collectionName, "Collection name mismatch given: $collectionName, record's collection: ${records.first.collectionName}");
 		}
 
+		final List<Map<String, dynamic>> dataToSave = <Map<String, dynamic>>[];
+
+		for (final RecordModel record in records) {
+			final Map<String, dynamic> recordMap = Map<String, dynamic>.from(record.data);
+			recordMap.remove("collectionName");
+			recordMap.remove("collectionId");
+			recordMap.remove("expand");
+			dataToSave.add(recordMap);
+		}
+
 		await tableExistsLock.synchronized(() async {
 
 			if (!(await tableExists(dbIsolate, collectionName))) {
 				final StringBuffer schema = StringBuffer("id TEXT PRIMARY KEY, created TEXT, updated TEXT, _downloaded TEXT");
 				final Set<String> tableKeys = <String>{"id", "created", "updated", "_downloaded"};
 
-				for (final MapEntry<String, dynamic> data in records.first.data.entries) {
+				for (final MapEntry<String, dynamic> data in dataToSave.first.entries) {
 
 					// avoid repeating hard coded keys as primary key, do not add it again
 					if (tableKeys.contains(data.key)) {
@@ -176,11 +187,11 @@ extension ListWrapper on PbOfflineCache {
 
 		final List<String> keys = <String>[];
 
-		for (final String key in records.first.data.keys) {
+		for (final String key in dataToSave.first.keys) {
 			keys.add(key);
-			if (records.first.data[key] is bool) {
+			if (dataToSave.first[key] is bool) {
 				command.write(", _offline_bool_$key");
-			} else if (records.first.data[key] is List<dynamic> || records.first.data[key] is Map<dynamic, dynamic>) {
+			} else if (dataToSave.first[key] is List<dynamic> || dataToSave.first[key] is Map<dynamic, dynamic>) {
 				command.write(", _offline_json_$key");
 			} else {
 				command.write(", $key");
@@ -193,7 +204,7 @@ extension ListWrapper on PbOfflineCache {
 		final List<dynamic> parameters = <dynamic>[];
 		final String now = overrideDownloadTime ?? DateTime.now().toUtc().toString();
 
-		for (final RecordModel record in records) {
+		for (final Map<String, dynamic> record in dataToSave) {
 			if (!first) {
 				command.write(",");
 			} else {
@@ -206,16 +217,16 @@ extension ListWrapper on PbOfflineCache {
 
 			for (final String key in keys) {
 				command.write(", ?");
-				if (record.data[key] == null) {
+				if (record[key] == null) {
 					if (key.startsWith("_offline_bool_")) {
 						parameters.add("false");
 					} else {
 						parameters.add("");
 					}
-				} else if (record.data[key] is List<dynamic> || record.data[key] is Map<dynamic, dynamic>) {
-					parameters.add(jsonEncode(record.data[key]));
+				} else if (record[key] is List<dynamic> || record[key] is Map<dynamic, dynamic>) {
+					parameters.add(jsonEncode(record[key]));
 				} else{
-					parameters.add(record.data[key]);
+					parameters.add(record[key]);
 				}
 			}
 
