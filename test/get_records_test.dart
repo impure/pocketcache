@@ -124,9 +124,11 @@ void main() {
 
 		test("insert empty", () async {
 			await pb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
-				id: "abc",
-				created: DateTime(2024, 1).toString(),
-				updated: DateTime(2024, 2).toString(),
+				<String, dynamic> {
+					"id" : "abc",
+					"created" : DateTime(2024, 1).toString(),
+					"updated" : DateTime(2024, 2).toString(),
+				}
 			) ], testLogger, overrideDownloadTime: DateTime(2024, 3).toString());
 			expect(operations.toString(),
 					"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
@@ -138,10 +140,12 @@ void main() {
 
 		test("insert one item", () async {
 			await pb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
-				id: "abc",
-				data: <String, dynamic> { "1" : 2 },
-				created: DateTime(2024, 1).toString(),
-				updated: DateTime(2024, 2).toString(),
+					<String, dynamic> {
+						"id" : "abc",
+						"created" : DateTime(2024, 1).toString(),
+						"updated" : DateTime(2024, 2).toString(),
+						"1" : 2,
+					}
 			) ], testLogger, overrideDownloadTime: DateTime(2024, 3).toString());
 			expect(operations.toString(),
 				"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
@@ -153,10 +157,13 @@ void main() {
 
 		test("insert two items", () async {
 			await pb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
-				id: "abc",
-				data: <String, dynamic> { "1" : true, "2" : DateTime(2022).toString() },
-				created: DateTime(2024, 1).toString(),
-				updated: DateTime(2024, 2).toString(),
+				<String, dynamic> {
+					"id" : "abc",
+					"created" : DateTime(2024, 1).toString(),
+					"updated" : DateTime(2024, 2).toString(),
+					"1" : true,
+					"2" : DateTime(2022).toString(),
+				},
 			) ], testLogger, overrideDownloadTime: DateTime(2024, 3).toString());
 			expect(operations.toString(),
 				"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
@@ -168,10 +175,13 @@ void main() {
 
 		test("single index failed", () async {
 			await pb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
-				id: "abc",
-				data: <String, dynamic> { "1" : 1, "2" : DateTime(2022).toString() },
-				created: DateTime(2024, 1).toString(),
-				updated: DateTime(2024, 2).toString(),
+				<String, dynamic> {
+					"1" : 1,
+					"2" : DateTime(2022).toString(),
+					"id" : "abc",
+					"created" : DateTime(2024, 1).toString(),
+					"updated" : DateTime(2024, 2).toString(),
+				},
 			) ], testLogger, indexInstructions: <String, List<(String, bool, List<String>)>>{"test" : <(String, bool, List<String>)>[ ("index1", false, <String>["3"]) ]}, overrideDownloadTime: DateTime(2024, 3).toString());
 			expect(operations.toString(),
 				"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
@@ -184,10 +194,13 @@ void main() {
 
 		test("irrelevant index", () async {
 			await pb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
-				id: "abc",
-				data: <String, dynamic> { "1" : <String>["1", "2"], "2" : DateTime(2022).toString() },
-				created: DateTime(2024, 1).toString(),
-				updated: DateTime(2024, 2).toString(),
+				<String, dynamic> {
+					"1" : <String>["1", "2"],
+					"2" : DateTime(2022).toString(),
+					"id" : "abc",
+					"created" : DateTime(2024, 1).toString(),
+					"updated" : DateTime(2024, 2).toString(),
+				},
 			) ], testLogger, indexInstructions: <String, List<(String, bool, List<String>)>>{"3" : <(String, bool, List<String>)>[ ("index1", false, <String>["4", "5"]) ]}, overrideDownloadTime: DateTime(2024, 3).toString());
 			expect(operations.toString(),
 				"[[SELECT name FROM sqlite_master WHERE type='table' AND name=?, [test]], "
@@ -199,10 +212,13 @@ void main() {
 
 		test("double index success", () async {
 			await pb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
-				id: "abc",
-				data: <String, dynamic> { "1" : 1, "2" : DateTime(2022).toString() },
-				created: DateTime(2024, 1).toString(),
-				updated: DateTime(2024, 2).toString(),
+				<String, dynamic> {
+					"1" : 1,
+					"2" : DateTime(2022).toString(),
+					"id" : "abc",
+					"created" : DateTime(2024, 1).toString(),
+					"updated" : DateTime(2024, 2).toString(),
+				},
 			) ], testLogger, indexInstructions: <String, List<(String, bool, List<String>)>>{"test" : <(String, bool, List<String>)>[
 				("index1", false, <String>["1", "2"]),
 			]}, overrideDownloadTime: DateTime(2024, 3).toString());
@@ -217,10 +233,13 @@ void main() {
 
 		test("multiple indexes at the same time (and one unique)", () async {
 			await pb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
-				id: "abc",
-				data: <String, dynamic> { "1" : 1, "2" : DateTime(2022).toString() },
-				created: DateTime(2024, 1).toString(),
-				updated: DateTime(2024, 2).toString(),
+				<String, dynamic> {
+					"1" : 1,
+					"2" : DateTime(2022).toString(),
+					"id" : "abc",
+					"created" : DateTime(2024, 1).toString(),
+					"updated" : DateTime(2024, 2).toString(),
+				},
 			) ], testLogger, indexInstructions: <String, List<(String, bool, List<String>)>>{"test" : <(String, bool, List<String>)>[
 				("index1", true, <String>["1", "2"]),
 				("index2", false, <String>["2"]),
@@ -241,10 +260,13 @@ void main() {
 			final PbOfflineCache testPb = PbOfflineCache.withDb(PocketBase(""), sqlite3.openInMemory());
 
 			await testPb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
-				id: "abc",
-				data: <String, dynamic> { "one" : 1, "two" : DateTime(2022).toString() },
-				created: DateTime(2024, 1).toString(),
-				updated: DateTime(2024, 2).toString(),
+				<String, dynamic> {
+					"one" : 1,
+					"two" : DateTime(2022).toString(),
+					"id" : "abc",
+					"created" : DateTime(2024, 1).toString(),
+					"updated" : DateTime(2024, 2).toString(),
+				},
 			) ], testLogger, indexInstructions: <String, List<(String, bool, List<String>)>>{"test" : <(String, bool, List<String>)>[
 				("index1", true, <String>["one", "two"]),
 				("index2", false, <String>["two"]),
@@ -262,10 +284,13 @@ void main() {
 			PbOfflineCache testPb = PbOfflineCache.withDb(PocketBase(""), db);
 
 			await testPb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
-				id: "abc",
-				data: <String, dynamic> { "one" : 1, "two" : DateTime(2022).toString() },
-				created: DateTime(2024, 1).toString(),
-				updated: DateTime(2024, 2).toString(),
+				<String, dynamic> {
+					"one" : 1,
+					"two" : DateTime(2022).toString(),
+					"id" : "abc",
+					"created" : DateTime(2024, 1).toString(),
+					"updated" : DateTime(2024, 2).toString(),
+				},
 			) ], testLogger, indexInstructions: <String, List<(String, bool, List<String>)>>{"test" : <(String, bool, List<String>)>[
 				("index1", true, <String>["one", "two"]),
 			]}, overrideDownloadTime: DateTime(2024, 3).toString());
@@ -282,10 +307,13 @@ void main() {
 			]});
 
 			await testPb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
-				id: "abc",
-				data: <String, dynamic> { "one" : 1, "two" : DateTime(2022).toString() },
-				created: DateTime(2024, 1).toString(),
-				updated: DateTime(2024, 2).toString(),
+				<String, dynamic> {
+					"one" : 1,
+					"two" : DateTime(2022).toString(),
+					"id" : "abc",
+					"created" : DateTime(2024, 1).toString(),
+					"updated" : DateTime(2024, 2).toString(),
+				},
 			) ], testLogger, indexInstructions: <String, List<(String, bool, List<String>)>>{"test" : <(String, bool, List<String>)>[
 				("index1", true, <String>["one", "two"]),
 				("index2", false, <String>["two"]),

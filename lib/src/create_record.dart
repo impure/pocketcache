@@ -23,16 +23,13 @@ extension CreateWrapper on PbOfflineCache {
 				final String now = DateTime.now().toUtc().toString();
 
 				unawaited(queueOperation("INSERT", collectionName, idToModify: id, values: values));
-				unawaited(insertRecordsIntoLocalDb(collectionName, <RecordModel>[ RecordModel(
-					id: id,
-					created: now,
-					updated: now,
-					data: values,
-				) ], logger, indexInstructions: indexInstructions));
 
 				values["id"] = id;
 				values["created"] = now;
 				values["updated"] = now;
+
+				unawaited(insertRecordsIntoLocalDb(collectionName, <RecordModel>[ RecordModel(values) ],
+						logger, indexInstructions: indexInstructions));
 
 				return values;
 			}

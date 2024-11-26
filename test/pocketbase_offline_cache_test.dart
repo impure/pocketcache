@@ -78,9 +78,6 @@ PocketBase basePb = PocketBase("");
 class PbWrapper implements PocketBase {
 
 	@override
-	AdminService admins = basePb.admins;
-
-	@override
 	AuthStore authStore = basePb.authStore;
 
 	@override
@@ -134,7 +131,23 @@ class PbWrapper implements PocketBase {
 	}
 
 	@override
-	Future<void> send(String path, {String method = "GET", Map<String, String> headers = const <String, String>{}, Map<String, dynamic> query = const <String, dynamic>{}, Map<String, dynamic> body = const <String, dynamic>{}, List<MultipartFile> files = const <MultipartFile>[]}) {
+	String baseURL = basePb.baseURL;
+
+	@override
+	RecordService get admins => throw UnimplementedError();
+
+	@override
+	Uri buildURL(String path, [Map<String, dynamic> queryParameters = const {}]) {
+		throw UnimplementedError();
+	}
+
+	@override
+	BatchService createBatch() {
+		throw UnimplementedError();
+	}
+
+	@override
+	Future<T> send<T extends dynamic>(String path, {String method = "GET", Map<String, String> headers = const {}, Map<String, dynamic> query = const {}, Map<String, dynamic> body = const {}, List<MultipartFile> files = const []}) {
 		throw UnimplementedError();
 	}
 }
@@ -147,11 +160,6 @@ class RecordServiceMock implements RecordService {
 
 	@override
 	Future<RecordAuth> authRefresh({String? expand, String? fields, Map<String, dynamic> body = const <String, dynamic>{}, Map<String, dynamic> query = const <String, dynamic>{}, Map<String, String> headers = const <String, String>{}}) {
-		throw UnimplementedError();
-	}
-
-	@override
-	Future<RecordAuth> authWithOAuth2(String providerName, OAuth2UrlCallbackFunc urlCallback, {List<String> scopes = const <String>[], Map<String, dynamic> createData = const <String, dynamic>{}, String? expand, String? fields}) {
 		throw UnimplementedError();
 	}
 
@@ -226,16 +234,6 @@ class RecordServiceMock implements RecordService {
 	}
 
 	@override
-	Future<AuthMethodsList> listAuthMethods({Map<String, dynamic> query = const <String, dynamic>{}, Map<String, String> headers = const <String, String>{}}) {
-		throw UnimplementedError();
-	}
-
-	@override
-	Future<List<ExternalAuthModel>> listExternalAuths(String recordId, {Map<String, dynamic> query = const <String, dynamic>{}, Map<String, String> headers = const <String, String>{}}) {
-		throw UnimplementedError();
-	}
-
-	@override
 	Future<void> requestEmailChange(String newEmail, {Map<String, dynamic> body = const <String, dynamic>{}, Map<String, dynamic> query = const <String, dynamic>{}, Map<String, String> headers = const <String, String>{}}) {
 		throw UnimplementedError();
 	}
@@ -267,6 +265,31 @@ class RecordServiceMock implements RecordService {
 
 	@override
 	Future<RecordModel> update(String id, {Map<String, dynamic> body = const <String, dynamic>{}, Map<String, dynamic> query = const <String, dynamic>{}, List<MultipartFile> files = const <MultipartFile>[], Map<String, String> headers = const <String, String>{}, String? expand, String? fields}) {
+		throw UnimplementedError();
+	}
+
+	@override
+	Future<RecordAuth> authWithOTP(String otpId, String password, {String? expand, String? fields, Map<String, dynamic> body = const {}, Map<String, dynamic> query = const {}, Map<String, String> headers = const {}}) {
+		throw UnimplementedError();
+	}
+
+	@override
+	Future<PocketBase> impersonate(String recordId, num duration, {String? expand, String? fields, Map<String, dynamic> body = const {}, Map<String, dynamic> query = const {}, Map<String, String> headers = const {}}) {
+		throw UnimplementedError();
+	}
+
+	@override
+	Future<OTPResponse> requestOTP(String email, {Map<String, dynamic> body = const {}, Map<String, dynamic> query = const {}, Map<String, String> headers = const {}}) {
+		throw UnimplementedError();
+	}
+
+	@override
+	Future<RecordAuth> authWithOAuth2(String providerName, OAuth2URLCallbackFunc urlCallback, {List<String> scopes = const [], Map<String, dynamic> createData = const {}, Map<String, dynamic> body = const {}, Map<String, dynamic> query = const {}, Map<String, String> headers = const {}, String? expand, String? fields}) {
+		throw UnimplementedError();
+	}
+
+	@override
+	Future<AuthMethodsList> listAuthMethods({String? fields, Map<String, dynamic> query = const {}, Map<String, String> headers = const {}}) {
 		throw UnimplementedError();
 	}
 }
