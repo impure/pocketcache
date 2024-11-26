@@ -325,6 +325,25 @@ void main() {
 			expect(names.contains("index1"), true);
 			expect(names.contains("index2"), true);
 		});
+
+		test("remove certain record keys", () async {
+
+			// On Windows in terminal requires SQLite files in the path, in Android Studio SQLite should be in the root of the project
+			final CommonDatabase db = sqlite3.openInMemory();
+			final PbOfflineCache testPb = PbOfflineCache.withDb(PocketBase(""), db);
+
+			await testPb.insertRecordsIntoLocalDb("test", <RecordModel>[ RecordModel(
+				<String, dynamic> {
+					"one" : 1,
+					"collectionName" : "a",
+					"collectionId" : "b",
+					"expand" : "c",
+				},
+			) ], testLogger, overrideDownloadTime: DateTime(2024, 3).toString());
+
+			expect((await testPb.dbIsolate.select("SELECT * FROM test")).first.keys, <String>{ "id", "created", "updated", "_downloaded", "one" });
+
+		});
 	});
 }
 
