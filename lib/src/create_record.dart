@@ -40,13 +40,7 @@ extension CreateWrapper on PbOfflineCache {
 		try {
 			final RecordModel model = await pb.collection(collectionName).create(body: values);
 			unawaited(insertRecordsIntoLocalDb(collectionName, <RecordModel>[ model ], logger, indexInstructions: indexInstructions));
-			final Map<String, dynamic> data = model.data;
-
-			data["id"] = model.id;
-			data["created"] = model.created;
-			data["updated"] = model.updated;
-
-			return data;
+			return model.data;
 		} catch (e) {
 
 			if (e is! ClientException){
