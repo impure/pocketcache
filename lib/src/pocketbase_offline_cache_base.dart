@@ -183,7 +183,7 @@ class PbOfflineCache {
 	/// Not required, but recommended. This is called periodically to resync the data with the db
 	final FutureOr<(String, List<Object?>)?> Function(String tableName, String lastUpdatedTime)? generateWhereForResync;
 
-	String? get id => isTest() ? "test" : pb.authStore.model?.id;
+	String? get id => isTest() ? "test" : pb.authStore.record?.id;
 	bool get tokenValid => pb.authStore.isValid;
 
 	Future<void> clearOldRecords(int maxOfflineDays) async {
@@ -239,7 +239,7 @@ class PbOfflineCache {
 		}
 		while (true) {
 			try {
-				final http.Response response = await http.get(pb.buildUrl("/api/health")).timeout(const Duration(seconds: 10));
+				final http.Response response = await http.get(pb.buildURL("/api/health")).timeout(const Duration(seconds: 10));
 				if (response.statusCode != 200) {
 					remoteAccessible = false;
 				} else {

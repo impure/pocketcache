@@ -73,7 +73,7 @@ class PbSubscriptionDetails {
 					if (event.record != null) {
 						final Map<String, dynamic> data = event.record!.data;
 
-						data["updated"] = event.record!.updated;
+						data["updated"] = event.record!.getStringValue("updated");
 
 						if (callback != null) {
 							callback!(event.record!.data);

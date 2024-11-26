@@ -49,10 +49,6 @@ extension UpdateWrapper on PbOfflineCache {
 
 			final Map<String, dynamic> newValues = record.data;
 
-			newValues["id"] = id;
-			newValues["created"] = record.created;
-			newValues["updated"] = record.updated;
-
 			final List<PbSubscriptionDetails>? details = pbListeners[(collectionName, id)];
 			if (details != null) {
 				for (final PbSubscriptionDetails item in details) {
