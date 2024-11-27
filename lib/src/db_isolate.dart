@@ -48,7 +48,9 @@ class DbIsolate {
 		if (port != null) {
 			port.send((command, parameters, responsePort.sendPort, true));
 		} else {
-			debugPrint("Failed to send to db");
+			if (!kIsWeb) {
+				debugPrint("Failed to send to db in execute");
+			}
 			return;
 		}
 
@@ -90,7 +92,9 @@ class DbIsolate {
 		if (port != null) {
 			port.send((command, parameters, responsePort.sendPort, false));
 		} else {
-			debugPrint("Failed to send to db");
+			if (!kIsWeb) {
+				debugPrint("Failed to send to db in select");
+			}
 			return <Map<String, dynamic>>[];
 		}
 
