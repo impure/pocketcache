@@ -87,23 +87,12 @@ extension ListWrapper on PbOfflineCache {
 			for (final RecordModel record in records) {
 				final Map<String, dynamic> entry = Map<String, dynamic>.from(record.data);
 
-				if (record.expand.isNotEmpty) {
-					final Map<String, Map<String, dynamic>> expansions = <String, Map<String, dynamic>>{};
+				final Map<String, dynamic>? expansions = record.get("expand");
 
-					for (final MapEntry<String, List<RecordModel>> item in record.expand.entries) {
-
-						if (item.value.length != 1) {
-							logger.w("Only 1 expansion record per table is supported");
-						}
-						final RecordModel? expansionRecord = item.value.firstOrNull;
-
-						if (expansionRecord != null) {
-							unawaited(insertRecordsIntoLocalDb(expansionRecord.collectionName, item.value, logger, stackTrace: StackTrace.current));
-							expansions[item.key] = expansionRecord.data;
-						}
+				if (expansions != null) {
+					for (final MapEntry<String, dynamic> item in expansions.entries) {
+						unawaited(insertRawDataIntoLocalDb(item.key, <Map<String, dynamic>>[ item.value ], logger, stackTrace: StackTrace.current));
 					}
-
-					entry["expand"] = expansions;
 				}
 				data.add(entry);
 			}
@@ -142,6 +131,25 @@ extension ListWrapper on PbOfflineCache {
 			dataToSave.add(recordMap);
 		}
 
+		for (final RecordModel record in records) {
+			broadcastToListeners("pocketcache/pre-local-update", (collectionName, record));
+		}
+
+		return insertRawDataIntoLocalDb(collectionName, dataToSave, logger);
+	}
+
+	Future<void> insertRawDataIntoLocalDb(String collectionName, List<Map<String, dynamic>> dataToSave, Logger logger, {Map<String, List<(String name, bool unique, List<String> columns)>> indexInstructions = const <String, List<(String, bool, List<String>)>>{}, String? overrideDownloadTime, StackTrace? stackTrace}) async {
+
+		if (!(await dbIsolate.enabled()) || dataToSave.isEmpty) {
+			return;
+		}
+
+		for (final Map<String, dynamic> data in dataToSave) {
+			data.remove("collectionName");
+			data.remove("collectionId");
+			data.remove("expand");
+		}
+
 		await tableExistsLock.synchronized(() async {
 
 			if (!(await tableExists(dbIsolate, collectionName))) {
@@ -178,10 +186,6 @@ extension ListWrapper on PbOfflineCache {
 				unawaited(createAllIndexesForTable(collectionName, indexInstructions, overrideLogger: logger, tableKeys: tableKeys));
 			}
 		});
-
-		for (final RecordModel record in records) {
-			broadcastToListeners("pocketcache/pre-local-update", (collectionName, record));
-		}
 
 		final StringBuffer command = StringBuffer("INSERT OR REPLACE INTO $collectionName(_downloaded");
 
