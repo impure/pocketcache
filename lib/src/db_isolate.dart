@@ -2,9 +2,7 @@
 import 'dart:async';
 import 'dart:isolate';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:sqlite3/common.dart';
-import 'package:sqlite3/common.dart' as sql;
 
 import 'make_db.dart' if (dart.library.io) 'make_db_io.dart' if (dart.library.html) 'make_db_web.dart';
 
@@ -180,7 +178,7 @@ Future<void> _isolateEntry((SendPort, String? path) data) async {
 			try {
 				final ResultSet set = db.select(message.$1, message.$2);
 				final List<Map<String, dynamic>> data = <Map<String, dynamic>>[];
-				for (final sql.Row row in set) {
+				for (final Row row in set) {
 					final Map<String, dynamic> rowData = <String, dynamic>{};
 
 					for (final MapEntry<String, dynamic> cell in row.entries) {
