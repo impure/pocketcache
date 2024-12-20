@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:core';
 
+import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:sqlite3/common.dart';
@@ -111,7 +112,7 @@ extension ListWrapper on PbOfflineCache {
 		}
 	}
 
-	Future<void> insertRecordsIntoLocalDb(String collectionName, List<RecordModel> records, Logger logger, {Map<String, List<(String name, bool unique, List<String> columns)>> indexInstructions = const <String, List<(String, bool, List<String>)>>{}, String? overrideDownloadTime, StackTrace? stackTrace}) async {
+	Future<void> insertRecordsIntoLocalDb(String collectionName, List<RecordModel> records, Logger logger, {Map<String, List<(String name, bool unique, List<String> columns)>> indexInstructions = const <String, List<(String, bool, List<String>)>>{}, String? overrideDownloadTime, StackTrace? stackTrace, bool allowRecurse = true}) async {
 
 		if (!(await dbIsolate.enabled()) || records.isEmpty) {
 			return;
@@ -122,13 +123,36 @@ extension ListWrapper on PbOfflineCache {
 		}
 
 		final List<Map<String, dynamic>> dataToSave = <Map<String, dynamic>>[];
+		final Map<String, List<RecordModel>> expandRecords = <String, List<RecordModel>>{};
 
 		for (final RecordModel record in records) {
 			final Map<String, dynamic> recordMap = Map<String, dynamic>.from(record.data);
-			recordMap.remove("collectionName");
-			recordMap.remove("collectionId");
-			recordMap.remove("expand");
 			dataToSave.add(recordMap);
+
+			for (final List<RecordModel> entry in record.expand.values) {
+				for (final RecordModel model in entry) {
+					final String? collection = model.data["collectionName"];
+
+					if (collection == null) {
+						debugPrint("Unable to find collection name!");
+					} else {
+						if (!expandRecords.containsKey(collection)) {
+							expandRecords[collection] = <RecordModel>[];
+						}
+						expandRecords[collection]!.add(model);
+					}
+				}
+			}
+		}
+
+		if (expandRecords.isNotEmpty) {
+			if (allowRecurse) {
+				for (final MapEntry<String, List<RecordModel>> data in expandRecords.entries) {
+					unawaited(insertRecordsIntoLocalDb(data.key, data.value, logger, allowRecurse: false));
+				}
+			} else {
+				debugPrint("Found expand records but recursion not allowed!");
+			}
 		}
 
 		for (final RecordModel record in records) {

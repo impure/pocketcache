@@ -205,7 +205,7 @@ class PbOfflineCache {
 	}
 
 	// Returns true on success, false on error
-	Future<AuthRefreshResult> tryRefreshAuth(Function() onUnauthorizedError) async {
+	Future<AuthRefreshResult> tryRefreshAuth(void Function() onUnauthorizedError) async {
 		if (id != null) {
 			if (tokenValid) {
 				try {
