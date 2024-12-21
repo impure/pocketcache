@@ -134,7 +134,7 @@ extension Realtime on PbOfflineCache {
 		return details;
 	}
 
-	Future<void> _subscribeToId(PbSubscriptionDetails details, String collection, String id, DateTime updateTime, Function(Map<String, dynamic>) callback, Duration debouncingDuration, bool connectToServer, bool refreshImmediately) async {
+	Future<void> _subscribeToId(PbSubscriptionDetails details, String collection, String id, DateTime updateTime, void Function(Map<String, dynamic>) callback, Duration debouncingDuration, bool connectToServer, bool refreshImmediately) async {
 
 		// Prevents too many temporary listeners from being registered all at once
 		await Future<void>.delayed(debouncingDuration);

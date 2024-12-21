@@ -66,7 +66,7 @@ extension ListWrapper on PbOfflineCache {
 					for (final RecordModel model in records) {
 						final DateTime? time = DateTime.tryParse(model.get("updated"))?.toUtc();
 						if (time == null) {
-							logger.e("Unable to parse time ${model.get("updated")}");
+							logger.e("Unable to parse time ${model.get<String>("updated")}");
 						}
 						if (time != null && (newLastSyncTime == null || time.isAfter(newLastSyncTime))) {
 							newLastSyncTime = time;
