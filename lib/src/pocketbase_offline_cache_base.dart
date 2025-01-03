@@ -590,10 +590,10 @@ class QueryBuilder {
 
 		if (isNull == true) {
 			return QueryBuilder._(pb, collectionName,
-					"${currentFilter != "" ? "$currentFilter && " : ""}$column = ?", List<dynamic>.from(args)..add(null), orderRule, expandFields);
+					"${currentFilter != "" ? "$currentFilter && " : ""}$column IS NULL", args, orderRule, expandFields);
 		} else if (isNull == false) {
 			return QueryBuilder._(pb, collectionName,
-					"${currentFilter != "" ? "$currentFilter && " : ""}$column != ?", List<dynamic>.from(args)..add(null), orderRule, expandFields);
+					"${currentFilter != "" ? "$currentFilter && " : ""}$column IS NOT NULL", args, orderRule, expandFields);
 		} else if (isEqualTo != null) {
 			return QueryBuilder._(pb, collectionName,
 					"${currentFilter != "" ? "$currentFilter && " : ""}$column = ?", List<dynamic>.from(args)..add(isEqualTo), orderRule, expandFields);
