@@ -12,8 +12,9 @@ extension CountWrapper on PbOfflineCache {
 
 		if ((source != QuerySource.server) && !remoteAccessible || source == QuerySource.cache) {
 
-			if (await tableExists(dbIsolate, collectionName)) {
-				final List<Map<String, dynamic>> results = await selectBuilder(dbIsolate, collectionName, columns: "COUNT(*)", filter: where);
+			final Set<String> columnNames = await getColumnNames(dbIsolate, collectionName);
+			if (columnNames.isNotEmpty) {
+				final List<Map<String, dynamic>> results = await selectBuilder(dbIsolate, collectionName, columns: "COUNT(*)", filter: where, columnNames: columnNames);
 				return results.first.values.first! as int;
 			}
 

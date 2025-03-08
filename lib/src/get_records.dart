@@ -21,8 +21,9 @@ extension ListWrapper on PbOfflineCache {
 		List<String> expand = const <String>[],
 	}) async {
 		if (source != QuerySource.server && (!remoteAccessible || source == QuerySource.cache)) {
-			if (await tableExists(dbIsolate, collectionName)) {
-				final List<Map<String, dynamic>> results = await selectBuilder(dbIsolate, collectionName, maxItems: maxItems, filter: where, startAfter: startAfter, sort: sort.firstOrNull);
+			final Set<String> columnNames = await getColumnNames(dbIsolate, collectionName);
+			if (columnNames.isNotEmpty) {
+				final List<Map<String, dynamic>> results = await selectBuilder(dbIsolate, collectionName, maxItems: maxItems, filter: where, startAfter: startAfter, sort: sort, columnNames: columnNames);
 
 				final List<Map<String, dynamic>> dataToReturn = <Map<String, dynamic>>[];
 				for (final Map<String, dynamic> row in results) {

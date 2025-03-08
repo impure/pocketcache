@@ -434,33 +434,45 @@ Future<bool> tableExists(DbIsolate db, String tableName) async {
 		<String> [ tableName ],
 	)).isNotEmpty;
 }
+Future<Set<String>> getColumnNames(DbIsolate db, String tableName) async {
+	return (await db.select(
+		"PRAGMA table_info($tableName)",
+	)).map((Map<String, dynamic> col) => col["name"] as String).toSet();
+}
 
 Future<List<Map<String, dynamic>>> selectBuilder(DbIsolate db, String tableName, {
 	String? columns,
 	(String, List<Object?>)? filter,
 	int? maxItems,
-	(String, bool descending)? sort,
+	List<(String, bool descending)> sort = const <(String, bool)>[],
 	Map<String, dynamic>? startAfter,
+	required Set<String> columnNames,
 }) {
 
 	final StringBuffer query = StringBuffer("SELECT ${columns ?? "*"} FROM $tableName");
 
-	(String, List<dynamic> newValues) generateSortCondition(Map<String, dynamic>? startAfter, (String, bool descending)? sort, bool and, List<dynamic> parameters) {
+	(String, List<dynamic> newValues) generateSortCondition(Map<String, dynamic>? startAfter, List<(String, bool descending)> sort, bool and, List<dynamic> parameters) {
 
 		if (startAfter == null || startAfter.isEmpty) {
 			return ("", parameters);
 		}
 
-		assert(sort != null, "Start after requires a sort condition");
+		assert(sort.isNotEmpty, "Start after requires a sort condition");
 
-		if (sort == null) {
+		if (sort.isEmpty) {
 			return ("", parameters);
 		}
 
 		final Map<String, dynamic> relevantStartKeys = <String, dynamic>{};
 
-		if (startAfter.containsKey(sort.$1)) {
-			relevantStartKeys[sort.$1] = startAfter[sort.$1];
+		for (final (String, bool) sortParam in sort) {
+			if (startAfter.containsKey(sortParam.$1)) {
+				if (columnNames.contains(sortParam.$1)) {
+					relevantStartKeys[sortParam.$1] = startAfter[sortParam.$1];
+				} else if (columnNames.contains("_offline_bool_${sortParam.$1}")) {
+					relevantStartKeys["_offline_bool_${sortParam.$1}"] = startAfter[sortParam.$1];
+				}
+			}
 		}
 
 		assert(relevantStartKeys.isNotEmpty, "Unable to find sort key in sort!");
@@ -480,7 +492,7 @@ Future<List<Map<String, dynamic>>> selectBuilder(DbIsolate db, String tableName,
 			return "?";
 		}).join(', ');
 
-		return ("${and ? " AND " : ""}($keysPart) ${sort.$2 ? "<" : ">"} ($valuesPart)", List<dynamic>.from(parameters)..addAll(values));
+		return ("${and ? " AND " : ""}($keysPart) < ($valuesPart)", List<dynamic>.from(parameters)..addAll(values));
 	}
 
 	String preprocessQuery(String query, List<dynamic> params) {
@@ -529,8 +541,18 @@ Future<List<Map<String, dynamic>>> selectBuilder(DbIsolate db, String tableName,
 		filter = ("", orderBy.$2);
 	}
 
-	if (sort != null) {
-		query.write(" ORDER BY ${sort.$1} ${sort.$2 ? "DESC" : "ASC"}");
+	if (sort.isNotEmpty) {
+		final List<String> orderArgs = <String>[];
+
+		for (final (String, bool) sortParam in sort) {
+			if (columnNames.contains(sortParam.$1)) {
+				orderArgs.add("${sortParam.$1} ${sortParam.$2 ? "DESC" : "ASC"}");
+			} else if (columnNames.contains("_offline_bool_${sortParam.$1}")) {
+				orderArgs.add("_offline_bool_${sortParam.$1} ${sortParam.$2 ? "DESC" : "ASC"}");
+			}
+		}
+
+		query.write(" ORDER BY ${orderArgs.join(", ")}");
 	}
 
 	if (maxItems != null) {
