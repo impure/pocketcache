@@ -273,7 +273,7 @@ class PbOfflineCache {
 							continue;
 						}
 
-						final List<Map<String, dynamic>> items = await getRecords(row["table_name"], where: whereCondition, sort: ("updated", false), source: QuerySource.server, maxItems: 50);
+						final List<Map<String, dynamic>> items = await getRecords(row["table_name"], where: whereCondition, sort: <(String, bool)>[("updated", false)], source: QuerySource.server, maxItems: 50);
 						if (items.isNotEmpty) {
 
 							for (final Map<String, dynamic> item in items) {
@@ -414,7 +414,7 @@ class PbOfflineCache {
 	}
 
 	QueryBuilder collection(String collectionName) {
-		return QueryBuilder._(this, collectionName, "", <dynamic>[], null, <String>[]);
+		return QueryBuilder._(this, collectionName, "", <dynamic>[], <(String, bool descending)>[], <String>[]);
 	}
 }
 
@@ -565,7 +565,7 @@ class QueryBuilder {
 	final String collectionName;
 	final String currentFilter;
 	final List<dynamic> args;
-	final (String, bool descending)? orderRule;
+	final List<(String, bool descending)> orderRule;
 	final List<String> expandFields;
 
 	@override
@@ -620,8 +620,7 @@ class QueryBuilder {
 	}
 
 	QueryBuilder orderBy(String columnName, { bool descending = true }) {
-		assert(orderRule == null, "Multiple order by not supported");
-		return QueryBuilder._(pb, collectionName, currentFilter, args, (columnName, descending), expandFields);
+		return QueryBuilder._(pb, collectionName, currentFilter, args, List<(String, bool descending)>.from(orderRule)..add((columnName, descending)), expandFields);
 	}
 
 	Future<List<Map<String, dynamic>>> get({ int maxItems = defaultMaxItems, QuerySource source = QuerySource.any, Map<String, dynamic>? startAfter }) {

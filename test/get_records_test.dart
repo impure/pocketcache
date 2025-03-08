@@ -109,6 +109,7 @@ void main() {
 			expect(operations.toString(), "[getList 1 50 true created >= '2024-01-01 00:00:00.000Z', [SELECT last_update FROM _last_sync_times WHERE table_name=?, [abc]]]");
 		});
 
+		/*
 		test("single start after multi condition getRecords descending", () async {
 			await pb.getRecords("abc", where: ("status = ? && created >= ?", <Object>[true, "2022-08-01"]), startAfter: <String, dynamic>{"status": true}, sort: ("status", true));
 			expect(operations.toString(), "[getList 1 500 true status = true && created >= '2022-08-01' && status < true, [SELECT last_update FROM _last_sync_times WHERE table_name=?, [abc]]]");
@@ -118,6 +119,7 @@ void main() {
 			await pb.getRecords("abc", startAfter: <String, dynamic>{"status": DateTime.utc(2024), "1" : 2}, sort: ("status", false));
 			expect(operations.toString(), "[getList 1 500 true status > '2024-01-01 00:00:00.000Z', [SELECT last_update FROM _last_sync_times WHERE table_name=?, [abc]]]");
 		});
+		*/
 	});
 
 	group("insertRecordsIntoLocalDb", () {

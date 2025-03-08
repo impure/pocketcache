@@ -16,13 +16,13 @@ extension ListWrapper on PbOfflineCache {
 		int maxItems = defaultMaxItems,
 		(String, List<Object?>)? where,
 		QuerySource source = QuerySource.any,
-		(String column, bool descending)? sort,
+		List<(String column, bool descending)> sort = const <(String, bool descending)>[],
 		Map<String, dynamic>? startAfter,
 		List<String> expand = const <String>[],
 	}) async {
 		if (source != QuerySource.server && (!remoteAccessible || source == QuerySource.cache)) {
 			if (await tableExists(dbIsolate, collectionName)) {
-				final List<Map<String, dynamic>> results = await selectBuilder(dbIsolate, collectionName, maxItems: maxItems, filter: where, startAfter: startAfter, sort: sort);
+				final List<Map<String, dynamic>> results = await selectBuilder(dbIsolate, collectionName, maxItems: maxItems, filter: where, startAfter: startAfter, sort: sort.firstOrNull);
 
 				final List<Map<String, dynamic>> dataToReturn = <Map<String, dynamic>>[];
 				for (final Map<String, dynamic> row in results) {
@@ -276,26 +276,31 @@ extension ListWrapper on PbOfflineCache {
 	}
 }
 
-String? makePbFilter((String, List<Object?>)? params, { (String column, bool descending)? sort, Map<String, dynamic>? startAfter }) {
+String? makePbFilter((String, List<Object?>)? params, { List<(String column, bool descending)> sort = const <(String, bool descending)>[], Map<String, dynamic>? startAfter }) {
 
 	assert(startAfter == null || (startAfter != null && sort != null), "If start after is not null sort must also be not null");
 
-	if (startAfter != null && sort != null && startAfter.containsKey(sort.$1)) {
-		if (params != null) {
-			if (sort.$2) {
-				final List<Object?> objects = List<Object?>.from(params.$2);
-				objects.add(startAfter[sort.$1]);
-				params = ("${params.$1} && ${sort.$1} < ?", objects);
-			} else {
-				final List<Object?> objects = List<Object?>.from(params.$2);
-				objects.add(startAfter[sort.$1]);
-				params = ("${params.$1} && ${sort.$1} > ?", objects);
+	if (startAfter != null && sort != null) {
+
+		final List<Object> paramsToAdd = <Object>[];
+		final List<String> filterNames = <String>[];
+
+		for (final (String column, bool descending) sortPair in sort) {
+			if (startAfter.containsKey(sortPair.$1)) {
+				paramsToAdd.add(startAfter[sortPair.$1]);
+				filterNames.add(sortPair.$1);
 			}
-		} else {
-			if (sort.$2) {
-				params = ("${sort.$1} < ?", <Object?> [ startAfter[sort.$1] ]);
+		}
+
+		if (paramsToAdd.isNotEmpty) {
+
+			final (String, List<Object>) pbCursor = generatePbCursor(filterNames, paramsToAdd);
+			if (params != null) {
+				final List<Object?> objects = List<Object?>.from(params.$2);
+				objects.addAll(pbCursor.$2);
+				params = ("${params.$1} && (${pbCursor.$1})", objects);
 			} else {
-				params = ("${sort.$1} > ?", <Object?> [ startAfter[sort.$1] ]);
+				params = pbCursor;
 			}
 		}
 	}
@@ -327,10 +332,41 @@ String? makePbFilter((String, List<Object?>)? params, { (String column, bool des
 
 }
 
-String? makeSortFilter((String column, bool descending)? data) {
-	if (data == null) {
-		return null;
-	} else {
-		return "${data.$2 ? "-" : "+"}${data.$1}";
+(String, List<Object>) generatePbCursor(List<String> columns, List<Object> values) {
+	if (columns.isEmpty || values.isEmpty || columns.length != values.length) {
+		throw ArgumentError('Columns and values must have the same non-zero length');
 	}
+
+	final List<String> conditions = <String>[];
+	final List<Object> newValues = <Object>[];
+
+	for (int i = 0; i < columns.length; i++) {
+		String condition = '${columns[i]} < ?';
+		newValues.add(values[i]);
+
+		if (i > 0) {
+			final String equalsConditions = List<String>.generate(i, (int j) => '${columns[j]} = ?').join(' && ');
+			condition = '($condition && $equalsConditions)';
+			newValues.addAll(values.sublist(0, i));
+		}
+
+		conditions.add(condition);
+	}
+
+	return (conditions.join(' || '), newValues);
+}
+
+String? makeSortFilter(List<(String column, bool descending)> data) {
+	if (data.isEmpty) {
+		return null;
+	}
+
+	String filter = "";
+	for (final (String column, bool descending) sort in data) {
+		if (filter != "") {
+			filter = "$filter,";
+		}
+		filter = "$filter${sort.$2 ? "-" : "+"}${sort.$1}";
+	}
+	return filter;
 }
