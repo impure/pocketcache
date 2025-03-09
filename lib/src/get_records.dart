@@ -283,19 +283,16 @@ String? makePbFilter((String, List<Object?>)? params, { List<(String column, boo
 
 	if (startAfter != null && sort != null) {
 
-		final List<Object> paramsToAdd = <Object>[];
-		final List<String> filterNames = <String>[];
+		final List<(String name, Object value, bool descending)> sortParams = <(String name, Object value, bool descending)>[];
 
 		for (final (String column, bool descending) sortPair in sort) {
 			if (startAfter.containsKey(sortPair.$1)) {
-				paramsToAdd.add(startAfter[sortPair.$1]);
-				filterNames.add(sortPair.$1);
+				sortParams.add((sortPair.$1, startAfter[sortPair.$1], sortPair.$2));
 			}
 		}
 
-		if (paramsToAdd.isNotEmpty) {
-
-			final (String, List<Object>) pbCursor = generatePbCursor(filterNames, paramsToAdd);
+		if (sortParams.isNotEmpty) {
+			final (String, List<Object>) pbCursor = generatePbCursor(sortParams);
 			if (params != null) {
 				final List<Object?> objects = List<Object?>.from(params.$2);
 				objects.addAll(pbCursor.$2);
@@ -333,22 +330,24 @@ String? makePbFilter((String, List<Object?>)? params, { List<(String column, boo
 
 }
 
-(String, List<Object>) generatePbCursor(List<String> columns, List<Object> values) {
-	if (columns.isEmpty || values.isEmpty || columns.length != values.length) {
+(String, List<Object>) generatePbCursor(List<(String name, Object value, bool descending)> sortParams) {
+	if (sortParams.isEmpty) {
 		throw ArgumentError('Columns and values must have the same non-zero length');
 	}
 
 	final List<String> conditions = <String>[];
 	final List<Object> newValues = <Object>[];
 
-	for (int i = 0; i < columns.length; i++) {
-		String condition = '${columns[i]} < ?';
-		newValues.add(values[i]);
+	for (int i = 0; i < sortParams.length; i++) {
+		String condition = '${sortParams[i].$1} ${sortParams[i].$3 ? "<" : ">"} ?';
+		newValues.add(sortParams[i].$2);
 
 		if (i > 0) {
-			final String equalsConditions = List<String>.generate(i, (int j) => '${columns[j]} = ?').join(' && ');
+			final String equalsConditions = List<String>.generate(i, (int j) => '${sortParams[j].$1} = ?').join(' && ');
 			condition = '($condition && $equalsConditions)';
-			newValues.addAll(values.sublist(0, i));
+			for (int j = 0; j < i; j++) {
+				newValues.add(sortParams[j].$2);
+			}
 		}
 
 		conditions.add(condition);

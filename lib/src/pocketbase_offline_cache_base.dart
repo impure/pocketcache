@@ -492,7 +492,7 @@ Future<List<Map<String, dynamic>>> selectBuilder(DbIsolate db, String tableName,
 			return "?";
 		}).join(', ');
 
-		return ("${and ? " AND " : ""}($keysPart) < ($valuesPart)", List<dynamic>.from(parameters)..addAll(values));
+		return ("${and ? " AND " : ""}($keysPart) ${sort.first.$2 ? "<" : ">"} ($valuesPart)", List<dynamic>.from(parameters)..addAll(values));
 	}
 
 	String preprocessQuery(String query, List<dynamic> params) {
