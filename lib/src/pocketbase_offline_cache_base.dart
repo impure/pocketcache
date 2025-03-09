@@ -463,36 +463,30 @@ Future<List<Map<String, dynamic>>> selectBuilder(DbIsolate db, String tableName,
 			return ("", parameters);
 		}
 
-		final Map<String, dynamic> relevantStartKeys = <String, dynamic>{};
+		final List<(String name, Object value, bool descending)> sortParams = <(String name, Object value, bool descending)>[];
 
 		for (final (String, bool) sortParam in sort) {
 			if (startAfter.containsKey(sortParam.$1)) {
 				if (columnNames.contains(sortParam.$1)) {
-					relevantStartKeys[sortParam.$1] = startAfter[sortParam.$1];
+					sortParams.add((sortParam.$1, startAfter[sortParam.$1], sortParam.$2));
 				} else if (columnNames.contains("_offline_bool_${sortParam.$1}")) {
-					relevantStartKeys["_offline_bool_${sortParam.$1}"] = startAfter[sortParam.$1];
+					sortParams.add(("_offline_bool_${sortParam.$1}", startAfter[sortParam.$1], sortParam.$2));
 				}
 			}
 		}
 
-		assert(relevantStartKeys.isNotEmpty, "Unable to find sort key in sort!");
-		if (relevantStartKeys.isEmpty) {
+		assert(sortParams.isNotEmpty, "Unable to find sort key in sort!");
+		if (sortParams.isEmpty) {
 			return ("", <dynamic>[]);
 		}
 
-		if (!relevantStartKeys.containsKey("id")) {
-			relevantStartKeys["id"] = startAfter["id"];
-		}
+		final (String, List<Object>) cursor = generateCursor(sortParams, pocketBase: false);
 
-		final List<String> keys = relevantStartKeys.keys.toList();
-		final List<dynamic> values = relevantStartKeys.values.toList();
+		//if (!relevantStartKeys.containsKey("id")) {
+		//	relevantStartKeys["id"] = startAfter["id"];
+		//}
 
-		final String keysPart = keys.join(', ');
-		final String valuesPart = values.map((dynamic val) {
-			return "?";
-		}).join(', ');
-
-		return ("${and ? " AND " : ""}($keysPart) ${sort.first.$2 ? "<" : ">"} ($valuesPart)", List<dynamic>.from(parameters)..addAll(values));
+		return ("${and ? " AND " : ""}(${cursor.$1})", List<dynamic>.from(parameters)..addAll(cursor.$2));
 	}
 
 	String preprocessQuery(String query, List<dynamic> params) {

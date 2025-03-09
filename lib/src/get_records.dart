@@ -292,7 +292,7 @@ String? makePbFilter((String, List<Object?>)? params, { List<(String column, boo
 		}
 
 		if (sortParams.isNotEmpty) {
-			final (String, List<Object>) pbCursor = generatePbCursor(sortParams);
+			final (String, List<Object>) pbCursor = generateCursor(sortParams);
 			if (params != null) {
 				final List<Object?> objects = List<Object?>.from(params.$2);
 				objects.addAll(pbCursor.$2);
@@ -330,7 +330,7 @@ String? makePbFilter((String, List<Object?>)? params, { List<(String column, boo
 
 }
 
-(String, List<Object>) generatePbCursor(List<(String name, Object value, bool descending)> sortParams) {
+(String, List<Object>) generateCursor(List<(String name, Object value, bool descending)> sortParams, {bool pocketBase = true}) {
 	if (sortParams.isEmpty) {
 		throw ArgumentError('Columns and values must have the same non-zero length');
 	}
@@ -343,8 +343,8 @@ String? makePbFilter((String, List<Object?>)? params, { List<(String column, boo
 		newValues.add(sortParams[i].$2);
 
 		if (i > 0) {
-			final String equalsConditions = List<String>.generate(i, (int j) => '${sortParams[j].$1} = ?').join(' && ');
-			condition = '($condition && $equalsConditions)';
+			final String equalsConditions = List<String>.generate(i, (int j) => '${sortParams[j].$1} = ?').join(' ${pocketBase ? "&&" : "AND"} ');
+			condition = '($condition ${pocketBase ? "&&" : "AND"} $equalsConditions)';
 			for (int j = 0; j < i; j++) {
 				newValues.add(sortParams[j].$2);
 			}
@@ -353,7 +353,7 @@ String? makePbFilter((String, List<Object?>)? params, { List<(String column, boo
 		conditions.add(condition);
 	}
 
-	return (conditions.join(' || '), newValues);
+	return (conditions.join(' ${pocketBase ? "||" : "OR"} '), newValues);
 }
 
 String? makeSortFilter(List<(String column, bool descending)> data) {
