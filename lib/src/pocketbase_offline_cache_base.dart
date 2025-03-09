@@ -482,10 +482,6 @@ Future<List<Map<String, dynamic>>> selectBuilder(DbIsolate db, String tableName,
 
 		final (String, List<Object>) cursor = generateCursor(sortParams, pocketBase: false);
 
-		//if (!relevantStartKeys.containsKey("id")) {
-		//	relevantStartKeys["id"] = startAfter["id"];
-		//}
-
 		return ("${and ? " AND " : ""}(${cursor.$1})", List<dynamic>.from(parameters)..addAll(cursor.$2));
 	}
 
