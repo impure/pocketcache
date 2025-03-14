@@ -144,7 +144,12 @@ extension Realtime on PbOfflineCache {
 		}
 
 		if (refreshImmediately) {
-			await details.manualUpdate();
+			// Having things in the operation queue means we're returning from offline and we have changes that have not been synced yet
+			final List<Map<String, dynamic>> data = await dbIsolate.select("SELECT COUNT(*) FROM _operation_queue");
+			final int? count = data.firstOrNull?["COUNT(*)"];
+			if (count == 0) {
+				await details.manualUpdate();
+			}
 		}
 
 		try {
