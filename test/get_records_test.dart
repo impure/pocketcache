@@ -346,6 +346,47 @@ void main() {
 			expect((await testPb.dbIsolate.select("SELECT * FROM test")).first.keys, <String>{ "id", "created", "updated", "_downloaded", "one" });
 
 		});
+
+		group("makePbFilter", () {
+
+			test("basic", () async {
+				expect(makePbFilter(("a = ? && b = ?", <dynamic>[ 1, 2 ])), "a = 1 && b = 2");
+			});
+
+			test("with sort", () async {
+				expect(makePbFilter(("a = ? && b = ?", <dynamic>[ 1, 2 ]),
+					sort: <(String, bool)> [
+						("a", true),
+						("b", true),
+					],
+				), "a = 1 && b = 2");
+			});
+
+			test("with start after", () async {
+				expect(makePbFilter(("a = ? && b = ?", <dynamic>[ 1, 2 ]),
+					sort: <(String, bool)> [
+						("a", true),
+						("b", true),
+					],
+					startAfter: <String, dynamic>{
+						"a" : 1,
+						"b" : 2,
+					},
+				), "a = 1 && b = 2 && (a < 1 || (b < 2 && a = 1))");
+
+				expect(makePbFilter(("a = ? && b = ?", <dynamic>[ 1, 2 ]),
+					sort: <(String, bool)> [
+						("a", true),
+						("b", false),
+					],
+					startAfter: <String, dynamic>{
+						"a" : 1,
+						"b" : 2,
+					},
+				), "a = 1 && b = 2 && (a < 1 || (b > 2 && a = 1))");
+			});
+		});
+
 	});
 }
 
