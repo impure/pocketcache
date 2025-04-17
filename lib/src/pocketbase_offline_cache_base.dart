@@ -440,7 +440,7 @@ Future<Set<String>> getColumnNames(DbIsolate db, String tableName) async {
 	)).map((Map<String, dynamic> col) => col["name"] as String).toSet();
 }
 
-Future<List<Map<String, dynamic>>> selectBuilder(DbIsolate db, String tableName, {
+(String command, List<dynamic>? params) selectBuilder(String tableName, {
 	String? columns,
 	(String, List<Object?>)? filter,
 	int? maxItems,
@@ -563,9 +563,34 @@ Future<List<Map<String, dynamic>>> selectBuilder(DbIsolate db, String tableName,
 			}
 		}
 
-		return db.select(query.toString(), filter.$2);
+		return (query.toString(), filter.$2);
 	} else {
-		return db.select(query.toString());
+		return (query.toString(), null);
+	}
+}
+
+Future<List<Map<String, dynamic>>> getFromLocalDb(DbIsolate db, String tableName, {
+	String? columns,
+	(String, List<Object?>)? filter,
+	int? maxItems,
+	List<(String, bool descending)> sort = const <(String, bool)>[],
+	Map<String, dynamic>? startAfter,
+	required Set<String> columnNames,
+}) {
+
+	final (String command, List<dynamic>? params) selectCommand = selectBuilder(tableName,
+		columns: columns,
+		filter: filter,
+		maxItems: maxItems,
+		sort: sort,
+		startAfter: startAfter,
+		columnNames: columnNames,
+	);
+
+	if (selectCommand.$2 != null) {
+		return db.select(selectCommand.$1, selectCommand.$2!);
+	} else {
+		return db.select(selectCommand.$1);
 	}
 }
 

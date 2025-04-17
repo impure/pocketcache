@@ -14,7 +14,7 @@ extension CountWrapper on PbOfflineCache {
 
 			final Set<String> columnNames = await getColumnNames(dbIsolate, collectionName);
 			if (columnNames.isNotEmpty) {
-				final List<Map<String, dynamic>> results = await selectBuilder(dbIsolate, collectionName, columns: "COUNT(*)", filter: where, columnNames: columnNames);
+				final List<Map<String, dynamic>> results = await getFromLocalDb(dbIsolate, collectionName, columns: "COUNT(*)", filter: where, columnNames: columnNames);
 				return results.first.values.first! as int;
 			}
 

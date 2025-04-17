@@ -23,7 +23,7 @@ extension ListWrapper on PbOfflineCache {
 		if (source != QuerySource.server && (!remoteAccessible || source == QuerySource.cache)) {
 			final Set<String> columnNames = await getColumnNames(dbIsolate, collectionName);
 			if (columnNames.isNotEmpty) {
-				final List<Map<String, dynamic>> results = await selectBuilder(dbIsolate, collectionName, maxItems: maxItems, filter: where, startAfter: startAfter, sort: sort, columnNames: columnNames);
+				final List<Map<String, dynamic>> results = await getFromLocalDb(dbIsolate, collectionName, maxItems: maxItems, filter: where, startAfter: startAfter, sort: sort, columnNames: columnNames);
 
 				final List<Map<String, dynamic>> dataToReturn = <Map<String, dynamic>>[];
 				for (final Map<String, dynamic> row in results) {

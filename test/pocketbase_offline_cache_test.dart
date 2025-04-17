@@ -306,36 +306,32 @@ void main() {
 	final PbOfflineCache pb = PbOfflineCache.withDb(PbWrapper(), DatabaseMock());
 	pb.remoteAccessible = true;
 
-	/*
 	group("selectBuilder", () {
-		test("basic selectBuilder", () async {
-			await selectBuilder(pb.dbIsolate, "collection");
-			expect(operations.toString(), "[[SELECT * FROM collection;, []]]");
+		test("basic", () {
+			expect(selectBuilder("table", columnNames: <String>{"a", "b"}), ("SELECT * FROM table;", null));
 		});
 
-		test("count selectBuilder", () async {
-			await selectBuilder(pb.dbIsolate, "collection", columns: "COUNT(*)");
-			expect(operations.toString(), "[[SELECT COUNT(*) FROM collection;, []]]");
-		});
+		test("start after", () {
+			expect(selectBuilder("table",
+				columnNames: <String>{"a", "b"},
+				startAfter: <String, dynamic> {"a" : 1, "b" : 2},
+				sort: <(String, bool)>[ ("a", true), ("b", true) ],
+			).toString(), ("SELECT * FROM table WHERE ((a < ? OR (b < ? AND a = ?)), [1, 2, 1]) ORDER BY a DESC, b DESC;", <dynamic>[1, 2, 1]).toString());
 
-		test("single conditions selectBuilder", () async {
-			await selectBuilder(pb.dbIsolate, "collection", filter: ("abc >= ?", <dynamic>[ DateTime.utc(2024) ]));
-			expect(operations.toString(), "[[SELECT * FROM collection WHERE abc >= ?;, [2024-01-01 00:00:00.000Z]]]");
-		});
+			expect(selectBuilder("table",
+				columnNames: <String>{"a", "b"},
+				startAfter: <String, dynamic> {"a" : 1, "b" : 2},
+				sort: <(String, bool)>[ ("a", true), ("b", false) ],
+			).toString(), ("SELECT * FROM table WHERE ((a < ? OR (b > ? AND a = ?)), [1, 2, 1]) ORDER BY a DESC, b ASC;", <dynamic>[1, 2, 1]).toString());
 
-		test("multiple conditions selectBuilder", () async {
-			await selectBuilder(pb.dbIsolate, "collection", columns: "COUNT(*)", filter: ("abc = ? && xyz = ?", <dynamic>[ 1, "2" ]));
-			expect(operations.toString(), "[[SELECT COUNT(*) FROM collection WHERE abc = ? AND  xyz = ?;, [1, 2]]]");
+			expect(selectBuilder("table",
+				filter: ("c > ?", <int>[ 3 ]),
+				columnNames: <String>{"a", "b"},
+				startAfter: <String, dynamic> {"a" : 1, "b" : 2},
+				sort: <(String, bool)>[ ("a", true), ("b", false) ],
+			).toString(), ("SELECT * FROM table WHERE c > ? AND (a < ? OR (b > ? AND a = ?)) ORDER BY a DESC, b ASC;", <dynamic>[3, 1, 2, 1]).toString());
 		});
-
-		test("single condition bool selectBuilder", () async {
-			testResults = (<String>["_offline_bool_abc"], <List<Object?>>[<Object?>[true]]);
-			expect((await selectBuilder(pb.dbIsolate, "collection", filter: ("abc = ?", <dynamic>[ true ]))).toString(), "[{_offline_bool_abc: true}]");
-			expect(operations.toString(), "[[SELECT * FROM collection WHERE _offline_bool_abc = ?;, [true]]]");
-		});
-
 	});
-	*/
 
 	group("QueryBuilder", () {
 		test("Empty", () async {
