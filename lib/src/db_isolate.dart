@@ -129,7 +129,9 @@ Future<SendPort?> _generateIsolate(String? path) async {
 
 	final ReceivePort receivePort = ReceivePort();
 	await Isolate.spawn(_isolateEntry, (receivePort.sendPort, path));
-	return await receivePort.first as SendPort?;
+	final SendPort? sendPort = await receivePort.first as SendPort?;
+	receivePort.close();
+	return sendPort;
 }
 
 Future<void> _isolateEntry((SendPort, String? path) data) async {
