@@ -14,8 +14,7 @@ dependencies:
   path: ^1.0.0
   path_provider: ^2.0.0
   pocketbase: ^0.19.0
-  sqlite3: ^2.0.0
-  sqlite3_flutter_libs: ^0.5.0
+  sqlite3: ^3.0.0
   state_groups: ^0.5.0
   synchronized: ^3.0.0
 
