@@ -15,13 +15,26 @@ class DatabaseMock implements CommonDatabase {
 	int userVersion = 0;
 
 	@override
+	void close() {
+	}
+
+	@override
 	bool get autocommit => throw UnimplementedError();
 
 	@override
 	DatabaseConfig get config => throw UnimplementedError();
 
 	@override
-	void createAggregateFunction<V>({required String functionName, required AggregateFunction<V> function, AllowedArgumentCount argumentCount = const AllowedArgumentCount.any(), bool deterministic = false, bool directOnly = true}) {
+	bool Function()? commitFilter;
+
+	@override
+	Stream<void> get commits => throw UnimplementedError();
+
+	@override
+	Stream<void> get rollbacks => throw UnimplementedError();
+
+	@override
+	void createAggregateFunction<V>({required String functionName, required AggregateFunction<V> function, AllowedArgumentCount argumentCount = const AllowedArgumentCount.any(), bool deterministic = false, bool directOnly = true, bool subtype = false}) {
 	}
 
 	@override
@@ -29,7 +42,7 @@ class DatabaseMock implements CommonDatabase {
 	}
 
 	@override
-	void createFunction({required String functionName, required ScalarFunction function, AllowedArgumentCount argumentCount = const AllowedArgumentCount.any(), bool deterministic = false, bool directOnly = true}) {
+	void createFunction({required String functionName, required ScalarFunction function, AllowedArgumentCount argumentCount = const AllowedArgumentCount.any(), bool deterministic = false, bool directOnly = true, bool subtype = false}) {
 	}
 
 	@override
@@ -70,6 +83,13 @@ class DatabaseMock implements CommonDatabase {
 
 	@override
 	Stream<SqliteUpdate> get updates => throw UnimplementedError();
+	
+	 @override
+	 set busyHandler(bool Function(int count)? handler) {
+	 }
+	
+	 @override
+	 Stream<SqliteUpdate> get updatesSync => throw UnimplementedError();
 
 }
 
