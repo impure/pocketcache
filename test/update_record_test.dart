@@ -1,6 +1,7 @@
 
-import 'package:pocketbase_offline_cache/src/get_records.dart';
 import 'package:test/test.dart';
+
+import '../lib/src/get_records.dart';
 
 void main() {
 	test("makePbFilter", () {
