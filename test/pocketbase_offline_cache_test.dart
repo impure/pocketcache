@@ -3,7 +3,6 @@
 import 'package:http/src/client.dart';
 import 'package:http/src/multipart_file.dart';
 import 'package:pocketbase/pocketbase.dart';
-import 'package:pocketbase_offline_cache/pocketbase_offline_cache.dart';
 import 'package:pocketbase_offline_cache/src/pocketbase_offline_cache_base.dart';
 import 'package:sqlite3/common.dart';
 import 'package:test/test.dart';
